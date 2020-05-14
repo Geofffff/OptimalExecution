@@ -1,4 +1,7 @@
 import time
+from library.local_environments import agent_environmentM
+import numpy as np
+from matplotlib import pyplot as plt
 
 class simulator:
 
@@ -85,8 +88,9 @@ class simulator:
 
 		# Set up the agents:
 		for i ,agent in enumerate(self.agents):
-			agent.epsilon = epsilon[i]
-			agent.epsilon_decay = epsilon_decay[i]
+			agent.update_paramaters(epsilon = epsilon[i], epsilon_decay = epsilon_decay[i])
+			##### TEMP ######
+			print(agent.epsilon_decay)
 			
 		# Setup action list
 		actions = [-1] * self.n_agents
