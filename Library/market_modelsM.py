@@ -1,7 +1,5 @@
 from random import gauss
-from numpy import exp
-from numpy import ones
-from numpy import vectorize
+import numpy as np
 
 class stock:
 	
@@ -23,7 +21,7 @@ class bs_stock:
 		if St is None:
 			St = self.price
 
-		self.price = St * exp((self.drift - 0.5 * self.vol) * dt + self.vol * dt**0.5 * gauss(0,1))
+		self.price = St * np.exp((self.drift - 0.5 * self.vol) * dt + self.vol * dt**0.5 * gauss(0,1))
 		return self.price
 
 	def generate_path(self,T,grid_size):
@@ -51,14 +49,14 @@ class market:
 	def __init__(self,stock_,num_strats = 1):
 		self.stock = stock_
 		self.spread = 0
-		self.price_adjust = ones(num_strats)
+		self.price_adjust = np.ones(num_strats)
 
 
 	def sell(self,volume,dt):
 		'''sell *volume* of stock over time window dt, volume is np array'''
-		self.price_adjust *= vectorize(self.exp_g)(volume)
+		self.price_adjust *= np.vectorize(self.exp_g)(volume)
 		#print("volume ", volume, "price_adjust ",self.price_adjust)        
-		ret = (self.stock.price * self.price_adjust - vectorize(self.f)(volume/dt) - 0.5 * self.spread) * volume 
+		ret = (self.stock.price * self.price_adjust - np.vectorize(self.f)(volume/dt) - 0.5 * self.spread) * volume 
 		return ret
 
 
@@ -66,14 +64,14 @@ class market:
 		return v * 0.001
     
 	def exp_g(self,v):
-		return exp(-self.g(v))
+		return np.exp(-self.g(v))
 
 	def f(self,v):
 		return v * 0.001
 
 	def reset(self):
 		self.stock.reset()
-		self.price_adjust = ones(len(self.price_adjust))
+		self.price_adjust = np.ones(len(self.price_adjust))
 
 	def progress(self,dt):
 		self.stock.generate_price(dt)

@@ -1,4 +1,5 @@
-from numpy import exp
+#from numpy import exp
+import numpy as np
     
 class agent_environmentM:
 
