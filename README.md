@@ -24,14 +24,21 @@ Code for optimal execution
 - Deep L in py book (buy)
 - Double deep q paper
 
+#### Other Reading
+- Restricted Boltzman machines
+- Random Forests
+- Target Networks
+
 ### Writing
 - Talk about DDQN in practise (halving epsilon decay)
 - Transformations of the features
 
-###General
+### General
 - Test training agents with a larger number of options and timesteps
 - Find average trade sizes from data
 - Initial weights?
+- Incorporate changes from the paper (reread)
+- Set seed to control reproducability
 
 ### Questions for Paul
 - The role of gamma in this case? - Risk aversion

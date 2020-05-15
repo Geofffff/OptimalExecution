@@ -1,11 +1,17 @@
 # Agents
+from tensorflow.random import set_seed
+set_seed(42)
+import numpy as np
+np.random.seed(42)
 
 from collections import deque
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.optimizers import Adam
 import random
-import numpy as np
+
+
+
 
 
 class learningAgent:
@@ -132,7 +138,7 @@ class DDQNAgent(learningAgent):
 		target = reward
 		# Update either of the two models with equal probability
 		if np.random.rand() < 0.5:
-			modelA = self.model1 # FIX
+			modelA = self.model1 
 			modelB = self.model2
 		else:
 			modelA = self.model2
