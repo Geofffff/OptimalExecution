@@ -1,6 +1,6 @@
 #from numpy import exp
 import numpy as np
-    
+
 class agent_environmentM:
 
     def __init__(self, market, position,num_steps,terminal,action_values_pct,n_strats):
@@ -44,8 +44,10 @@ class agent_environmentM:
     
     def step(self,actions):
         self.progress(self.step_size)
-        
-        rewards = self.sell(self.action_values[actions])
+        if self.time < self.terminal:
+            rewards = self.sell(self.action_values[actions])
+        else:
+            rewards = self.sell(self.position)
         done = (self.position == 0) + (self.time >= self.terminal)
         done = np.array(done,dtype = bool)
             
