@@ -148,10 +148,10 @@ class DDQNAgent(learningAgent):
 			max_act = np.argmax(modelA.predict(next_state))
 			target = (reward + self.gamma * 
 						modelB.predict(next_state)[0,max_act])
-			target_f = modelA.predict(state) # predicted returns for all actions
-			target_f[0][action] = target 
+		target_f = modelA.predict(state) # predicted returns for all actions
+		target_f[0][action] = target 
 			# Change the action taken to the reward + predicted max of next states
-			modelA.fit(state, target_f,epochs=1, verbose=0) # Single epoch?
+		modelA.fit(state, target_f,epochs=1, verbose=0) # Single epoch?
 
 	def update_paramaters(self,epsilon = 1.0,epsilon_decay = 0.9992,gamma = 1.0, epsilon_min = 0.01):
 		super(DDQNAgent,self).update_paramaters(epsilon, np.sqrt(epsilon_decay),gamma, epsilon_min)

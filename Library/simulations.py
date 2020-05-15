@@ -89,8 +89,6 @@ class simulator:
 		# Set up the agents:
 		for i ,agent in enumerate(self.agents):
 			agent.update_paramaters(epsilon = epsilon[i], epsilon_decay = epsilon_decay[i])
-			##### TEMP ######
-			print(agent.epsilon_decay)
 			
 		# Setup action list
 		actions = [-1] * self.n_agents
@@ -134,7 +132,7 @@ class simulator:
 				timer.append(time_now - start_time)
 				start_time = time_now
 				
-				rewards = (1 - done) * rewards
+				#rewards = (1 - done) * rewards
 				
 				next_states = np.reshape(next_states, [self.n_agents,1, self.env.state_size])
 				total_reward += rewards

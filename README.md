@@ -5,8 +5,8 @@ Code for optimal execution
 ### Agents
 - The build model function should probably be broken out of the learning agents
 - Add DDQN Agent [TESTING]
-	- halve the epsilon decay DONE
 - Fix slightly hacky solution to non generalised parameters
+- Test target network concept
 
 ### Simulator
 - Efficiency
@@ -15,14 +15,16 @@ Code for optimal execution
 - Record model choices for diagnosis
 - Remove checks
 
-### Market Models
+### Market Models and Environment
 - Add new market models
+- Expand the feature set
 
 ### Reading
 - Sutton and Barto (p142)
-- Next RL execution paper DONE
+- Next RL execution paper [DONE]
 - Deep L in py book (buy)
-- Double deep q paper
+- Double deep q paper [DONE]
+
 
 #### Other Reading
 - Restricted Boltzman machines
@@ -32,13 +34,14 @@ Code for optimal execution
 ### Writing
 - Talk about DDQN in practise (halving epsilon decay)
 - Transformations of the features
+- Case study on robustness and DDQ - could demonstate / prove the issues with the niave approach DQN
 
 ### General
 - Test training agents with a larger number of options and timesteps
 - Find average trade sizes from data
 - Initial weights?
 - Incorporate changes from the paper (reread)
-- Set seed to control reproducability
+- Set seed to control reproducability [DONE]
 
 ### Questions for Paul
 - The role of gamma in this case? - Risk aversion
