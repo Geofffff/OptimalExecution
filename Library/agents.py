@@ -12,7 +12,27 @@ import random
 
 
 
+class basicAgent:
+	def __init__(self,action, agent_name, action_size = None):
+		self.agent_name = agent_name
+		# Currently this agent must be provided with the correct action
+		self.action = action
+		self.memory = [1,2]
+		self.epsilon_decay = 0
+		self.action_size = action_size
+		
+	def remember(self, state, action, reward, next_state, done):
+		pass
+	
+	def replay(self, batch_size):
+		pass
+	
+	# 'Virtual' function
+	def act(self, state):
+		raise "act() must be overriden by the child class"
 
+	def update_paramaters(self,epsilon = 1.0,epsilon_decay = 0.9992,gamma = 1.0, epsilon_min = 0.01):
+		pass
 
 class learningAgent:
 	def __init__(self, state_size, action_size, agent_name,agent_type):
@@ -77,7 +97,6 @@ class learningAgent:
 		self.epsilon_decay = epsilon_decay
 		self.epsilon_min = epsilon_min
 
-
 class DQNAgent(learningAgent):
 	'''Standard Deep Q Agent, network dimensions pre specified'''
 	def __init__(self, state_size, action_size, agent_name):
@@ -85,6 +104,7 @@ class DQNAgent(learningAgent):
 		self.model = self._build_model() # private method 
 	
 	def _build_model(self):
+		set_seed(42)
 		# neural net to approximate Q-value function:
 		model = Sequential()
 		model.add(Dense(5, input_dim=self.state_size, activation='relu')) # 1st hidden layer; states as input
@@ -154,30 +174,18 @@ class DDQNAgent(learningAgent):
 		modelA.fit(state, target_f,epochs=1, verbose=0) # Single epoch?
 
 	def update_paramaters(self,epsilon = 1.0,epsilon_decay = 0.9992,gamma = 1.0, epsilon_min = 0.01):
-		super(DDQNAgent,self).update_paramaters(epsilon, np.sqrt(epsilon_decay),gamma, epsilon_min)
+		super(DDQNAgent,self).update_paramaters(epsilon, epsilon_decay,gamma, epsilon_min)
 		#epsilon_decay = np.sqrt(epsilon_decay)
 
-
-class TWAPAgent:
-	def __init__(self, action , agent_name):
-		self.agent_name = agent_name
-		# Currently this agent must be provided with the correct action
-		self.action = action
-		self.memory = [1,2]
-		self.epsilon_decay = 0
-		
-	def remember(self, state, action, reward, next_state, done):
-		pass
-	
-	def replay(self, batch_size):
-		pass
-	
+class TWAPAgent(basicAgent):
 	def act(self, state):
 		return self.action
 
-	def update_paramaters(self,epsilon = 1.0,epsilon_decay = 0.9992,gamma = 1.0, epsilon_min = 0.01):
-		pass
-
+class randomAgent(basicAgent):
+	def act(self,state):
+		if self.action_size is None:
+			raise "Action size must be specified when initialising the random agent"
+		return random.randrange(self.action_size)
 
 
 

@@ -19,11 +19,12 @@ class simulator:
 		self.n_agents = len(self.agents)
 
 		self.m = market_
+		self.possible_actions = [0,0.001,0.005,0.01,0.02,0.05,0.1]
 		self.env = agent_environmentM(self.m,
 									 params["position"],
 									 params["num_trades"],
 									 params["terminal"],
-									 [0,0.001,0.005,0.01,0.02,0.05,0.1],
+									 self.possible_actions,
 									 self.n_agents
 									)
 		
@@ -33,6 +34,11 @@ class simulator:
 		self.final_timestep = []
 		self.train_rewards = np.zeros((0,self.n_agents))
 		self.eval_rewards = np.zeros((0,self.n_agents))
+
+		# Record actions
+		self.train_actions = np.zeros((0,len(self.possible_actions),self.n_agents))
+		self.episode_actions = np.zeros((len(self.possible_actions),self.n_agents))
+		self.record_frequency = 100
 		
 		
 
@@ -115,6 +121,9 @@ class simulator:
 			time_now = time.time()
 			timer_o.append(time_now - start_time_o)
 			start_time_o = time.time()
+
+			# Reset recorded actions
+			self.episode_actions.fill(0)
 			
 			
 			for t in range(self.num_steps):
@@ -125,6 +134,10 @@ class simulator:
 					# Agents action only updated if still active
 					if not inactive[i]:
 						actions[i] = agent.act(states[i])
+
+					if e % self.record_frequency == 0:
+						self.episode_actions[actions[i],i] += 1
+						#print(i)
 				
 				next_states, rewards, done = self.env.step(actions)
 				
@@ -147,9 +160,6 @@ class simulator:
 					#print("time", t, "Actions ", actions[0], "Rewards ", rewards[0], states[0],next_states[0])
 
 				states = next_states
-				
-				if actions[0] == 4:
-					correct_action += 1
 					
 					
 				if all(done): 
@@ -178,6 +188,10 @@ class simulator:
 				if len(agent.memory) > self.batch_size and train[i]:
 					agent.replay(self.batch_size) # train the agent by replaying the experiences of the episode
 
+			if e % self.record_frequency == 0:
+				np.concatenate((self.train_actions,[self.episode_actions]))
+				
+
 			time_now = time.time()
 			timer_o.append(time_now - start_time_o)
 			self.code_time_o = np.vstack((self.code_time_o,timer_o)) 
@@ -186,7 +200,7 @@ class simulator:
 				if show_details and not evaluate:
 					ax.clear()
 					for i in range(self.train_rewards.shape[1]):
-						ax.plot(self.__moving_average(self.train_rewards[current_training_step:,i],n=500), label  = self.agents[i].agent_name)
+						ax.plot(self.__moving_average(self.train_rewards[current_training_step:,i],n=100), label  = self.agents[i].agent_name)
 					plt.pause(0.0001)
 					plt.draw()
 		if not evaluate:

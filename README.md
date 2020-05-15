@@ -7,13 +7,16 @@ Code for optimal execution
 - Add DDQN Agent [TESTING]
 - Fix slightly hacky solution to non generalised parameters
 - Test target network concept
+- Add random agent
+- Add Sutton and Barto n step approach
 
 ### Simulator
 - Efficiency
 - Robust model saving and figure saving
 - Silent training option
-- Record model choices for diagnosis
-- Remove checks
+- Record model choices for diagnosis [IMPORTANT - why does it start at 9.4]
+- Remove checks [DONE]
+- Continuous evaluation (every 1000 steps evaluate for 100 steps?)
 
 ### Market Models and Environment
 - Add new market models
@@ -24,6 +27,8 @@ Code for optimal execution
 - Next RL execution paper [DONE]
 - Deep L in py book (buy)
 - Double deep q paper [DONE]
+- Prioritised replay
+- Distributional approach
 
 
 #### Other Reading
