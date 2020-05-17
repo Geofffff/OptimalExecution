@@ -1,8 +1,8 @@
 # Agents
 from tensorflow.random import set_seed
-set_seed(42)
+set_seed(84)
 import numpy as np
-np.random.seed(42)
+np.random.seed(84)
 
 from collections import deque
 from keras.models import Sequential
@@ -19,6 +19,7 @@ class basicAgent:
 		self.action = action
 		self.memory = [1,2]
 		self.epsilon_decay = 0
+		self.epsilon = 1
 		self.action_size = action_size
 		
 	def remember(self, state, action, reward, next_state, done):
@@ -30,6 +31,11 @@ class basicAgent:
 	# 'Virtual' function
 	def act(self, state):
 		raise "act() must be overriden by the child class"
+
+	# 'Virtual' function
+	def predict(self, state):
+		#raise "predict() must be overriden by the child class"
+		return 0
 
 	def update_paramaters(self,epsilon = 1.0,epsilon_decay = 0.9992,gamma = 1.0, epsilon_min = 0.01):
 		pass
@@ -99,12 +105,16 @@ class learningAgent:
 
 class DQNAgent(learningAgent):
 	'''Standard Deep Q Agent, network dimensions pre specified'''
-	def __init__(self, state_size, action_size, agent_name):
+	def __init__(self, state_size, action_size, agent_name, C = 0):
 		learningAgent.__init__(self,state_size,action_size,agent_name,agent_type = "DQN")
 		self.model = self._build_model() # private method 
+		self.C = C
+		if self.C > 0:
+			self.target_model = self.model.copy()
+			self.n_since_updated = 0
 	
 	def _build_model(self):
-		set_seed(42)
+		set_seed(84)
 		# neural net to approximate Q-value function:
 		model = Sequential()
 		model.add(Dense(5, input_dim=self.state_size, activation='relu')) # 1st hidden layer; states as input
@@ -115,7 +125,17 @@ class DQNAgent(learningAgent):
 		return model
 
 	# Override predict and fit functions
-	def predict(self,state):
+	def predict(self,state,for_fitting = False):
+		# Note that this predict function (without for_fitting) should only be used once per step!
+		if self.C > 0:
+			if for_fitting: 
+				self.n_since_updated += 1
+				if self.n_since_updated == C: # Update the target network if C steps have passed
+					self.n_since_updated = 0
+					self.target_model = self.model.copy()
+		
+			return self.target_model.predict(state)
+
 		return self.model.predict(state)
  
 	def fit(self,state, action, reward, next_state, done):
@@ -140,6 +160,7 @@ class DDQNAgent(learningAgent):
 		self.model2 = self._build_model() # private method
 
 	def _build_model(self):
+		set_seed(84)
 		# neural net to approximate Q-value function:
 		model = Sequential()
 		model.add(Dense(5, input_dim=self.state_size, activation='relu')) # 1st hidden layer; states as input

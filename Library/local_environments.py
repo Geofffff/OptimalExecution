@@ -36,11 +36,10 @@ class agent_environmentM:
 
     def state(self,full = False):
 
-        times = np.ones(self.n_strats) * self.time
+        times = np.ones(self.n_strats) * 2 * self.time - 1
         # TODO: Store state as a seprate variable
-        states = np.vstack((self.position,times))
         
-        return np.vstack((self.position,times)).T
+        return np.vstack((2 * self.position/self.initial[0] - 1,times)).T # Assuming initial position always the same
     
     def step(self,actions):
         self.progress(self.step_size)
@@ -48,7 +47,9 @@ class agent_environmentM:
             rewards = self.sell(self.action_values[actions])
         else:
             rewards = self.sell(self.position)
-        done = (self.position == 0) + (self.time >= self.terminal)
+        done = (self.position <= 0) + (self.time >= self.terminal)
+        if any(self.position < 0):
+            print("Warning position is ",self.position)
         done = np.array(done,dtype = bool)
             
 		# Reward is currently just the returned cash / 100...

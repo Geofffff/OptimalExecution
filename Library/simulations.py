@@ -19,7 +19,7 @@ class simulator:
 		self.n_agents = len(self.agents)
 
 		self.m = market_
-		self.possible_actions = [0,0.001,0.005,0.01,0.02,0.05,0.1]
+		self.possible_actions = [0,0.001,0.005,0.01,0.02,0.05,0.1]#[0,0.02,0.04,0.06,0.08,0.1,0.12,0.14,0.16,0.18,0.2]
 		self.env = agent_environmentM(self.m,
 									 params["position"],
 									 params["num_trades"],
@@ -31,14 +31,17 @@ class simulator:
 		
 
 		# Stats
-		self.final_timestep = []
+		self.final_timestep = [] # Inactive
 		self.train_rewards = np.zeros((0,self.n_agents))
-		self.eval_rewards = np.zeros((0,self.n_agents))
+		self.eval_rewards = np.zeros((1,self.n_agents)) 
+		self.eval_rewards_mean = np.zeros((0,self.n_agents)) 
+		self.eval_window = 40
 
 		# Record actions
 		self.train_actions = np.zeros((0,len(self.possible_actions),self.n_agents))
 		self.episode_actions = np.zeros((len(self.possible_actions),self.n_agents))
 		self.record_frequency = 100
+		self.plot_y_lim = (4,9.8)
 		
 		
 
@@ -55,12 +58,13 @@ class simulator:
 		# Number of agents to be trained
 		
 		### Live Plots ###
-		fig = plt.figure()
-		ax = fig.add_subplot(111)
-		plt.ion()
+		if not evaluate:
+			fig = plt.figure()
+			ax = fig.add_subplot(111)
+			plt.ion()
 
-		fig.show()
-		fig.canvas.draw()
+			fig.show()
+			fig.canvas.draw()
 		### Live Plots ###
 		
 		# Default training parameters if not provided
@@ -81,15 +85,12 @@ class simulator:
 		# TEMPORARY? #
 
 		# Evaluatory Stats
-		current_training_step = len(self.train_rewards) #
+		current_training_step = len(self.eval_rewards) # CHANGED TO EVAL
 		
 		n_correct = 0#
 		total_reward = np.zeros(self.n_agents)#
 		
 		pcnt_opt = []#
-		
-		
-
 		
 
 		# Set up the agents:
@@ -122,8 +123,13 @@ class simulator:
 			timer_o.append(time_now - start_time_o)
 			start_time_o = time.time()
 
-			# Reset recorded actions
-			self.episode_actions.fill(0)
+			# Record the initial action values if training
+			#self.episode_actions.fill(0)
+			if not evaluate:
+				for i, agent in enumerate(self.agents):
+					self.episode_actions[:,i] = agent.predict(states[i])
+
+				self.train_actions = np.concatenate((self.train_actions,[self.episode_actions]))
 			
 			
 			for t in range(self.num_steps):
@@ -135,8 +141,9 @@ class simulator:
 					if not inactive[i]:
 						actions[i] = agent.act(states[i])
 
-					if e % self.record_frequency == 0:
-						self.episode_actions[actions[i],i] += 1
+					#if e % self.eval_window == 0:
+						#if not inactive[i]:
+							#self.episode_actions[actions[i],i] += 1
 						#print(i)
 				
 				next_states, rewards, done = self.env.step(actions)
@@ -180,17 +187,16 @@ class simulator:
 			start_time_o = time.time()
 			
 			if evaluate:
-				self.eval_rewards = np.vstack((self.eval_rewards,total_reward))
+				self.eval_rewards += total_reward
 			else:
-				self.train_rewards = np.vstack((self.train_rewards,total_reward))
+				pass
+				# Testing removing train_rewards
+				#self.train_rewards = np.vstack((self.train_rewards,total_reward))
 			
 			for i, agent in enumerate(self.agents):
 				if len(agent.memory) > self.batch_size and train[i]:
 					agent.replay(self.batch_size) # train the agent by replaying the experiences of the episode
 
-			if e % self.record_frequency == 0:
-				np.concatenate((self.train_actions,[self.episode_actions]))
-				
 
 			time_now = time.time()
 			timer_o.append(time_now - start_time_o)
@@ -198,19 +204,40 @@ class simulator:
 			if e % 100 == 0:
 				#self.total_training_steps += 100
 				if show_details and not evaluate:
+					current_training_step = len(self.eval_rewards_mean) # CHANGED TO EVAL
+					self.evaluate(self.eval_window,show_stats=False)
 					ax.clear()
-					for i in range(self.train_rewards.shape[1]):
-						ax.plot(self.__moving_average(self.train_rewards[current_training_step:,i],n=100), label  = self.agents[i].agent_name)
+					#print(self.eval_rewards_mean)
+					for i in range(self.eval_rewards_mean.shape[1]):
+						ax.plot(self.__moving_average(self.eval_rewards_mean[:,i],n=5), label  = self.agents[i].agent_name)
+					plt.legend()
+					plt.ylim(self.plot_y_lim) # Temporary
 					plt.pause(0.0001)
 					plt.draw()
 		if not evaluate:
-			self.show_stats(trained_from = current_training_step)       
+			self.show_stats(trained_from = current_training_step) 
+		else:
+			self.eval_rewards_mean = np.vstack((self.eval_rewards_mean,self.eval_rewards / self.eval_window))
+			self.eval_rewards_mean
+			self.eval_rewards = np.zeros((1,self.n_agents))      
 		
-	def evaluate(self,n_episodes = 500):
-		start_iteration = len(self.eval_rewards)
+	def evaluate(self,n_episodes = 200,show_stats = True):
+		epsilon_old = []
+		epsilon_decay_old = []
+		# Get current epsilon values
+		for agent in self.agents:
+			epsilon_old.append(agent.epsilon)
+			epsilon_decay_old.append(agent.epsilon_decay)
+
 		epsilon = [0] * self.n_agents
 		self.train(n_episodes = n_episodes, epsilon = epsilon, show_details = False,evaluate = True)
-		self.show_stats(trained_from = start_iteration,training = False)
+		# Return agent epsilons to their original values:
+		for i, agent in enumerate(self.agents):
+			agent.update_paramaters(epsilon = epsilon_old[i],epsilon_decay = epsilon_decay_old[i])
+
+		if show_stats:
+			start_iteration = len(self.eval_rewards)
+			self.show_stats(trained_from = start_iteration,training = False)
 
 	def show_stats(self,trained_from = 0,trained_to = None,moving_average = 400,training = True):
 		

@@ -1,22 +1,32 @@
 # ThesisCode
 Code for optimal execution
 
+
+
 ## TODO:
+
+1) Agents 
+- Agents don't seem to converge so diagnose and fix this before adding / improving anything else
+- Trying making the problem simpler (higher temp impact and lower vol)
+- Approach should probably be adapted to the Jaimungal approach
+
+- Find average trade sizes from data
+- Initial weights?
+- Incorporate changes from the paper (reread)
+- Set seed to control reproducability [DONE] - add seed to stock price
+
 ### Agents
+- Clean up and standardise
 - The build model function should probably be broken out of the learning agents
-- Add DDQN Agent [TESTING]
 - Fix slightly hacky solution to non generalised parameters
 - Test target network concept
-- Add random agent
 - Add Sutton and Barto n step approach
 
 ### Simulator
-- Efficiency
-- Robust model saving and figure saving
 - Silent training option
-- Record model choices for diagnosis [IMPORTANT - why does it start at 9.4]
-- Remove checks [DONE]
-- Continuous evaluation (every 1000 steps evaluate for 100 steps?)
+- Major rework needed once its working
+- Evaluation option to continue from random strategy [Think about this - not sure its necessary, problem is markov]
+- [IMPORTANT] Track action values and calculate how they diverge from theoretical ones
 
 ### Market Models and Environment
 - Add new market models
@@ -37,16 +47,9 @@ Code for optimal execution
 - Target Networks
 
 ### Writing
-- Talk about DDQN in practise (halving epsilon decay)
+- Talk about DDQN in practise (halving epsilon decay?)
 - Transformations of the features
 - Case study on robustness and DDQ - could demonstate / prove the issues with the niave approach DQN
-
-### General
-- Test training agents with a larger number of options and timesteps
-- Find average trade sizes from data
-- Initial weights?
-- Incorporate changes from the paper (reread)
-- Set seed to control reproducability [DONE]
 
 ### Questions for Paul
 - The role of gamma in this case? - Risk aversion

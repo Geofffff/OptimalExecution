@@ -67,7 +67,7 @@ class market:
 		return np.exp(-self.g(v))
 
 	def f(self,v):
-		return v * 0.001
+		return v**2 * 0.001
 
 	def reset(self):
 		self.stock.reset()
