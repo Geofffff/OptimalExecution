@@ -60,9 +60,6 @@ class learningAgent:
 		# rate at which NN adjusts models parameters via SGD to reduce cost:
 		self.learning_rate = 0.001
 		#self.model = self._build_model() # private method 
-
-	def __update_target(self):
-		pass
 	
 	def remember(self, state, action, reward, next_state, done):
 		'''Record the current environment for later replay'''
@@ -99,7 +96,7 @@ class learningAgent:
 			self.epsilon *= self.epsilon_decay
 
 	def step(self):
-		self.__update_target()
+		pass
 
 	def load(self, file_name):
 		self.model.load_weights(file_name)
@@ -134,12 +131,13 @@ class DQNAgent(learningAgent):
 						optimizer=Adam(lr=self.learning_rate))
 		return model
 
-	def _update_target(self):
+	def step(self):
 		if self.C > 0:
 			self.n_since_updated += 1
 			if self.n_since_updated >= self.C: # Update the target network if C steps have passed
 				if self.n_since_updated > self.C:
 					print("target network not updated on time")
+				#print("Debug: target network updated")
 				self.n_since_updated = 0
 				self.target_model = clone_model(self.model)
 
