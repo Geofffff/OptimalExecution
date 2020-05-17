@@ -1,5 +1,6 @@
 from random import gauss
 import numpy as np
+np.random.seed(84)
 
 class stock:
 	

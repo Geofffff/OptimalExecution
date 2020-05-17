@@ -196,6 +196,7 @@ class simulator:
 			for i, agent in enumerate(self.agents):
 				if len(agent.memory) > self.batch_size and train[i]:
 					agent.replay(self.batch_size) # train the agent by replaying the experiences of the episode
+					agent.step() # Update target network if required
 
 
 			time_now = time.time()

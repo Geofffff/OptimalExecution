@@ -6,6 +6,7 @@ np.random.seed(84)
 
 from collections import deque
 from keras.models import Sequential
+from keras.models import clone_model
 from keras.layers import Dense
 from keras.optimizers import Adam
 import random
@@ -32,6 +33,9 @@ class basicAgent:
 	def act(self, state):
 		raise "act() must be overriden by the child class"
 
+	def step(self):
+		pass
+
 	# 'Virtual' function
 	def predict(self, state):
 		#raise "predict() must be overriden by the child class"
@@ -49,12 +53,16 @@ class learningAgent:
 		self.action_size = action_size
 		# double-ended queue; acts like list, but elements can be added/removed from either end:
 		self.memory = deque(maxlen=2000)
+		self.n_since_updated = 0
 		
 		self.update_paramaters() # to defaults
 		
 		# rate at which NN adjusts models parameters via SGD to reduce cost:
 		self.learning_rate = 0.001
 		#self.model = self._build_model() # private method 
+
+	def __update_target(self):
+		pass
 	
 	def remember(self, state, action, reward, next_state, done):
 		'''Record the current environment for later replay'''
@@ -90,6 +98,9 @@ class learningAgent:
 		if self.epsilon > self.epsilon_min: # TODO: unecessary?
 			self.epsilon *= self.epsilon_decay
 
+	def step(self):
+		self.__update_target()
+
 	def load(self, file_name):
 		self.model.load_weights(file_name)
 
@@ -110,8 +121,7 @@ class DQNAgent(learningAgent):
 		self.model = self._build_model() # private method 
 		self.C = C
 		if self.C > 0:
-			self.target_model = self.model.copy()
-			self.n_since_updated = 0
+			self.target_model = clone_model(self.model)
 	
 	def _build_model(self):
 		set_seed(84)
@@ -124,16 +134,19 @@ class DQNAgent(learningAgent):
 						optimizer=Adam(lr=self.learning_rate))
 		return model
 
-	# Override predict and fit functions
-	def predict(self,state,for_fitting = False):
-		# Note that this predict function (without for_fitting) should only be used once per step!
+	def _update_target(self):
 		if self.C > 0:
-			if for_fitting: 
-				self.n_since_updated += 1
-				if self.n_since_updated == C: # Update the target network if C steps have passed
-					self.n_since_updated = 0
-					self.target_model = self.model.copy()
-		
+			self.n_since_updated += 1
+			if self.n_since_updated >= self.C: # Update the target network if C steps have passed
+				if self.n_since_updated > self.C:
+					print("target network not updated on time")
+				self.n_since_updated = 0
+				self.target_model = clone_model(self.model)
+
+	# Override predict and fit functions
+	def predict(self,state,target = False):
+		# Note that this predict function (without for_fitting) should only be used once per step!
+		if self.C > 0 and target:
 			return self.target_model.predict(state)
 
 		return self.model.predict(state)
@@ -143,8 +156,8 @@ class DQNAgent(learningAgent):
 		# if not done then returns must incorporate predicted (discounted) future reward
 		if not done:
 			target = (reward + self.gamma * 
-						np.amax(self.predict(next_state)[0])) 
-		target_f = self.predict(state) # predicted returns for all actions
+						np.amax(self.predict(next_state,target = True)[0])) 
+		target_f = self.predict(state,target = True) # predicted returns for all actions
 		target_f[0][action] = target 
 		# Change the action taken to the reward + predicted max of next states
 		self.model.fit(state, target_f,epochs=1, verbose=0) # Single epoch?
