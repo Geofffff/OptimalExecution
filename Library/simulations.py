@@ -36,12 +36,13 @@ class simulator:
 		self.eval_rewards = np.zeros((1,self.n_agents)) 
 		self.eval_rewards_mean = np.zeros((0,self.n_agents)) 
 		self.eval_window = 40
+		self.plot_title = "Unlabelled Performance Test"
 
 		# Record actions
 		self.train_actions = np.zeros((0,len(self.possible_actions),self.n_agents))
 		self.episode_actions = np.zeros((len(self.possible_actions),self.n_agents))
 		self.record_frequency = 100
-		self.plot_y_lim = (4,9.8)
+		self.plot_y_lim = (9,10)
 		
 		
 
@@ -164,7 +165,7 @@ class simulator:
 				time_now = time.time()
 				timer.append(time_now - start_time)
 				#if e % 100 == 0:
-					#print("time", t, "Actions ", actions[0], "Rewards ", rewards[0], states[0],next_states[0])
+				#print("time", t, "Actions ", actions[1], "Rewards ", rewards[1], states[1],next_states[1])
 
 				states = next_states
 					
@@ -213,6 +214,7 @@ class simulator:
 						ax.plot(self.__moving_average(self.eval_rewards_mean[:,i],n=5), label  = self.agents[i].agent_name)
 					plt.legend()
 					plt.ylim(self.plot_y_lim) # Temporary
+					plt.title(self.plot_title)
 					plt.pause(0.0001)
 					plt.draw()
 		if not evaluate:

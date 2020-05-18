@@ -77,8 +77,8 @@ class learningAgent:
 	def act(self, state):
 		# random action
 		if np.random.rand() <= self.epsilon:
-			return random.randrange(self.action_size)
-		
+			rand_act = random.randrange(self.action_size)
+			return rand_act#random.randrange(self.action_size)
 		# Predict return
 		act_values = self.predict(state)
 		# Maximise return
@@ -139,7 +139,14 @@ class DQNAgent(learningAgent):
 					print("target network not updated on time")
 				#print("Debug: target network updated")
 				self.n_since_updated = 0
-				self.target_model = clone_model(self.model)
+				#self.target_model = clone_model(self.model)
+				self.target_model.set_weights(self.model.get_weights())
+				### DEBUGGING ###
+				state_check = [1,-1] 
+				state_check = np.reshape(state_check, [1, 2])
+				print("target predict: ",self.predict(state_check,True))
+				print("model predict: ",self.predict(state_check,False))
+				### DEBUGGING ###
 
 	# Override predict and fit functions
 	def predict(self,state,target = False):
@@ -155,6 +162,7 @@ class DQNAgent(learningAgent):
 		if not done:
 			target = (reward + self.gamma * 
 						np.amax(self.predict(next_state,target = True)[0])) 
+			#print("target ", target, ", reward ", reward)
 		target_f = self.predict(state,target = True) # predicted returns for all actions
 		target_f[0][action] = target 
 		# Change the action taken to the reward + predicted max of next states
