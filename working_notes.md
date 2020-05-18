@@ -13,3 +13,5 @@
 	- random weights performed better(!)
 	- Papers on target networks
 	- Look at action value function progression with both implementations of target network
+
+- Set gamma = 1, cant see logic in non unit gamma

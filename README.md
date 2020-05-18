@@ -16,10 +16,9 @@ Code for optimal execution
 - Set seed to control reproducability [DONE] - add seed to stock price
 
 ### Agents
-- Clean up and standardise
 - The build model function should probably be broken out of the learning agents
 - Fix slightly hacky solution to non generalised parameters
-- Test target network concept
+- Test target network concept [DONE]
 - Add Sutton and Barto n step approach
 
 ### Simulator
@@ -52,12 +51,12 @@ Code for optimal execution
 - Case study on robustness and DDQ - could demonstate / prove the issues with the niave approach DQN
 
 ### Questions for Paul
-- The role of gamma in this case? - Risk aversion
-- The different approach - estimating action values
-- Target network paper / book
-- AlphaGo Approach
-- A3C paper
+
 
 Deep reinforcement learning hands on
+
+### Paul Meeting 3
+- Evaluation (run for 100 steps, evaluate for 40)
+- 
 
 
