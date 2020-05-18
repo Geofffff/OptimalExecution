@@ -74,34 +74,16 @@ class simulator:
 			
 		if epsilon_decay is None:
 			epsilon_decay = [0.998] * self.n_agents
-		
-		if evaluate:
-			train = [False] * self.n_agents
-		else:
-			train = [True] * self.n_agents
-			
-		# TEMPORARY? #
-		self.code_time_i = np.zeros((0,2))
-		self.code_time_o = np.zeros((0,3))
-		# TEMPORARY? #
 
 		# Evaluatory Stats
-		current_training_step = len(self.eval_rewards) # CHANGED TO EVAL
+		#current_training_step = len(self.eval_rewards) # CHANGED TO EVAL
 		
-		n_correct = 0#
-		total_reward = np.zeros(self.n_agents)#
-		
-		pcnt_opt = []#
-		
-
 		# Set up the agents:
 		for i ,agent in enumerate(self.agents):
 			agent.update_paramaters(epsilon = epsilon[i], epsilon_decay = epsilon_decay[i])
 			
 		# Setup action list
 		actions = [-1] * self.n_agents
-		
-		timer_o = []
 		
 		for e in range(n_episodes): # iterate over new episodes of the game
 			
@@ -110,15 +92,7 @@ class simulator:
 			timer_o = []
 			start_time_o = time.time()
 			
-			states = self.env.reset() # reset state at start of each new episode of the game
-			states = np.reshape(states, [self.n_agents,1, self.env.state_size])
 			
-			correct_action = 0.0
-			
-			done = np.zeros(self.n_agents) # Has the episode finished
-			inactive = np.zeros(self.n_agents) # Agents which are still trading
-			
-			total_reward.fill(0)
 			
 			time_now = time.time()
 			timer_o.append(time_now - start_time_o)
@@ -126,83 +100,15 @@ class simulator:
 
 			# Record the initial action values if training
 			#self.episode_actions.fill(0)
-			if not evaluate:
-				for i, agent in enumerate(self.agents):
-					self.episode_actions[:,i] = agent.predict(states[i])
+			
+			self.episode(actions = actions, evaluate = evaluate)
 
-				self.train_actions = np.concatenate((self.train_actions,[self.episode_actions]))
-			
-			
-			for t in range(self.num_steps):
-				timer = []
-				start_time = time.time()
-				# Get actions for each agent
-				for i, agent in enumerate(self.agents):
-					# Agents action only updated if still active
-					if not inactive[i]:
-						actions[i] = agent.act(states[i])
-
-					#if e % self.eval_window == 0:
-						#if not inactive[i]:
-							#self.episode_actions[actions[i],i] += 1
-						#print(i)
-				
-				next_states, rewards, done = self.env.step(actions)
-				
-				time_now = time.time()
-				timer.append(time_now - start_time)
-				start_time = time_now
-				
-				#rewards = (1 - done) * rewards
-				
-				next_states = np.reshape(next_states, [self.n_agents,1, self.env.state_size])
-				total_reward += rewards
-				#print(total_reward)
-				for i, agent in enumerate(self.agents):
-					if not inactive[i] and train[i]:
-						agent.remember(states[i], actions[i], rewards[i], next_states[i], done[i])
-				
-				time_now = time.time()
-				timer.append(time_now - start_time)
-				#if e % 100 == 0:
-				#print("time", t, "Actions ", actions[1], "Rewards ", rewards[1], states[1],next_states[1])
-
-				states = next_states
-					
-					
-				if all(done): 
-					percent_optimal = correct_action / self.num_steps
-					pcnt_opt.append(percent_optimal)
-					break # exit loop
-					
-				inactive = inactive + done
-				
-				self.code_time_i = np.vstack((self.code_time_i,timer))   
-
-			if not all(done):
-				print("We have a problem.")
-				
-			
-			time_now = time.time()
-			timer_o.append(time_now - start_time_o)
-			start_time_o = time.time()
-			
-			if evaluate:
-				self.eval_rewards += total_reward
-			else:
-				pass
-				# Testing removing train_rewards
-				#self.train_rewards = np.vstack((self.train_rewards,total_reward))
-			
 			for i, agent in enumerate(self.agents):
-				if len(agent.memory) > self.batch_size and train[i]:
+				if len(agent.memory) > self.batch_size and not evaluate:
 					agent.replay(self.batch_size) # train the agent by replaying the experiences of the episode
 					agent.step() # Update target network if required
 
 
-			time_now = time.time()
-			timer_o.append(time_now - start_time_o)
-			self.code_time_o = np.vstack((self.code_time_o,timer_o)) 
 			if e % 100 == 0:
 				#self.total_training_steps += 100
 				if show_details and not evaluate:
@@ -221,9 +127,61 @@ class simulator:
 			self.show_stats(trained_from = current_training_step) 
 		else:
 			self.eval_rewards_mean = np.vstack((self.eval_rewards_mean,self.eval_rewards / self.eval_window))
-			self.eval_rewards_mean
-			self.eval_rewards = np.zeros((1,self.n_agents))      
+			self.eval_rewards = np.zeros((1,self.n_agents))
+
+	def episode(self,actions, verbose = False,evaluate = False):
+		states = self.env.reset() # reset state at start of each new episode of the game
+		states = np.reshape(states, [self.n_agents,1, self.env.state_size])
+
+		if not evaluate:
+			for i, agent in enumerate(self.agents):
+				self.episode_actions[:,i] = agent.predict(states[i])
+
+			self.train_actions = np.concatenate((self.train_actions,[self.episode_actions]))
+					
+		done = np.zeros(self.n_agents) # Has the episode finished
+		inactive = np.zeros(self.n_agents) # Agents which are still trading
+					
+		total_reward = np.zeros(self.n_agents)
+
+		for t in range(self.num_steps):
+			timer = []
+			start_time = time.time()
+			# Get actions for each agent
+			for i, agent in enumerate(self.agents):
+				# Agents action only updated if still active
+				if not inactive[i]:
+					actions[i] = agent.act(states[i])
+				else:
+					actions[i] = 0 # Could speed up (only need to change once)
+			
+			next_states, rewards, done = self.env.step(actions)
+			
+			#rewards = (1 - done) * rewards
+			
+			next_states = np.reshape(next_states, [self.n_agents,1, self.env.state_size])
+			total_reward += rewards
+			#print(total_reward)
+			if not evaluate:
+				for i, agent in enumerate(self.agents):
+					if not inactive[i]:
+						agent.remember(states[i], actions[i], rewards[i], next_states[i], done[i])
+
+			if verbose:
+				print("State[0]: ",states[0], "Actions[0]: ", actions[0], "Rewards[0]: ", rewards[0], "Next_states[0]: ", next_states[0], "Done[0]: ", done[0])
+			states = next_states
+				
+			if all(done): 
+				break # exit loop
+				
+			inactive = inactive + done
+
+		if not all(done):
+			print("We have a problem.")
 		
+		if evaluate:
+			self.eval_rewards += total_reward
+
 	def evaluate(self,n_episodes = 200,show_stats = True):
 		epsilon_old = []
 		epsilon_decay_old = []

@@ -18,9 +18,11 @@ class agent_environmentM:
 
     def sell(self,volumes):
         capped_volume = np.minimum(volumes,self.position)
+        #print("time ", self.time, "capped_volume ", capped_volume, "state ", self.state())
         self.position -= capped_volume
         returns = self.m.sell(capped_volume,self.step_size) 
         self.cash += returns
+        #print("time ", self.time, "capped_volume ", capped_volume, "state ", self.state(),"returns ", returns)
         return returns
 
     def reset(self):

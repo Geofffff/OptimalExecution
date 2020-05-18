@@ -6,12 +6,10 @@ Code for optimal execution
 ## TODO:
 
 1) Agents 
-- Agents don't seem to converge so diagnose and fix this before adding / improving anything else
+- Agents don't seem to converge so diagnose and fix this before adding / improving anything else [DONE]
 - Trying making the problem simpler (higher temp impact and lower vol)
 - Approach should possibly be adapted to the Jaimungal approach
-
 - Find average trade sizes from data
-- Initial weights?
 - Incorporate changes from the paper (reread)
 - Set seed to control reproducability [DONE] - add seed to stock price
 
@@ -20,6 +18,7 @@ Code for optimal execution
 - Fix slightly hacky solution to non generalised parameters
 - Test target network concept [DONE]
 - Add Sutton and Barto n step approach
+- Prioritised Sampling
 
 ### Simulator
 - Silent training option
