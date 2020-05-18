@@ -8,7 +8,7 @@ Code for optimal execution
 1) Agents 
 - Agents don't seem to converge so diagnose and fix this before adding / improving anything else
 - Trying making the problem simpler (higher temp impact and lower vol)
-- Approach should probably be adapted to the Jaimungal approach
+- Approach should possibly be adapted to the Jaimungal approach
 
 - Find average trade sizes from data
 - Initial weights?

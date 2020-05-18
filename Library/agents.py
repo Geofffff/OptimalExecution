@@ -10,6 +10,7 @@ from keras.models import clone_model
 from keras.layers import Dense
 from keras.optimizers import Adam
 import random
+random.seed(84)
 
 
 
@@ -113,12 +114,16 @@ class learningAgent:
 
 class DQNAgent(learningAgent):
 	'''Standard Deep Q Agent, network dimensions pre specified'''
-	def __init__(self, state_size, action_size, agent_name, C = 0):
+	def __init__(self, state_size, action_size, agent_name, C = 0,alternative_target = False):
 		learningAgent.__init__(self,state_size,action_size,agent_name,agent_type = "DQN")
 		self.model = self._build_model() # private method 
 		self.C = C
+		self.alternative_target = alternative_target
 		if self.C > 0:
 			self.target_model = clone_model(self.model)
+
+			if alternative_target:
+				self.prior_weights = deque(maxlen = C)
 	
 	def _build_model(self):
 		set_seed(84)
@@ -132,21 +137,36 @@ class DQNAgent(learningAgent):
 		return model
 
 	def step(self):
-		if self.C > 0:
-			self.n_since_updated += 1
-			if self.n_since_updated >= self.C: # Update the target network if C steps have passed
-				if self.n_since_updated > self.C:
-					print("target network not updated on time")
-				#print("Debug: target network updated")
-				self.n_since_updated = 0
-				#self.target_model = clone_model(self.model)
-				self.target_model.set_weights(self.model.get_weights())
+		# Implementation described in Google Paper
+		if not self.alternative_target:
+			if self.C > 0:
+				self.n_since_updated += 1
+				if self.n_since_updated >= self.C: # Update the target network if C steps have passed
+					if self.n_since_updated > self.C:
+						print("target network not updated on time")
+					#print("Debug: target network updated")
+					self.n_since_updated = 0
+					#self.target_model = clone_model(self.model)
+					self.target_model.set_weights(self.model.get_weights())
+					### DEBUGGING ###
+					#state_check = [1,-1] 
+					#state_check = np.reshape(state_check, [1, 2])
+					#print("target predict: ",self.predict(state_check,True))
+					#print("model predict: ",self.predict(state_check,False))
+					### DEBUGGING ###
 				### DEBUGGING ###
-				state_check = [1,-1] 
-				state_check = np.reshape(state_check, [1, 2])
-				print("target predict: ",self.predict(state_check,True))
-				print("model predict: ",self.predict(state_check,False))
+				#state_check = [1,-1] 
+				#state_check = np.reshape(state_check, [1, 2])
+				#print("target predict: ",self.predict(state_check,True))
+				#print("model predict: ",self.predict(state_check,False))
 				### DEBUGGING ###
+			# Alternative Implementation
+		else:
+			if self.C > 0:
+				if len(self.prior_weights) >= self.C: # Update the target network if at least C weights in memory
+					self.target_model.set_weights(self.prior_weights.pop())
+					self.prior_weights.appendleft(self.model.get_weights())
+					#print("DEBUG: prior weights: ",self.prior_weights)
 
 	# Override predict and fit functions
 	def predict(self,state,target = False):
