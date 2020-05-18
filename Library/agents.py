@@ -148,25 +148,13 @@ class DQNAgent(learningAgent):
 					self.n_since_updated = 0
 					#self.target_model = clone_model(self.model)
 					self.target_model.set_weights(self.model.get_weights())
-					### DEBUGGING ###
-					#state_check = [1,-1] 
-					#state_check = np.reshape(state_check, [1, 2])
-					#print("target predict: ",self.predict(state_check,True))
-					#print("model predict: ",self.predict(state_check,False))
-					### DEBUGGING ###
-				### DEBUGGING ###
-				#state_check = [1,-1] 
-				#state_check = np.reshape(state_check, [1, 2])
-				#print("target predict: ",self.predict(state_check,True))
-				#print("model predict: ",self.predict(state_check,False))
-				### DEBUGGING ###
-			# Alternative Implementation
+		# Alternative Implementation
 		else:
 			if self.C > 0:
 				if len(self.prior_weights) >= self.C: # Update the target network if at least C weights in memory
 					self.target_model.set_weights(self.prior_weights.pop())
-					self.prior_weights.appendleft(self.model.get_weights())
 					#print("DEBUG: prior weights: ",self.prior_weights)
+				self.prior_weights.appendleft(self.model.get_weights())
 
 	# Override predict and fit functions
 	def predict(self,state,target = False):
@@ -191,7 +179,7 @@ class DQNAgent(learningAgent):
 	def update_paramaters(self,epsilon = 1.0,epsilon_decay = 0.9992,gamma = 1.0, epsilon_min = 0.01):
 		super(DQNAgent,self).update_paramaters(epsilon, epsilon_decay,gamma, epsilon_min)
 
-class DDQNAgent(learningAgent):
+class DDQNAgent_v1(learningAgent):
 	''' Double Deep Q Agent, network dimensions pre specified'''
 	def __init__(self, state_size, action_size, agent_name):
 		learningAgent.__init__(self,state_size,action_size,agent_name,agent_type = "DDQN")
@@ -236,6 +224,21 @@ class DDQNAgent(learningAgent):
 	def update_paramaters(self,epsilon = 1.0,epsilon_decay = 0.9992,gamma = 1.0, epsilon_min = 0.01):
 		super(DDQNAgent,self).update_paramaters(epsilon, epsilon_decay,gamma, epsilon_min)
 		#epsilon_decay = np.sqrt(epsilon_decay)
+
+class DDQNAgent(DQNAgent):
+
+	def fit(self,state, action, reward, next_state, done):
+		target = reward
+		# if not done then returns must incorporate predicted (discounted) future reward
+		if not done:
+			max_act = np.argmax(self.predict(next_state,target = False))
+			target = (reward + self.gamma * 
+						self.predict(next_state,target = True)[0,max_act])
+			#print("target ", target, ", reward ", reward)
+		target_f = self.predict(state,target = True) # predicted returns for all actions
+		target_f[0][action] = target 
+		# Change the action taken to the reward + predicted max of next states
+		self.model.fit(state, target_f,epochs=1, verbose=0) # Single epoch?
 
 class TWAPAgent(basicAgent):
 	def act(self, state):

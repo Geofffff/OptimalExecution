@@ -54,5 +54,10 @@ Code for optimal execution
 ### Questions for Paul
 - The role of gamma in this case? - Risk aversion
 - The different approach - estimating action values
+- Target network paper / book
+- AlphaGo Approach
+- A3C paper
+
+Deep reinforcement learning hands on
 
 

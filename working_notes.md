@@ -12,3 +12,4 @@
 	- Possible improvement, keep lag between target network and true (higher memory useage, could be a problem for larger networks)
 	- random weights performed better(!)
 	- Papers on target networks
+	- Look at action value function progression with both implementations of target network
