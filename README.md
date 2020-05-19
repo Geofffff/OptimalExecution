@@ -19,12 +19,16 @@ Code for optimal execution
 - Test target network concept [DONE]
 - Add Sutton and Barto n step approach
 - Prioritised Sampling
+- Distributional Agent
+	#### Distributional Agent
+		- Dynamic V_min and V_max dependent on vol etc?
 
 ### Simulator
 - Silent training option
 - Major rework needed once its working
 - Evaluation option to continue from random strategy [Think about this - not sure its necessary, problem is markov]
 - [IMPORTANT] Track action values and calculate how they diverge from theoretical ones
+- Investigate what this suboptimal strategy is that agents converge to
 
 ### Market Models and Environment
 - Add new market models

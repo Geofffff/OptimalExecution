@@ -238,7 +238,7 @@ class DDQNAgent(DQNAgent):
 		target_f = self.predict(state,target = True) # predicted returns for all actions
 		target_f[0][action] = target 
 		# Change the action taken to the reward + predicted max of next states
-		self.model.fit(state, target_f,epochs=1, verbose=0) # Single epoch?
+		self.model.fit(state, target_f,epochs=1, verbose=0) # Single epoch?	
 
 class TWAPAgent(basicAgent):
 	def act(self, state):
