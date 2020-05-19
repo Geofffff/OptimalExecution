@@ -42,7 +42,7 @@ class simulator:
 		self.train_actions = np.zeros((0,len(self.possible_actions),self.n_agents))
 		self.episode_actions = np.zeros((len(self.possible_actions),self.n_agents))
 		self.record_frequency = 100
-		self.plot_y_lim = (9,10)
+		self.plot_y_lim = (0,10)
 		
 		
 
