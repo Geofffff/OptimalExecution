@@ -148,7 +148,7 @@ class DQNAgent(learningAgent):
 					self.n_since_updated = 0
 					#self.target_model = clone_model(self.model)
 					self.target_model.set_weights(self.model.get_weights())
-		# Alternative Implementation
+		# Alternative Implementation with permenant lag
 		else:
 			if self.C > 0:
 				if len(self.prior_weights) >= self.C: # Update the target network if at least C weights in memory

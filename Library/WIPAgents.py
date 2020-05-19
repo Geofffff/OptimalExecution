@@ -20,6 +20,8 @@ gamma = 1 # Discount factor
 learning_rate = 0.001
 # This would result in uniform prob (not sure if this is the right approach)
 state_size = 2
+action_values = np.array([0,0.001,0.005,0.01,0.02,0.05,0.1])
+action_values = action_values * 10
 
 
 
@@ -28,18 +30,34 @@ def probs(state,action):
 	return model.predict(state_action)
 	#return np.exp(theta(i,x,a)/np.sum(np.exp(theta(i,x,a))))
 
-#def predict(state,)
+def predict(state):
+	return vpredict(state,action_values)
+
+def predict_act(state,action):
+	state_action = np.reshape(np.append(state,action), [1, len(state[0]) + 1])
+	#print("predicting ", state_action)
+	dist = model.predict(state_action)
+	return np.sum(dist * z)
+
+def vpredict(state,actions):
+	return np.vectorize(predict_act,excluded=['state'] )(state = state,action = actions)
 
 def Tz(reward):
 	Tz = reward + gamma * z
 	return Tz
 
 # Think of how to do this in a more numpy way
-def projTZ(reward,next_state):
-	next_action = np.argmax(model.predict(next_state)[0])
+def projTZ(reward,next_state,done):
 	res = []
-	for i in range(N):
-		res.append(np.sum(bound(1 - np.abs(bound(Tz(reward),V_min,V_max) - z)/dz,0,1) * prob(next_state,next_action)))
+	if not done:
+		next_action_index = np.argmax(predict(next_state))
+		next_action = action_values[next_action_index]
+		for i in range(N):
+			res.append(np.sum(bound(1 - np.abs(bound(Tz(reward),V_min,V_max) - z[i])/dz,0,1) * probs(next_state,next_action)))
+	else:
+		reward_v = np.ones(N) * reward
+		for i in range(N):
+			res.append(bound(1 - np.abs(bound(reward,V_min,V_max) - z[i])/dz,0,1))
 	return res
 
 def bound(vec,lower,upper):
@@ -56,14 +74,26 @@ def _build_model():
 
 # This is currently 1D - won't accept multiple agents
 def fit(state, action, reward, next_state, done):
-	pass
+	state_action = np.reshape(np.append(state,action), [1, len(state[0]) + 1])
+	target = projTZ(reward,next_state,done)
+	target_f = np.reshape(target, [1, 50])
+	#print("fitting ", state_action)
+	model.fit(state_action, target_f,epochs=100, verbose=0)
 
 # Testing the code
 if __name__ == "__main__":
 	model = _build_model()
-	print(bound(Tz(1),0,10))
+	#print(bound(Tz(1),0,10))
 	state = [1,-1] 
 	state = np.reshape(state, [1, 2])
+	next_state = [0.8,-0.9] 
+	next_state = np.reshape(state, [1, 2])
+	#print("test_pred ", predict_act(state,1))
+	#print(np.vectorize(predict_act,excluded=['state'])(state = state,action = [0,1,2]))
 
-	print(probs(state,1))
+	old_predict = predict(state)
+	#print("target ",projTZ(1.0,next_state,True))
+	fit(state,action_values[6],100.0,next_state,True)
+	fit(state,action_values[0],-100.0,next_state,True)
+	print("predict change ",predict(state) - old_predict ,"probs ")#, probs(state,6))
 
