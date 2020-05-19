@@ -35,12 +35,12 @@ Code for optimal execution
 - Expand the feature set
 
 ### Reading
-- Sutton and Barto (p142)
+- Sutton and Barto (part 2)
 - Next RL execution paper [DONE]
 - Deep L in py book (buy)
 - Double deep q paper [DONE]
 - Prioritised replay
-- Distributional approach
+- Distributional approach [WIP]
 
 
 #### Other Reading
@@ -52,6 +52,10 @@ Code for optimal execution
 - Talk about DDQN in practise (halving epsilon decay?)
 - Transformations of the features
 - Case study on robustness and DDQ - could demonstate / prove the issues with the niave approach DQN
+- How do we know when its converged outside of the simulated environment
+
+### Network Architecture
+- Look at improving the architecture of the Neural Net
 
 ### Questions for Paul
 
