@@ -3,8 +3,12 @@ from keras.models import Sequential
 from keras.models import clone_model
 from keras.layers import Dense
 from keras.optimizers import Adam
-from library.agents import learningAgent
 from collections import deque
+
+if __name__ == "__main__":
+	from agents import learningAgent
+else:
+	from library.agents import learningAgent
 
 # Define support for the value distribution model
 # Note that V_min and V_max should be dynamic and depend on vol - how would this work on real data (max historical?)
@@ -38,7 +42,7 @@ class distAgent(learningAgent):
 		self.z = np.array(range(self.N)) * (self.V_max - self.V_min) / (self.N - 1) + self.V_min
 		#theta = np.ones(N)
 		self.gamma = 1 # Discount factor
-		self.learning_rate = 0.001
+		self.learning_rate = 0.01
 		# This would result in uniform prob (not sure if this is the right approach)
 		self.state_size = 2
 		self.action_values = np.array([0,0.001,0.005,0.01,0.02,0.05,0.1])
@@ -48,6 +52,8 @@ class distAgent(learningAgent):
 		self.action_size = len(self.action_values)
 		self.model = self._build_model()
 		self.agent_name = "David"
+		self.epsilon = 1
+		self.epsilon_decay = 0.998
 
 	def probs(self,state,action):
 		state_action = np.reshape(np.append(state,action), [1, len(state[0]) + 1])
@@ -55,7 +61,8 @@ class distAgent(learningAgent):
 		#return np.exp(theta(i,x,a)/np.sum(np.exp(theta(i,x,a))))
 
 	def predict(self,state):
-		return self.vpredict(state,self.action_values)
+		res = self.vpredict(state,self.action_values)
+		return np.reshape(res, [1, len(res)])
 
 	def predict_act(self,state,action):
 		#state_action = np.reshape(np.append(state,action), [1, len(state[0]) + 1])
@@ -74,7 +81,7 @@ class distAgent(learningAgent):
 	def projTZ(self,reward,next_state,done):
 		res = []
 		if not done:
-			next_action_index = np.argmax(self.predict(next_state))
+			next_action_index = np.argmax(self.predict(next_state)[0])
 			next_action = self.action_values[next_action_index]
 			all_probs = self.probs(next_state,next_action)
 			for i in range(N):
@@ -112,17 +119,29 @@ class distAgent(learningAgent):
 # Testing the code
 if __name__ == "__main__":
 	myAgent = distAgent()
-	#print(bound(Tz(1),0,10))
 	state = [1,-1] 
 	state = np.reshape(state, [1, 2])
 	next_state = [0.8,-0.9] 
 	next_state = np.reshape(state, [1, 2])
-	#print("test_pred ", predict_act(state,1))
-	#print(np.vectorize(predict_act,excluded=['state'])(state = state,action = [0,1,2]))
+	
+	if False:
+		#print(bound(Tz(1),0,10))
+		#print("test_pred ", predict_act(state,1))
+		#print(np.vectorize(predict_act,excluded=['state'])(state = state,action = [0,1,2]))
 
-	old_predict = myAgent.predict(state)
-	#print("target ",projTZ(1.0,next_state,True))
-	myAgent.fit(state,action_values[6],100.0,next_state,True)
-	myAgent.fit(state,action_values[0],-100.0,next_state,True)
-	print("predict change ",myAgent.predict(state) - old_predict ,"probs ")#, probs(state,6))
+		old_predict = myAgent.predict(state)
+		#print("target ",projTZ(1.0,next_state,True))
+		myAgent.fit(state,action_values[6],100.0,next_state,True)
+		myAgent.fit(state,action_values[0],-100.0,next_state,True)
+		print("predict change ",myAgent.predict(state) - old_predict ,"probs ")#, probs(state,6))
+	if True:
+		myAgent.epsilon = 0
+		print(myAgent.act(state))
+		print("predict change ",myAgent.predict(state)  ,"probs ")#, probs(state,6))
+
+
+
+
+
+
 

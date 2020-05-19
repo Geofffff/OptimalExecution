@@ -82,6 +82,7 @@ class learningAgent:
 			return rand_act#random.randrange(self.action_size)
 		# Predict return
 		act_values = self.predict(state)
+		#print("act_values ",act_values)
 		# Maximise return
 		return np.argmax(act_values[0])
 
