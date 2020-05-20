@@ -3,6 +3,8 @@ from keras.models import Sequential
 from keras.models import clone_model
 from keras.layers import Dense
 from keras.layers import Softmax
+from keras import Input
+from keras import Model
 from keras.optimizers import Adam
 from collections import deque
 
@@ -69,16 +71,16 @@ class distAgent(learningAgent):
 		if self.C > 0:
 			self.target_model = clone_model(self.model)
 
-	def probs(self,state,action_index,target=False):
-		action = self._transform_action(action_index)
-		state_action = np.reshape(np.append(state,action), [1, len(state[0]) + 1]) #np.reshape(action, [1, 1])#
+	def probs(self,state,target=False):
+		#action = self._transform_action(action_index)
+		#state_action = np.reshape(np.append(state,action), [1, len(state[0]) + 1]) #np.reshape(action, [1, 1])#
 		if DEBUG:
 			#print("probs of ",state_action,"are",self.model.predict(state_action))
 			pass
 		if target and self.C>0:
-			return self.target_model.predict(state_action)
+			return self.target_model.predict(state)
 
-		return self.model.predict(state_action)
+		return self.model.predict(state)
 		#return np.exp(theta(i,x,a)/np.sum(np.exp(theta(i,x,a))))
 
 	def predict(self,state,target = False):
@@ -88,7 +90,7 @@ class distAgent(learningAgent):
 	def predict_act(self,state,action_index,target = False):
 		#state_action = np.reshape(np.append(state,action), [1, len(state[0]) + 1])
 		#print("predicting ", state_action)
-		dist = self.probs(state,action_index,target = target)
+		dist = self.probs(state,target = target)[:,action_index]
 		return np.sum(dist * self.z)
 
 	def vpredict(self,state,action_indices,target = False):
@@ -100,13 +102,13 @@ class distAgent(learningAgent):
 
 	# Think of how to do this in a more numpy way
 	# Note this ALWAYS uses the target network
-	# DDQN enabled (!!!)
+	# DDQN NOT enabled (!!!)
 	def projTZ(self,reward,next_state,done):
 		res = []
 		if not done:
-			next_action_index = np.argmax(self.predict(next_state,target = False)[0])
+			next_action_index = np.argmax(self.predict(next_state,target = True)[0])
 			#next_action = self.action_values[next_action_index]
-			all_probs = self.probs(next_state,next_action_index,target = True)
+			all_probs = self.probs(next_state,target = True)[:,next_action_index]
 			for i in range(self.N):
 				res.append(np.sum(self._bound(1 - np.abs(self._bound(self.Tz(reward),self.V_min,self.V_max) - self.z[i])/self.dz,0,1) * all_probs))
 		else:
@@ -120,11 +122,14 @@ class distAgent(learningAgent):
 		return np.minimum(np.maximum(vec,lower),upper)
 
 	def _build_model(self):
-		model = Sequential()
-		# Input dim self.state_size + 1
-		model.add(Dense(5, input_dim=(self.state_size + 1), activation='relu')) # 1st hidden layer; states as input
-		model.add(Dense(5, activation='relu')) # 2nd hidden layer
-		model.add(Dense(self.N, activation='softmax')) 
+		# Using Keras functional API
+		state_in = Input(shape=(self.state_size,))
+		hidden1 = Dense(5, activation='relu')(state_in)
+		hidden2 = Dense(5, activation='relu')(hidden1)
+		outputs =[]
+		for i in range(self.action_size):
+			outputs.append(Dense(self.N, activation='softmax')(hidden2))
+		model = Model(inputs=state_in, outputs=outputs)
 		model.compile(loss='kullback_leibler_divergence',
 						optimizer=Adam(lr=self.learning_rate))
 		return model
@@ -133,15 +138,17 @@ class distAgent(learningAgent):
 	def _transform_action(self,action_index):
 		return action_values[action_index] * self.trans_a + self.trans_b
 
-	# Switched to DDQN !!
 	def fit(self,state, action_index, reward, next_state, done):
-		action = self._transform_action(action_index)
-		state_action = np.reshape(np.append(state,action), [1, len(state[0]) + 1])#np.reshape(action, [1, 2])#
+		#action = self._transform_action(action_index)
+		#state_action = np.reshape(np.append(state,action), [1, len(state[0]) + 1])#np.reshape(action, [1, 2])#
 		target = self.projTZ(reward,next_state,done)
-		target_f = np.reshape(target, [1, self.N])
+		target_f = self.probs(state,target = True)
+		#if DEBUG:
+			#print("target_f ",target_f[action_index][0], "target ", target)
+		target_f[action_index][0] = target
 		if DEBUG:
-			print("fitting ", state_action," target_f ",target_f)
-		self.model.fit(state_action, target_f,epochs=1, verbose=0)
+			print("fitting ", state," target_f ",target_f)
+		self.model.fit(state, target_f,epochs=1, verbose=0)
 
 	def step(self):
 		# Implementation described in Google Paper
@@ -170,7 +177,7 @@ if __name__ == "__main__":
 		#print(np.vectorize(predict_act,excluded=['state'])(state = state,action = [0,1,2]))
 
 		#old_predict = myAgent.predict(state)
-		old_probs = myAgent.probs(state,1)
+		#old_probs = myAgent.probs(state,1)
 		#print("target ",projTZ(1.0,next_state,True))
 		for i in range(2):
 			myAgent.fit(state,6,9.7,next_state,True)
@@ -179,7 +186,7 @@ if __name__ == "__main__":
 			myAgent.fit(state,3,9.6,next_state,True)
 			myAgent.fit(state,2,9.4,next_state,True)
 		#print("predict change ",myAgent.predict(state) - old_predict ,"probs change ", myAgent.probs(state,6) - old_probs)
-		print("state ", state,"predict ",myAgent.predict(state) ,"probs(",1,") ", myAgent.probs(state,6), "probs(",0,")", myAgent.probs(state,0))
+		print("state ", state,"predict ",myAgent.predict(state) ,"probs(",1,") ", myAgent.probs(state)[:,6], "probs(",0,")", myAgent.probs(state,0)[:,0])
 	if False:
 		myAgent.epsilon = 0
 		print(myAgent.act(state))
