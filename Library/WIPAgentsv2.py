@@ -2,6 +2,7 @@ import numpy as np
 from keras.models import Sequential
 from keras.models import clone_model
 from keras.layers import Dense
+from keras.layers import Softmax
 from keras.optimizers import Adam
 from collections import deque
 
