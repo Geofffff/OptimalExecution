@@ -7,13 +7,15 @@ from collections import deque
 
 if __name__ == "__main__":
 	from agents import learningAgent
+	DEBUG = True
 else:
 	from library.agents import learningAgent
+	DEBUG = False
 
 # Define support for the value distribution model
 # Note that V_min and V_max should be dynamic and depend on vol - how would this work on real data (max historical?)
 # Is V_min for the total value? In this case it can be capped by the remaining position
-V_min = 0; V_max = 10 
+V_min = 0; V_max = 12 
 
 #N = 2 # This could be dynamic depending on state?
 # This granularity is problematic - can we do this without discretisation?
@@ -31,10 +33,10 @@ action_values = action_values * 10
 
 class distAgent(learningAgent):
 
-	def __init__(self):
-		self.V_min = 0; self.V_max = 10 
+	def __init__(self,agent_name,C = 0):
+		self.V_min = 0; self.V_max = 15 
 
-		self.N = 2 # This could be dynamic depending on state?
+		self.N = 50 # This could be dynamic depending on state?
 		# This granularity is problematic - can we do this without discretisation?
 		# Especially if V_min and V_max are not dynamic
 		# Paper: increasing N always increases returns
@@ -51,7 +53,7 @@ class distAgent(learningAgent):
 		self.memory = deque(maxlen=2000)
 		self.action_size = len(self.action_values)
 		self.model = self._build_model()
-		self.agent_name = "David"
+		self.agent_name = agent_name
 		self.epsilon = 1
 		self.epsilon_decay = 0.998
 
@@ -59,37 +61,49 @@ class distAgent(learningAgent):
 		self.trans_a = 2 / (np.amax(self.action_values) - np.amin(self.action_values))
 		self.trans_b = -self.trans_a * np.amin(self.action_values) - 1
 
-	def probs(self,state,action_index):
+		# Target networks
+		self.C = C
+		self.alternative_target = False
+		self.n_since_updated = 0
+		if self.C > 0:
+			self.target_model = clone_model(self.model)
+
+	def probs(self,state,action_index,target=False):
 		action = self._transform_action(action_index)
 		state_action = np.reshape(np.append(state,action), [1, len(state[0]) + 1]) #np.reshape(action, [1, 1])#
-		print("probs of ",state_action,"are",self.model.predict(state_action))
+		if DEBUG:
+			print("probs of ",state_action,"are",self.model.predict(state_action))
+		if target:
+			return self.target_model.predict(state_action)
+
 		return self.model.predict(state_action)
 		#return np.exp(theta(i,x,a)/np.sum(np.exp(theta(i,x,a))))
 
-	def predict(self,state):
-		res = self.vpredict(state,range(len(self.action_values)))
+	def predict(self,state,target = False):
+		res = self.vpredict(state,range(len(self.action_values)),target = target)
 		return np.reshape(res, [1, len(res)])
 
-	def predict_act(self,state,action_index):
+	def predict_act(self,state,action_index,target = False):
 		#state_action = np.reshape(np.append(state,action), [1, len(state[0]) + 1])
 		#print("predicting ", state_action)
-		dist = self.probs(state,action_index)
+		dist = self.probs(state,action_index,target = target)
 		return np.sum(dist * self.z)
 
-	def vpredict(self,state,action_indices):
-		return np.vectorize(self.predict_act,excluded=['state'] )(state = state,action_index = action_indices)
+	def vpredict(self,state,action_indices,target = False):
+		return np.vectorize(self.predict_act,excluded=['state'] )(state = state,action_index = action_indices,target = target)
 
 	def Tz(self,reward):
 		Tz = reward + self.gamma * self.z
 		return Tz
 
 	# Think of how to do this in a more numpy way
+	# Note this ALWAYS uses the target network
 	def projTZ(self,reward,next_state,done):
 		res = []
 		if not done:
-			next_action_index = np.argmax(self.predict(next_state)[0])
-			next_action = self.action_values[next_action_index]
-			all_probs = self.probs(next_state,next_action)
+			next_action_index = np.argmax(self.predict(next_state,target = True)[0])
+			#next_action = self.action_values[next_action_index]
+			all_probs = self.probs(next_state,next_action_index,target = True)
 			for i in range(self.N):
 				res.append(np.sum(self._bound(1 - np.abs(self._bound(self.Tz(reward),self.V_min,self.V_max) - self.z[i])/self.dz,0,1) * all_probs))
 		else:
@@ -105,7 +119,7 @@ class distAgent(learningAgent):
 	def _build_model(self):
 		model = Sequential()
 		# Input dim self.state_size + 1
-		model.add(Dense(5, input_dim=(3), activation='relu')) # 1st hidden layer; states as input
+		model.add(Dense(5, input_dim=(self.state_size + 1), activation='relu')) # 1st hidden layer; states as input
 		model.add(Dense(5, activation='relu')) # 2nd hidden layer
 		model.add(Dense(self.N, activation='softmax')) 
 		model.compile(loss='categorical_crossentropy',
@@ -121,13 +135,22 @@ class distAgent(learningAgent):
 		state_action = np.reshape(np.append(state,action), [1, len(state[0]) + 1])#np.reshape(action, [1, 2])#
 		target = self.projTZ(reward,next_state,done)
 		target_f = np.reshape(target, [1, self.N])
-		
-		print("fitting ", state_action," target_f ",target_f)
-		self.model.fit(state_action, target_f,epochs=100, verbose=0)
+		if DEBUG:
+			print("fitting ", state_action," target_f ",target_f)
+		self.model.fit(state_action, target_f,epochs=1, verbose=0)
 
 	def step(self):
-		# Temporarily pass this
-		pass
+		# Implementation described in Google Paper
+		if not self.alternative_target:
+			if self.C > 0:
+				self.n_since_updated += 1
+				if self.n_since_updated >= self.C: # Update the target network if C steps have passed
+					if self.n_since_updated > self.C:
+						print("target network not updated on time")
+					#print("Debug: target network updated")
+					self.n_since_updated = 0
+					#self.target_model = clone_model(self.model)
+					self.target_model.set_weights(self.model.get_weights())
 
 # Testing the code
 if __name__ == "__main__":
