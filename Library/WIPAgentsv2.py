@@ -39,7 +39,7 @@ class distAgent(learningAgent):
 	def __init__(self,agent_name,C = 0):
 		self.V_min = 0; self.V_max = 15 
 
-		self.N = 50 # This could be dynamic depending on state?
+		self.N = 2 # This could be dynamic depending on state?
 		# This granularity is problematic - can we do this without discretisation?
 		# Especially if V_min and V_max are not dynamic
 		# Paper: increasing N always increases returns
@@ -90,7 +90,7 @@ class distAgent(learningAgent):
 	def predict_act(self,state,action_index,target = False):
 		#state_action = np.reshape(np.append(state,action), [1, len(state[0]) + 1])
 		#print("predicting ", state_action)
-		dist = self.probs(state,target = target)[:,action_index]
+		dist = self.probs(state,target = target)[action_index][0]
 		return np.sum(dist * self.z)
 
 	def vpredict(self,state,action_indices,target = False):
@@ -108,7 +108,7 @@ class distAgent(learningAgent):
 		if not done:
 			next_action_index = np.argmax(self.predict(next_state,target = True)[0])
 			#next_action = self.action_values[next_action_index]
-			all_probs = self.probs(next_state,target = True)[:,next_action_index]
+			all_probs = self.probs(next_state,target = True)[next_action_index][0]
 			for i in range(self.N):
 				res.append(np.sum(self._bound(1 - np.abs(self._bound(self.Tz(reward),self.V_min,self.V_max) - self.z[i])/self.dz,0,1) * all_probs))
 		else:
@@ -179,14 +179,15 @@ if __name__ == "__main__":
 		#old_predict = myAgent.predict(state)
 		#old_probs = myAgent.probs(state,1)
 		#print("target ",projTZ(1.0,next_state,True))
-		for i in range(2):
-			myAgent.fit(state,6,9.7,next_state,True)
+		for i in range(200):
+			myAgent.fit(state,6,7,next_state,True)
 			myAgent.fit(state,5,10,next_state,True)
-			myAgent.fit(state,4,9.8,next_state,True)
-			myAgent.fit(state,3,9.6,next_state,True)
-			myAgent.fit(state,2,9.4,next_state,True)
+			myAgent.fit(state,4,6,next_state,True)
+			myAgent.fit(state,3,3,next_state,True)
+			myAgent.fit(state,2,0,next_state,True)
+		print("probs[0] ", myAgent.probs(state)[0][0])
 		#print("predict change ",myAgent.predict(state) - old_predict ,"probs change ", myAgent.probs(state,6) - old_probs)
-		print("state ", state,"predict ",myAgent.predict(state) ,"probs(",1,") ", myAgent.probs(state)[:,6], "probs(",0,")", myAgent.probs(state,0)[:,0])
+		print("state ", state,"predict ",myAgent.predict(state) ,"probs(",1,") ", myAgent.probs(state)[6][0], "probs(",0,")", myAgent.probs(state,0)[0][0])
 	if False:
 		myAgent.epsilon = 0
 		print(myAgent.act(state))
