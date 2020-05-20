@@ -84,8 +84,10 @@ class distAgent(learningAgent):
 		#return np.exp(theta(i,x,a)/np.sum(np.exp(theta(i,x,a))))
 
 	def predict(self,state,target = False):
-		res = self.vpredict(state,range(len(self.action_values)),target = target)
-		return np.reshape(res, [1, len(res)])
+		dist = self.probs(state,target = target)
+		print("dist ",dist)
+		print("dist ",dist * self.z)
+		return np.sum(dist * self.z, axis = 2)
 
 	def predict_act(self,state,action_index,target = False):
 		#state_action = np.reshape(np.append(state,action), [1, len(state[0]) + 1])
@@ -180,6 +182,7 @@ if __name__ == "__main__":
 		#old_probs = myAgent.probs(state,1)
 		#print("target ",projTZ(1.0,next_state,True))
 		for i in range(200):
+			break
 			myAgent.fit(state,6,7,next_state,True)
 			myAgent.fit(state,5,10,next_state,True)
 			myAgent.fit(state,4,6,next_state,True)
