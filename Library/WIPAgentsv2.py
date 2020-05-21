@@ -39,7 +39,7 @@ class distAgent(learningAgent):
 	def __init__(self,agent_name,C = 0):
 		self.V_min = 0; self.V_max = 15 
 
-		self.N = 2 # This could be dynamic depending on state?
+		self.N = 50 # This could be dynamic depending on state?
 		# This granularity is problematic - can we do this without discretisation?
 		# Especially if V_min and V_max are not dynamic
 		# Paper: increasing N always increases returns
@@ -47,7 +47,7 @@ class distAgent(learningAgent):
 		self.z = np.array(range(self.N)) * (self.V_max - self.V_min) / (self.N - 1) + self.V_min
 		#theta = np.ones(N)
 		self.gamma = 1 # Discount factor
-		self.learning_rate = 0.01
+		self.learning_rate = 0.001
 		# This would result in uniform prob (not sure if this is the right approach)
 		self.state_size = 2
 		self.action_values = np.array([0,0.001,0.005,0.01,0.02,0.05,0.1])
@@ -85,9 +85,9 @@ class distAgent(learningAgent):
 
 	def predict(self,state,target = False):
 		dist = self.probs(state,target = target)
-		print("dist ",dist)
-		print("dist ",dist * self.z)
-		return np.sum(dist * self.z, axis = 2)
+		res = np.sum(dist * self.z, axis = 2).flatten()
+		res.shape = (1,len(res))
+		return res
 
 	def predict_act(self,state,action_index,target = False):
 		#state_action = np.reshape(np.append(state,action), [1, len(state[0]) + 1])
@@ -108,7 +108,7 @@ class distAgent(learningAgent):
 	def projTZ(self,reward,next_state,done):
 		res = []
 		if not done:
-			next_action_index = np.argmax(self.predict(next_state,target = True)[0])
+			next_action_index = np.argmax(self.predict(next_state,target = False)[0])
 			#next_action = self.action_values[next_action_index]
 			all_probs = self.probs(next_state,target = True)[next_action_index][0]
 			for i in range(self.N):
@@ -148,8 +148,8 @@ class distAgent(learningAgent):
 		#if DEBUG:
 			#print("target_f ",target_f[action_index][0], "target ", target)
 		target_f[action_index][0] = target
-		if DEBUG:
-			print("fitting ", state," target_f ",target_f)
+		#if DEBUG:
+		#print("fitting ", state," target_f ",target_f)
 		self.model.fit(state, target_f,epochs=1, verbose=0)
 
 	def step(self):
@@ -170,8 +170,11 @@ if __name__ == "__main__":
 	myAgent = distAgent("TonyTester")
 	state = [1,-1] 
 	state = np.reshape(state, [1, 2])
+	state1 = [0,0] 
+	state1 = np.reshape(state1, [1, 2])
 	next_state = [0.8,-0.9] 
 	next_state = np.reshape(state, [1, 2])
+	myAgent.epsilon_min = 0.01
 	
 	if True:
 		#print(bound(Tz(1),0,10))
@@ -181,16 +184,21 @@ if __name__ == "__main__":
 		#old_predict = myAgent.predict(state)
 		#old_probs = myAgent.probs(state,1)
 		#print("target ",projTZ(1.0,next_state,True))
+		DEBUG = False
+		print("state ", state,"predict ",myAgent.predict(state) ,"probs(",1,") ", myAgent.probs(state)[6][0], "probs(",0,")", myAgent.probs(state,0)[0][0])
 		for i in range(200):
-			break
-			myAgent.fit(state,6,7,next_state,True)
-			myAgent.fit(state,5,10,next_state,True)
-			myAgent.fit(state,4,6,next_state,True)
-			myAgent.fit(state,3,3,next_state,True)
-			myAgent.fit(state,2,0,next_state,True)
+			myAgent.remember(state, 6, 7, next_state, False)
+			myAgent.remember(state, 5, 10, next_state, False)
+			myAgent.remember(state, 4, 6, next_state, False)
+			myAgent.remember(state, 3, 3, next_state, False)
+			myAgent.remember(state, 2, 0, next_state, False)
+			myAgent.remember(state1, 6, 3, next_state, True)
+		for i in range(200):
+			myAgent.replay(6)
 		print("probs[0] ", myAgent.probs(state)[0][0])
 		#print("predict change ",myAgent.predict(state) - old_predict ,"probs change ", myAgent.probs(state,6) - old_probs)
-		print("state ", state,"predict ",myAgent.predict(state) ,"probs(",1,") ", myAgent.probs(state)[6][0], "probs(",0,")", myAgent.probs(state,0)[0][0])
+		print("state ", state,"predict ",myAgent.predict(state) , "state ", state1,"predict ",myAgent.predict(state1))
+		#print("state ", state,"predict ",myAgent.predict(state) ,"probs(",1,") ", myAgent.probs(state)[6][0], "probs(",0,")", myAgent.probs(state,0)[0][0])
 	if False:
 		myAgent.epsilon = 0
 		print(myAgent.act(state))

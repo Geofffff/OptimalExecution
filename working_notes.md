@@ -16,4 +16,13 @@
 
 - Set gamma = 1, cant see logic in non unit gamma
 
-### 
+### Dist Agent
+- Version 1.8: switched Bin X entropy to KL divergence
+- Version 2: Revert to original value neural net?
+- Version 2.2: Switched to DDQ with target
+
+Things to Try:
+- Lower learning rate
+- Changing N
+- Capping max reward to 10?
+- Larger target lag (100)
