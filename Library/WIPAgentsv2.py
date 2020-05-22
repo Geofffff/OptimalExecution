@@ -40,7 +40,7 @@ class distAgent(learningAgent):
 		self.V_min = 0; self.V_max = 11
 		self.agent_type = "dist" 
 
-		self.N = 50 # This could be dynamic depending on state?
+		self.N = 51 # This could be dynamic depending on state?
 		# This granularity is problematic - can we do this without discretisation?
 		# Especially if V_min and V_max are not dynamic
 		# Paper: increasing N always increases returns

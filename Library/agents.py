@@ -111,7 +111,7 @@ class learningAgent:
 		self.gamma = gamma
 		self.epsilon = epsilon
 		self.epsilon_decay = epsilon_decay
-		self.epsilon_min = epsilon_min
+		#self.epsilon_min = epsilon_min
 
 class DQNAgent(learningAgent):
 	'''Standard Deep Q Agent, network dimensions pre specified'''

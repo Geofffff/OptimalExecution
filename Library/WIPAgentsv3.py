@@ -40,7 +40,7 @@ class distAgentL(learningAgent):
 		self.V_min = 0; self.V_max = 11
 		self.agent_type = "dist" 
 
-		self.N = 50 # This could be dynamic depending on state?
+		self.N = 61 # This could be dynamic depending on state?
 		# This granularity is problematic - can we do this without discretisation?
 		# Especially if V_min and V_max are not dynamic
 		# Paper: increasing N always increases returns
@@ -156,7 +156,7 @@ class distAgentL(learningAgent):
 		target_f[action_index][0] = target
 		#if DEBUG:
 		#print("fitting ", state," target_f ",target_f)
-		self.model.fit(state, target_f,epochs=2, verbose=0)
+		self.model.fit(state, target_f,epochs=4, verbose=0)
 
 	def step(self):
 		# Implementation described in Google Paper

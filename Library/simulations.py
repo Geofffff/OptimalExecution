@@ -46,7 +46,7 @@ class simulator:
 		
 		
 
-	def __moving_average(self,a, n=300):
+	def _moving_average(self,a, n=300):
 		ret = np.cumsum(a, dtype=float)
 		ret[n:] = ret[n:] - ret[:-n]
 		return ret[n - 1:] / n
@@ -120,9 +120,10 @@ class simulator:
 					#print(self.eval_rewards_mean)
 					
 					for i in range(self.eval_rewards_mean.shape[1]):
-						y_vals = self.__moving_average(self.eval_rewards_mean[:,i],n=3)
+						y_vals = self._moving_average(self.eval_rewards_mean[:,i],n=3)
 						x_vals = np.arange(len(y_vals)) * self.record_frequency
-						ax.plot(x_vals,y_vals, label  = self.agents[i].agent_name)
+						agent_label = self.agents[i].agent_name + "(" + round(self.agents[i].epsilon,3) + ")"
+						ax.plot(x_vals,y_vals, label  = agent_label )
 					plt.legend()
 					plt.ylim(self.plot_y_lim) # Temporary
 					plt.title(self.plot_title)
@@ -219,12 +220,12 @@ class simulator:
 			if trained_to is None:
 				trained_to = len(self.train_rewards)
 			for i in range(self.train_rewards.shape[1]):
-				plt.plot(self.__moving_average(self.train_rewards[trained_from:trained_to,i],n=moving_average), label  = self.agents[i].agent_name)
+				plt.plot(self._moving_average(self.train_rewards[trained_from:trained_to,i],n=moving_average), label  = self.agents[i].agent_name)
 		else:
 			if trained_to is None:
 				trained_to = len(self.eval_rewards)
 			for i in range(self.eval_rewards.shape[1]):
-				plt.plot(self.__moving_average(self.eval_rewards[trained_from:trained_to,i],n=moving_average), label  = self.agents[i].agent_name)
+				plt.plot(self._moving_average(self.eval_rewards[trained_from:trained_to,i],n=moving_average), label  = self.agents[i].agent_name)
 		plt.legend()
 
 	def show_dist(self, dist_agent, data,figure = 1, actions = [5,6]):
