@@ -36,6 +36,10 @@ Simulator v3:
 - practical considerations:
 	- less data - no unlimited games like atari
 	- more noise
+	- theoretically, if following DDQN Opt Ex, the reward for every action could be evaluated?
+		- Or, more optimally the same data could be trained on multiple times? - new perspective each time but risk of overfitting
+- Think about theory - volatile agent at the start does explore more of the state space?
+	- Agents seem to respond to similar triggers (dist agents more robust to this?)
 
 ## Results
 - Daisy Test 4: NN with 3 hidden layers, 8 nodes each, N = 50, V_max = 15, Daisy50 lr=0.001 and Daisy20_l lr = 0.0001, bsstock w/ mu = 0, sigma = 0.001
@@ -49,13 +53,20 @@ Simulator v3:
 		- Experimental Dist Agent WIPAgentsv3 with larger network and epoch = 3
 
 - Large Scale Test 2:
-	Parameters (same unless specified): num_trades = 15, (N=51 for distAgents)
+	Parameters (same unless specified): num_trades = 20, (N=51 for distAgents)
 	- 5 Agents:
 		- Daisy8a eps_d = 0.999, eps_min = 0.04
 		- Daisy8a eps_d = 0.998, eps_min = 0.1
 		- Paul8a eps_d = 0.999, eps_min = 0.04 (N=61) (epochs 4)
 		- Amanda10a eps_d = 0.999, eps_min = 0.04
-		- Daisy20a ??
+
+- Small Test 3:
+	Parameters (same unless specified): eps_d = 0.9992, pretraining (defaults)
+	- 3 Agents:
+		- Daisy5a
+		- Paul8 (epochs 1)
+		- Amanda10a
+
 
 
 

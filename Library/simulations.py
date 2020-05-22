@@ -2,6 +2,7 @@ import time
 from library.local_environments import agent_environmentM
 import numpy as np
 from matplotlib import pyplot as plt
+import random
 
 class simulator:
 
@@ -49,7 +50,49 @@ class simulator:
 	def _moving_average(self,a, n=300):
 		ret = np.cumsum(a, dtype=float)
 		ret[n:] = ret[n:] - ret[:-n]
-		return ret[n - 1:] / n
+		return ret[n - 1:] / 
+
+	def pretrain(self,n_samples = 2000,n_iterations = 500):
+		pretain_position = True
+		pretrain_time = True
+		for i in range(n_samples):
+			## Pretrain for state where position is 0 ##
+			
+			# Randomly sample transformed t in the time interval [-1,1] and action from space
+			if pretain_position:
+				t = random.uniform(-1,1)
+				a = random.randrange(len(self.possible_actions))
+				state = [-1,self.t]
+				next_time = max(1,t + 2 / self.num_steps)
+				next_state = [self.t,-1]
+				state = np.reshape(state, [self.n_agents,1, self.env.state_size])
+				next_state = np.reshape(next_state, [self.n_agents,1, self.env.state_size])
+				for agent in self.agents:
+					agent.remember(state, a, 0, next_state, True)
+
+			## Pretrain for state where time is 0 ##
+			if pretain_position:
+				# Randomly sample transformed position in the time interval [-1,1] and action from space
+				p = random.uniform(-1,1)
+				a = random.randrange(len(self.possible_actions))
+				state = [p,1]
+				state = np.reshape(state, [self.n_agents,1, self.env.state_size])
+				for agent in self.agents:
+					agent.remember(state, a, 0, state, True)
+
+		for i in range(n_iterations):
+			for agent in self.agents:
+				agent.replay(self.batch_size)
+
+		# Clear the memory
+		for agent in self.agents:
+			agent.memory.clear()
+		print("Pretraining Complete")
+			
+
+
+
+
 
 
 
@@ -122,7 +165,7 @@ class simulator:
 					for i in range(self.eval_rewards_mean.shape[1]):
 						y_vals = self._moving_average(self.eval_rewards_mean[:,i],n=3)
 						x_vals = np.arange(len(y_vals)) * self.record_frequency
-						agent_label = self.agents[i].agent_name + "(" + round(self.agents[i].epsilon,3) + ")"
+						agent_label = self.agents[i].agent_name + "(" + str(round(self.agents[i].epsilon,3)) + ")"
 						ax.plot(x_vals,y_vals, label  = agent_label )
 					plt.legend()
 					plt.ylim(self.plot_y_lim) # Temporary
