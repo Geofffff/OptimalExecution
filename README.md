@@ -46,16 +46,24 @@ Code for optimal execution
 #### Other Reading
 - Restricted Boltzman machines
 - Random Forests
-- Target Networks
+- Target Networks [DONE]
 
 ### Writing
 - Talk about DDQN in practise (halving epsilon decay?)
 - Transformations of the features
 - Case study on robustness and DDQ - could demonstate / prove the issues with the niave approach DQN
 - How do we know when its converged outside of the simulated environment
+- Semi Gradient decent discussion (convergence page 202 Sutton Barto)
+- Distributional RL Theory
 
 ### Network Architecture
 - Look at improving the architecture of the Neural Net
+
+### General
+- Need to cut down the number of training episodes:
+	- pre training on simulated data?
+	- Reuse training data
+	- prioritised sweeping
 
 ### Questions for Paul
 
@@ -64,6 +72,6 @@ Deep reinforcement learning hands on
 
 ### Paul Meeting 3
 - Evaluation (run for 100 steps, evaluate for 40)
-- 
+- Takes many episodes to converge (if ever) and limited data available
 
 

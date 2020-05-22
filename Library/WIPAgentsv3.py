@@ -34,7 +34,7 @@ state_size = 2
 action_values = np.array([0,0.001,0.005,0.01,0.02,0.05,0.1])
 action_values = action_values * 10
 
-class distAgent(learningAgent):
+class distAgentL(learningAgent):
 
 	def __init__(self,agent_name,C = 0,alternative_target = False):
 		self.V_min = 0; self.V_max = 11
@@ -67,7 +67,7 @@ class distAgent(learningAgent):
 
 		# Target networks
 		self.C = C
-		self.alternative_target = alternative_target
+		self.alternative_target = False
 		self.n_since_updated = 0
 		if self.C > 0:
 			self.target_model = clone_model(self.model)
@@ -130,12 +130,13 @@ class distAgent(learningAgent):
 	def _build_model(self):
 		# Using Keras functional API
 		state_in = Input(shape=(self.state_size,))
-		hidden1 = Dense(8, activation='relu')(state_in)
-		hidden2 = Dense(8, activation='relu')(hidden1)
-		hidden3 = Dense(8, activation='relu')(hidden2)
+		hidden1 = Dense(20, activation='relu')(state_in)
+		hidden2 = Dense(20, activation='relu')(hidden1)
+		hidden3 = Dense(20, activation='relu')(hidden2)
+		hidden4 = Dense(20, activation='relu')(hidden3)
 		outputs =[]
 		for i in range(self.action_size):
-			outputs.append(Dense(self.N, activation='softmax')(hidden3))
+			outputs.append(Dense(self.N, activation='softmax')(hidden4))
 		model = Model(inputs=state_in, outputs=outputs)
 		model.compile(loss='kullback_leibler_divergence',
 						optimizer=Adam(lr=self.learning_rate))
@@ -155,7 +156,7 @@ class distAgent(learningAgent):
 		target_f[action_index][0] = target
 		#if DEBUG:
 		#print("fitting ", state," target_f ",target_f)
-		self.model.fit(state, target_f,epochs=1, verbose=0)
+		self.model.fit(state, target_f,epochs=2, verbose=0)
 
 	def step(self):
 		# Implementation described in Google Paper

@@ -41,8 +41,8 @@ class simulator:
 		# Record actions
 		self.train_actions = np.zeros((0,len(self.possible_actions),self.n_agents))
 		self.episode_actions = np.zeros((len(self.possible_actions),self.n_agents))
-		self.record_frequency = 100
-		self.plot_y_lim = (9,10)
+		self.record_frequency = 200
+		self.plot_y_lim = (9.5,10)
 		
 		
 
@@ -60,10 +60,10 @@ class simulator:
 		
 		### Live Plots ###
 		if not evaluate:
-			fig = plt.figure()
+			fig = plt.figure(0)
 			ax = fig.add_subplot(111)
 			plt.ion()
-
+			ax.grid(b=True, which='major', axis='both')
 			fig.show()
 			fig.canvas.draw()
 		### Live Plots ###
@@ -84,19 +84,21 @@ class simulator:
 			
 		# Setup action list
 		actions = [-1] * self.n_agents
+
+		agent_reward_dists = []
 		
 		for e in range(n_episodes): # iterate over new episodes of the game
 			
-			#Time code
-			timer = []
-			timer_o = []
-			start_time_o = time.time()
-			
-			
-			
-			time_now = time.time()
-			timer_o.append(time_now - start_time_o)
-			start_time_o = time.time()
+			### Record Probabilities 4 times throughout training ###
+			# Currently only record for the first dist agent
+			if e % n_episodes / 5 == 0 and e>0:
+				for agent in self.agents:
+					if agent.agent_type == "dist":
+						self.dist_agent_for_plot = agent
+						init_state = [1,-1] 
+						init_state = np.reshape(init_, [1, 2])
+						agent_reward_dists.append(agent.probs(init_state))
+						break
 
 			# Record the initial action values if training
 			#self.episode_actions.fill(0)
@@ -109,22 +111,33 @@ class simulator:
 					agent.step() # Update target network if required
 
 
-			if e % 100 == 0:
+			if e % self.record_frequency == 0 and e>0:
 				#self.total_training_steps += 100
 				if show_details and not evaluate:
 					current_training_step = len(self.eval_rewards_mean) # CHANGED TO EVAL
 					self.evaluate(self.eval_window,show_stats=False)
 					ax.clear()
 					#print(self.eval_rewards_mean)
+					
 					for i in range(self.eval_rewards_mean.shape[1]):
-						ax.plot(self.__moving_average(self.eval_rewards_mean[:,i],n=5), label  = self.agents[i].agent_name)
+						y_vals = self.__moving_average(self.eval_rewards_mean[:,i],n=3)
+						x_vals = np.arange(len(y_vals)) * self.record_frequency
+						ax.plot(x_vals,y_vals, label  = self.agents[i].agent_name)
 					plt.legend()
 					plt.ylim(self.plot_y_lim) # Temporary
 					plt.title(self.plot_title)
+					plt.grid(b=True, which='major', axis='both')
+					### TEMPORARY ###
+					twap_stat = 9.849
+					if len(x_vals) > 0:
+						plt.plot([0, x_vals[-1]], [twap_stat, twap_stat], 'k--')
+					### TEMPORARY ###
 					plt.pause(0.0001)
 					plt.draw()
 		if not evaluate:
 			self.show_stats(trained_from = current_training_step) 
+			for i, d in enumerate(agent_reward_dists):
+				self.show_dist(self.dist_agent_for_plot,d,figure = i + 1)
 		else:
 			self.eval_rewards_mean = np.vstack((self.eval_rewards_mean,self.eval_rewards / self.eval_window))
 			self.eval_rewards = np.zeros((1,self.n_agents))
@@ -213,7 +226,12 @@ class simulator:
 			for i in range(self.eval_rewards.shape[1]):
 				plt.plot(self.__moving_average(self.eval_rewards[trained_from:trained_to,i],n=moving_average), label  = self.agents[i].agent_name)
 		plt.legend()
-		
+
+	def show_dist(self, dist_agent, data,figure = 1, actions = [5,6]):
+		plt.figure(figure)
+		for a in actions:
+			plt.bar(dist_agent.z,data[a][0],alpha = 0.4,width = 0.25,label = f"action {bar_act}")
+		plt.legend()
 		
 	#def test_convergence(self,)
 
