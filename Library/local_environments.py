@@ -49,10 +49,11 @@ class agent_environmentM:
             rewards = self.sell(self.action_values[actions])
         else:
             rewards = self.sell(self.position)
-        done = (self.position <= 0) + (self.time >= self.terminal)
+        done = (self.position <= 0) + (round(self.time,7) >= self.terminal)
         if any(self.position < 0):
             print("Warning position is ",self.position)
         done = np.array(done,dtype = bool)
+        #print("times ",self.time, self.terminal)
             
 		# Reward is currently just the returned cash / 100...
 		# Not sure what the last value of the tuple should be??

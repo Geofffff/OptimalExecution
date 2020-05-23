@@ -53,7 +53,7 @@ class learningAgent:
 		self.state_size = state_size
 		self.action_size = action_size
 		# double-ended queue; acts like list, but elements can be added/removed from either end:
-		self.memory = deque(maxlen=2000)
+		self.memory = deque(maxlen=3000)
 		self.n_since_updated = 0
 		
 		self.update_paramaters() # to defaults

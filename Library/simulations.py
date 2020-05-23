@@ -10,7 +10,7 @@ class simulator:
 		
 		# Default params
 		if params is None:
-			params = params = {"terminal" : 1, "num_trades" : 50, "position" : 10, "batch_size" : 32 }
+			params = params = {"terminal" : 1, "num_trades" : 50, "position" : 10, "batch_size" : 32,"action_values" : [0,0.001,0.005,0.01,0.02,0.05,0.1] }
 			print("Initialising using default parameters")
 
 		self.terminal = params["terminal"]
@@ -20,7 +20,7 @@ class simulator:
 		self.n_agents = len(self.agents)
 
 		self.m = market_
-		self.possible_actions = [0,0.001,0.005,0.01,0.02,0.05,0.1]#[0,0.02,0.04,0.06,0.08,0.1,0.12,0.14,0.16,0.18,0.2]
+		self.possible_actions = params["action_values"]#[0,0.02,0.04,0.06,0.08,0.1,0.12,0.14,0.16,0.18,0.2]
 		self.env = agent_environmentM(self.m,
 									 params["position"],
 									 params["num_trades"],
@@ -30,6 +30,7 @@ class simulator:
 									)
 		
 		
+		self.intensive_training = True
 
 		# Stats
 		self.final_timestep = [] # Inactive
@@ -50,11 +51,11 @@ class simulator:
 	def _moving_average(self,a, n=300):
 		ret = np.cumsum(a, dtype=float)
 		ret[n:] = ret[n:] - ret[:-n]
-		return ret[n - 1:] / 
+		return ret[n - 1:] / n
 
 	def pretrain(self,n_samples = 2000,n_iterations = 500):
 		pretain_position = True
-		pretrain_time = True
+		pretrain_time = False
 		for i in range(n_samples):
 			## Pretrain for state where position is 0 ##
 			
@@ -62,21 +63,21 @@ class simulator:
 			if pretain_position:
 				t = random.uniform(-1,1)
 				a = random.randrange(len(self.possible_actions))
-				state = [-1,self.t]
+				state = [-1,t]
 				next_time = max(1,t + 2 / self.num_steps)
-				next_state = [self.t,-1]
-				state = np.reshape(state, [self.n_agents,1, self.env.state_size])
-				next_state = np.reshape(next_state, [self.n_agents,1, self.env.state_size])
+				next_state = [-1,next_time]
+				state = np.reshape(state, [1, self.env.state_size])
+				next_state = np.reshape(next_state, [1, self.env.state_size])
 				for agent in self.agents:
 					agent.remember(state, a, 0, next_state, True)
 
 			## Pretrain for state where time is 0 ##
-			if pretain_position:
+			if pretrain_time:
 				# Randomly sample transformed position in the time interval [-1,1] and action from space
 				p = random.uniform(-1,1)
 				a = random.randrange(len(self.possible_actions))
 				state = [p,1]
-				state = np.reshape(state, [self.n_agents,1, self.env.state_size])
+				state = np.reshape(state, [1, self.env.state_size])
 				for agent in self.agents:
 					agent.remember(state, a, 0, state, True)
 
@@ -147,11 +148,11 @@ class simulator:
 			#self.episode_actions.fill(0)
 			
 			self.episode(actions = actions, evaluate = evaluate)
-
-			for i, agent in enumerate(self.agents):
-				if len(agent.memory) > self.batch_size and not evaluate:
-					agent.replay(self.batch_size) # train the agent by replaying the experiences of the episode
-					agent.step() # Update target network if required
+			if not self.intensive_training:
+				for i, agent in enumerate(self.agents):
+					if len(agent.memory) > self.batch_size and not evaluate:
+						agent.replay(self.batch_size) # train the agent by replaying the experiences of the episode
+						agent.step() # Update target network if required
 
 
 			if e % self.record_frequency == 0 and e>0:
@@ -232,6 +233,12 @@ class simulator:
 				break # exit loop
 				
 			inactive = inactive + done
+
+			if self.intensive_training:
+				for i, agent in enumerate(self.agents):
+					if len(agent.memory) > self.batch_size and not evaluate:
+						agent.replay(self.batch_size) # train the agent by replaying the experiences of the episode
+						agent.step() # Update target network if required
 
 		if not all(done):
 			print("We have a problem.")

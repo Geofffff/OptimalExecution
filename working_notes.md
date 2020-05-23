@@ -62,10 +62,13 @@ Simulator v3:
 
 - Small Test 3:
 	Parameters (same unless specified): eps_d = 0.9992, pretraining (defaults)
-	- 3 Agents:
-		- Daisy5a
-		- Paul8 (epochs 1)
+	- Agents:
+		- Daisy8a
 		- Amanda10a
+
+- Small Test 4:
+	Parameters (same unless specified): larger range of action values
+	- 
 
 
 

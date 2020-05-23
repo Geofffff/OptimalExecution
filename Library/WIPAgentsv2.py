@@ -36,11 +36,11 @@ action_values = action_values * 10
 
 class distAgent(learningAgent):
 
-	def __init__(self,agent_name,C = 0,alternative_target = False):
+	def __init__(self,action_size, agent_name,N=51,C = 0,alternative_target = False):
 		self.V_min = 0; self.V_max = 11
 		self.agent_type = "dist" 
 
-		self.N = 51 # This could be dynamic depending on state?
+		self.N = N # This could be dynamic depending on state?
 		# This granularity is problematic - can we do this without discretisation?
 		# Especially if V_min and V_max are not dynamic
 		# Paper: increasing N always increases returns
@@ -51,19 +51,13 @@ class distAgent(learningAgent):
 		self.learning_rate = 0.001
 		# This would result in uniform prob (not sure if this is the right approach)
 		self.state_size = 2
-		self.action_values = np.array([0,0.001,0.005,0.01,0.02,0.05,0.1])
-		self.action_values = self.action_values * 10
 
 		self.memory = deque(maxlen=2000)
-		self.action_size = len(self.action_values)
+		self.action_size = action_size
 		self.model = self._build_model()
 		self.agent_name = agent_name
 		self.epsilon = 1
 		self.epsilon_decay = 0.998
-
-		# Transformations
-		self.trans_a = 2 / (np.amax(self.action_values) - np.amin(self.action_values))
-		self.trans_b = -self.trans_a * np.amin(self.action_values) - 1
 
 		# Target networks
 		self.C = C
@@ -108,7 +102,7 @@ class distAgent(learningAgent):
 
 	# Think of how to do this in a more numpy way
 	# Note this ALWAYS uses the target network
-	# DDQN NOT enabled (!!!)
+	# DDQN enabled (!!!)
 	def projTZ(self,reward,next_state,done):
 		res = []
 		if not done:
@@ -141,9 +135,6 @@ class distAgent(learningAgent):
 						optimizer=Adam(lr=self.learning_rate))
 		return model
 
-	# CURRENTLY: Action index goes in - transformed action value out
-	def _transform_action(self,action_index):
-		return action_values[action_index] * self.trans_a + self.trans_b
 
 	def fit(self,state, action_index, reward, next_state, done):
 		#action = self._transform_action(action_index)
@@ -152,9 +143,10 @@ class distAgent(learningAgent):
 		target_f = self.probs(state,target = True)
 		#if DEBUG:
 			#print("target_f ",target_f[action_index][0], "target ", target)
+		debug_target_f = target_f[action_index][0].copy()
 		target_f[action_index][0] = target
 		#if DEBUG:
-		#print("fitting ", state," target_f ",target_f)
+		#print("fitting state:", state,",action:",action_index,",reward:",reward, "target_f ",target_f[action_index][0]-debug_target_f)
 		self.model.fit(state, target_f,epochs=1, verbose=0)
 
 	def step(self):
@@ -178,7 +170,7 @@ class distAgent(learningAgent):
 				self.prior_weights.appendleft(self.model.get_weights())
 # Testing the code
 if __name__ == "__main__":
-	myAgent = distAgent("TonyTester")
+	myAgent = distAgent(7,"TonyTester")
 	state = [1,-1] 
 	state = np.reshape(state, [1, 2])
 	state1 = [0,0] 
@@ -187,7 +179,7 @@ if __name__ == "__main__":
 	next_state = np.reshape(state, [1, 2])
 	myAgent.epsilon_min = 0.01
 	
-	if True:
+	if False:
 		#print(bound(Tz(1),0,10))
 		#print("test_pred ", predict_act(state,1))
 		#print(np.vectorize(predict_act,excluded=['state'])(state = state,action = [0,1,2]))
@@ -214,6 +206,14 @@ if __name__ == "__main__":
 		myAgent.epsilon = 0
 		print(myAgent.act(state))
 		print("predict change ",myAgent.predict(state)  ,"probs ")#, probs(state,6))
+
+	if True:
+		print("Tz:",myAgent.Tz(0.5))
+		print("Next State Value:",myAgent.predict(next_state)[0])
+		my_next_action = np.argmax(myAgent.predict(next_state)[0])
+		print("choose action:",my_next_action)
+		print("... and the probs:",myAgent.probs(next_state)[my_next_action][0])
+		print("resulting in projTZ ", myAgent.projTZ(0.5,next_state,False))
 
 
 
