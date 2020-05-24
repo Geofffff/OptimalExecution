@@ -30,7 +30,7 @@ class simulator:
 									)
 		
 		
-		self.intensive_training = True
+		self.intensive_training = False
 
 		# Stats
 		self.final_timestep = [] # Inactive

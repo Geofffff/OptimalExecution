@@ -37,7 +37,7 @@ action_values = action_values * 10
 class distAgent(learningAgent):
 
 	def __init__(self,action_size, agent_name,N=51,C = 0,alternative_target = False):
-		self.V_min = 0; self.V_max = 11
+		self.V_min = 0; self.V_max = 15
 		self.agent_type = "dist" 
 
 		self.N = N # This could be dynamic depending on state?
@@ -126,12 +126,12 @@ class distAgent(learningAgent):
 		state_in = Input(shape=(self.state_size,))
 		hidden1 = Dense(8, activation='relu')(state_in)
 		hidden2 = Dense(8, activation='relu')(hidden1)
-		hidden3 = Dense(8, activation='relu')(hidden2)
+		hidden3 = Dense(30, activation='relu')(hidden2)
 		outputs =[]
 		for i in range(self.action_size):
 			outputs.append(Dense(self.N, activation='softmax')(hidden3))
 		model = Model(inputs=state_in, outputs=outputs)
-		model.compile(loss='kullback_leibler_divergence',
+		model.compile(loss='categorical_crossentropy',
 						optimizer=Adam(lr=self.learning_rate))
 		return model
 
@@ -148,6 +148,10 @@ class distAgent(learningAgent):
 		#if DEBUG:
 		#print("fitting state:", state,",action:",action_index,",reward:",reward, "target_f ",target_f[action_index][0]-debug_target_f)
 		self.model.fit(state, target_f,epochs=1, verbose=0)
+
+	# Temporary Experiment
+	def variance(self,state,target = False):
+		pass
 
 	def step(self):
 		# Implementation described in Google Paper

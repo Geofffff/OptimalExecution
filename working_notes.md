@@ -41,6 +41,9 @@ Simulator v3:
 - Think about theory - volatile agent at the start does explore more of the state space?
 	- Agents seem to respond to similar triggers (dist agents more robust to this?)
 
+- Pretraining: Could pretrain with executing remaining position at time t? - What would be a realistic stock price for this though? - might work if stock price were a feature
+Pre training for time 0 not useful
+
 ## Results
 - Daisy Test 4: NN with 3 hidden layers, 8 nodes each, N = 50, V_max = 15, Daisy50 lr=0.001 and Daisy20_l lr = 0.0001, bsstock w/ mu = 0, sigma = 0.001
 - Large Scale Test 1:
@@ -69,6 +72,20 @@ Simulator v3:
 - Small Test 4:
 	Parameters (same unless specified): larger range of action values
 	- 
+
+- Test 5:
+	Action space now larger, number of trades: 10, 10 decisions to make
+	- Agents:
+		- Daisy8a eps_decay = 0.9994
+
+- Test 6:
+	Intensive training switched on
+		- Daisy8aN51
+		- Daisy8aN11
+		- Amanda10a
+
+- Test 7:
+	Identical but with pretraining
 
 
 
