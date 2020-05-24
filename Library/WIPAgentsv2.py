@@ -7,6 +7,7 @@ from keras import Input
 from keras import Model
 from keras.optimizers import Adam
 from collections import deque
+import random
 
 if __name__ == "__main__":
 	from agents import learningAgent
@@ -36,7 +37,7 @@ action_values = action_values * 10
 
 class distAgent(learningAgent):
 
-	def __init__(self,action_size, agent_name,N=51,C = 0,alternative_target = False):
+	def __init__(self,action_size, agent_name,N=51,C = 0,alternative_target = False,UCB = False,UCBc = 1):
 		self.V_min = 0; self.V_max = 15
 		self.agent_type = "dist" 
 
@@ -51,6 +52,7 @@ class distAgent(learningAgent):
 		self.learning_rate = 0.001
 		# This would result in uniform prob (not sure if this is the right approach)
 		self.state_size = 2
+		self.epsilon_min = 0.01 
 
 		self.memory = deque(maxlen=2000)
 		self.action_size = action_size
@@ -58,6 +60,11 @@ class distAgent(learningAgent):
 		self.agent_name = agent_name
 		self.epsilon = 1
 		self.epsilon_decay = 0.998
+
+		self.UCB = UCB
+		if self.UCB:
+			self.c = UCBc
+			self.t = 1
 
 		# Target networks
 		self.C = C
@@ -151,9 +158,31 @@ class distAgent(learningAgent):
 
 	# Temporary Experiment
 	def variance(self,state,target = False):
-		pass
+		dist = self.probs(state,target = target)
+		res = np.sum(dist * self.z**2, axis = 2).flatten()
+		res = res - np.power(self.predict(state,target),2)
+		return res
+
+	def act(self, state):
+		# No eps greedy required for 'UCB' type update
+		if self.UCB:
+			self.ct = self.c * np.sqrt(np.log(self.t) / self.t)
+			act_values = self.predict(state)
+			return np.argmax(act_values[0] + self.ct * np.sqrt(self.variance(state)))
+		# random action
+		if np.random.rand() <= self.epsilon:
+			rand_act = random.randrange(self.action_size)
+			return rand_act#random.randrange(self.action_size)
+		# Predict return
+		act_values = self.predict(state)
+		#print("act_values ",act_values)
+		# Maximise return
+		
+		return np.argmax(act_values[0])
 
 	def step(self):
+		if self.UCB:
+			self.t += 1 # For UCB method
 		# Implementation described in Google Paper
 		if not self.alternative_target:
 			if self.C > 0:

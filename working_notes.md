@@ -85,7 +85,16 @@ Pre training for time 0 not useful
 		- Amanda10a
 
 - Test 7:
-	Identical but with pretraining
+	Intensive training off
+	- Agents:
+		- Daisy8aN11 V_max = 15 (NN with 30 units in base layer)
+		- Amanda10a
+
+- Test 8:
+	UCB method descibed in paper (c = 1) vs regular Daisy, lr = 0.00025
+
+- Test 9:
+	c = 10 lr identical
 
 
 
