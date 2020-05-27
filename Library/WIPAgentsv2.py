@@ -3,6 +3,7 @@ from keras.models import Sequential
 from keras.models import clone_model
 from keras.layers import Dense
 from keras.layers import Softmax
+from keras.layers import BatchNormalization
 from keras import Input
 from keras import Model
 from keras.optimizers import Adam
@@ -69,7 +70,7 @@ class replayMemory:
 class distAgent(learningAgent):
 
 	def __init__(self,action_size, agent_name,N=51,C = 0,alternative_target = False,UCB = False,UCBc = 1):
-		self.V_min = -0.5; self.V_max = 1.5
+		self.V_min = 0; self.V_max = 1.2
 		self.agent_type = "dist" 
 
 		self.N = N # This could be dynamic depending on state?
@@ -204,12 +205,13 @@ class distAgent(learningAgent):
 	def _build_model(self):
 		# Using Keras functional API
 		state_in = Input(shape=(self.state_size,))
-		hidden1 = Dense(8, activation='relu')(state_in)
-		hidden2 = Dense(8, activation='relu')(hidden1)
-		hidden3 = Dense(5, activation='relu')(hidden2)
+		hidden1 = Dense(20, activation='relu')(state_in)
+		hidden1_n = BatchNormalization() (hidden1)
+		hidden2 = Dense(20, activation='relu')(hidden1_n)
+		#hidden3 = Dense(5, activation='relu')(hidden2)
 		outputs =[]
 		for i in range(self.action_size):
-			outputs.append(Dense(self.N, activation='softmax')(hidden3))
+			outputs.append(Dense(self.N, activation='softmax')(hidden2))
 		model = Model(inputs=state_in, outputs=outputs)
 		model.compile(loss='categorical_crossentropy',
 						optimizer=Adam(lr=self.learning_rate))

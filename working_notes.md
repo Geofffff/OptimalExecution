@@ -126,6 +126,15 @@ Still seems to be considerable bias towards the first popular action
 
 - Test 16:
 	same but n = 5 for both, UCBc = 50
+	notes: highly promising but very unstable - could try higher target lag, lower lr?
+
+- Test 17:
+	Changed neural net architecture to be shallower and added a normalisation layer (Sutton Barto) - needs further investigation,
+	increased Vmin to 0 and Vmax to 1.2
+	- Agents:
+		- UCB50 n =3
+		- UCB30 n = 5 lag = 30a
+
 
 
 
