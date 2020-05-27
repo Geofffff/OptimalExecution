@@ -44,7 +44,7 @@ class simulator:
 		self.train_actions = np.zeros((0,len(self.possible_actions),self.n_agents))
 		self.episode_actions = np.zeros((len(self.possible_actions),self.n_agents))
 		self.record_frequency = 200
-		self.plot_y_lim = (9.5,10)
+		self.plot_y_lim = (0.96,0.99)
 		
 		
 
@@ -173,9 +173,9 @@ class simulator:
 					plt.title(self.plot_title)
 					plt.grid(b=True, which='major', axis='both')
 					### TEMPORARY ###
-					twap_stat = 9.849
-					if len(x_vals) > 0:
-						plt.plot([0, x_vals[-1]], [twap_stat, twap_stat], 'k--')
+					#twap_stat = 9.849
+					#if len(x_vals) > 0:
+						#plt.plot([0, x_vals[-1]], [twap_stat, twap_stat], 'k--')
 					### TEMPORARY ###
 					plt.pause(0.0001)
 					plt.draw()
@@ -211,7 +211,7 @@ class simulator:
 				if not inactive[i]:
 					actions[i] = agent.act(states[i])
 				else:
-					actions[i] = 0 # Could speed up (only need to change once)
+					actions[i] = -1 # Could speed up (only need to change once)
 			
 			next_states, rewards, done = self.env.step(actions)
 			
@@ -226,7 +226,9 @@ class simulator:
 						agent.remember(states[i], actions[i], rewards[i], next_states[i], done[i])
 
 			if verbose:
+				print("Agent 0 predict", self.agents[0].predict(states[0]))
 				print("State[0]: ",states[0], "Actions[0]: ", actions[0], "Rewards[0]: ", rewards[0], "Next_states[0]: ", next_states[0], "Done[0]: ", done[0])
+				print("Agent 0 next predict", self.agents[0].predict(next_states[0]))
 			states = next_states
 				
 			if all(done): 

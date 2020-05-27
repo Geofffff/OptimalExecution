@@ -55,6 +55,7 @@ class learningAgent:
 		# double-ended queue; acts like list, but elements can be added/removed from either end:
 		self.memory = deque(maxlen=3000)
 		self.n_since_updated = 0
+		self.geometric_decay = True
 		
 		self.update_paramaters() # to defaults
 		
@@ -94,8 +95,11 @@ class learningAgent:
 		for state, action, reward, next_state, done in minibatch:
 			self.fit(state, action, reward, next_state, done)
 		
-		if self.epsilon > self.epsilon_min: # TODO: unecessary?
-			self.epsilon *= self.epsilon_decay
+		if self.epsilon > self.epsilon_min: 
+			if self.geometric_decay:
+				self.epsilon *= self.epsilon_decay
+			else:
+				self.epsilon -= self.epsilon_decay#*= self.epsilon_decay
 
 	def step(self):
 		pass

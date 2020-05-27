@@ -19,7 +19,7 @@ else:
 # Define support for the value distribution model
 # Note that V_min and V_max should be dynamic and depend on vol - how would this work on real data (max historical?)
 # Is V_min for the total value? In this case it can be capped by the remaining position
-V_min = 0; V_max = 10
+#V_min = 0; V_max = 10
 
 #N = 2 # This could be dynamic depending on state?
 # This granularity is problematic - can we do this without discretisation?
@@ -28,17 +28,48 @@ V_min = 0; V_max = 10
 #dz = (V_max - V_min) / (N - 1)
 #z = np.array(range(N)) * (V_max - V_min) / (N - 1) + V_min
 #theta = np.ones(N)
-gamma = 1 # Discount factor
+#gamma = 1 # Discount factor
 #learning_rate = 0.01
 # This would result in uniform prob (not sure if this is the right approach)
-state_size = 2
-action_values = np.array([0,0.001,0.005,0.01,0.02,0.05,0.1])
-action_values = action_values * 10
+#state_size = 2
+#action_values = np.array([0,0.001,0.005,0.01,0.02,0.05,0.1])
+#action_values = action_values * 10
+
+# https://stackoverflow.com/questions/40181284/how-to-get-random-sample-from-deque-in-python-3
+class LengthMetaclass(type):
+
+    def __len__(self):
+        return self.clslength()
+
+
+class replayMemory:
+    def __init__(self, max_size):
+        self.buffer = [None] * max_size
+        self.max_size = max_size
+        self.index = 0
+        self.size = 0
+
+    def append(self, obj):
+        self.buffer[self.index] = obj
+        self.size = min(self.size + 1, self.max_size)
+        self.index = (self.index + 1) % self.max_size
+
+    def sample(self, batch_size):
+        indices = random.sample(range(self.size), batch_size)
+        return [(index,self.buffer[index]) for index in indices]
+
+    def __len__(self):
+        return self.size
+
+    def __getitem__(self, index):
+        return self.buffer[index]
+
+
 
 class distAgent(learningAgent):
 
 	def __init__(self,action_size, agent_name,N=51,C = 0,alternative_target = False,UCB = False,UCBc = 1):
-		self.V_min = 0; self.V_max = 15
+		self.V_min = -0.5; self.V_max = 1.5
 		self.agent_type = "dist" 
 
 		self.N = N # This could be dynamic depending on state?
@@ -53,13 +84,16 @@ class distAgent(learningAgent):
 		# This would result in uniform prob (not sure if this is the right approach)
 		self.state_size = 2
 		self.epsilon_min = 0.01 
-
-		self.memory = deque(maxlen=2000)
+		self.replay_buffer_size = 2000
+		self.memory = replayMemory(max_size=self.replay_buffer_size)
 		self.action_size = action_size
 		self.model = self._build_model()
 		self.agent_name = agent_name
 		self.epsilon = 1
 		self.epsilon_decay = 0.998
+		self.geometric_decay = True
+
+		self.tree_n = 3
 
 		self.UCB = UCB
 		if self.UCB:
@@ -125,6 +159,45 @@ class distAgent(learningAgent):
 				#print("reward ", self._bound(reward,self.V_min,self.V_max), " dz ", self.dz, " z[i] ", self.z[i], " append ",(self._bound(reward,self.V_min,self.V_max) - self.z[i])/self.dz)
 		return res
 
+	def projTZ_nTree(self,reward,next_state,done,horizon,mem_index):
+		res = []
+		tree_success = False
+		if not done:
+			next_action_index = np.argmax(self.predict(next_state,target = False)[0])
+			# Check there is a valid next state and that the tree is not at a leaf
+			if horizon > 1 and mem_index < (self.memory.size - 1):
+				state1, action1, reward1, next_state1, done1 = self.memory[mem_index + 1]
+				if next_action_index == action1:
+					#print("Tree Sucess",state1,horizon)
+					all_probs = self.projTZ_nTree(reward1,next_state1,done1,horizon - 1,mem_index + 1)
+					tree_success = True
+			#next_action = self.action_values[next_action_index]
+			if not tree_success:
+				all_probs = self.probs(next_state,target = True)[next_action_index][0]
+			for i in range(self.N):
+				res.append(np.sum(self._bound(1 - np.abs(self._bound(self.Tz(reward),self.V_min,self.V_max) - self.z[i])/self.dz,0,1) * all_probs))
+		else:
+			#reward_v = np.ones(N) * reward
+			for i in range(self.N):
+				res.append(self._bound(1 - np.abs(self._bound(reward,self.V_min,self.V_max) - self.z[i])/self.dz,0,1))
+				#print("reward ", self._bound(reward,self.V_min,self.V_max), " dz ", self.dz, " z[i] ", self.z[i], " append ",(self._bound(reward,self.V_min,self.V_max) - self.z[i])/self.dz)
+		return res
+
+
+	def replay(self, batch_size):
+		'''Train with experiences sampled from memory'''
+		# sample a minibatch from memory
+		minibatch = self.memory.sample(batch_size)
+		
+		for mem_index, (state, action, reward, next_state, done) in minibatch:
+			self.fit(state, action, reward, next_state, done,mem_index)
+		
+		if self.epsilon > self.epsilon_min: 
+			if self.geometric_decay:
+				self.epsilon *= self.epsilon_decay
+			else:
+				self.epsilon -= self.epsilon_decay#*= self.epsilon_decay
+
 	def _bound(self,vec,lower,upper):
 		return np.minimum(np.maximum(vec,lower),upper)
 
@@ -133,7 +206,7 @@ class distAgent(learningAgent):
 		state_in = Input(shape=(self.state_size,))
 		hidden1 = Dense(8, activation='relu')(state_in)
 		hidden2 = Dense(8, activation='relu')(hidden1)
-		hidden3 = Dense(30, activation='relu')(hidden2)
+		hidden3 = Dense(5, activation='relu')(hidden2)
 		outputs =[]
 		for i in range(self.action_size):
 			outputs.append(Dense(self.N, activation='softmax')(hidden3))
@@ -143,17 +216,20 @@ class distAgent(learningAgent):
 		return model
 
 
-	def fit(self,state, action_index, reward, next_state, done):
+	def fit(self,state, action_index, reward, next_state, done,mem_index = -1):
 		#action = self._transform_action(action_index)
 		#state_action = np.reshape(np.append(state,action), [1, len(state[0]) + 1])#np.reshape(action, [1, 2])#
-		target = self.projTZ(reward,next_state,done)
+		if self.tree_n > 1:
+			target = self.projTZ_nTree(reward,next_state,done,self.tree_n,mem_index)
+		else:
+			target = self.projTZ(reward,next_state,done)
 		target_f = self.probs(state,target = True)
 		#if DEBUG:
 			#print("target_f ",target_f[action_index][0], "target ", target)
 		debug_target_f = target_f[action_index][0].copy()
 		target_f[action_index][0] = target
 		#if DEBUG:
-		#print("fitting state:", state,",action:",action_index,",reward:",reward, "target_f ",target_f[action_index][0]-debug_target_f)
+		#print("fitting state:", state,",action:",action_index,",reward:",reward, " delta target_f ",target_f[action_index][0]-debug_target_f,"done:",done)
 		self.model.fit(state, target_f,epochs=1, verbose=0)
 
 	# Temporary Experiment
@@ -203,7 +279,7 @@ class distAgent(learningAgent):
 				self.prior_weights.appendleft(self.model.get_weights())
 # Testing the code
 if __name__ == "__main__":
-	myAgent = distAgent(7,"TonyTester")
+	myAgent = distAgent(5,"TonyTester",N=5)
 	state = [1,-1] 
 	state = np.reshape(state, [1, 2])
 	state1 = [0,0] 
@@ -246,7 +322,8 @@ if __name__ == "__main__":
 		my_next_action = np.argmax(myAgent.predict(next_state)[0])
 		print("choose action:",my_next_action)
 		print("... and the probs:",myAgent.probs(next_state)[my_next_action][0])
-		print("resulting in projTZ ", myAgent.projTZ(0.5,next_state,False))
+		print("resulting in projTZ ", myAgent.projTZ(0.5,next_state,True))
+		myAgent.fit(state,2,0.5,next_state,False)
 
 
 

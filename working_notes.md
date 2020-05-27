@@ -94,9 +94,38 @@ Pre training for time 0 not useful
 	UCB method descibed in paper (c = 1) vs regular Daisy, lr = 0.00025
 
 - Test 9:
-	c = 10 lr identical
+	c = 10, lr = 0.0005
+
+- Test 10:
+	
+	- Agents:
+		- Daisy10aN11UCB10
+		- Amanda10a (baseline)
+
+- Test 11:
+	Scaled Rewards
+
+- Test 12:
+	Small action space (5 actions)
+	See if we can get convergence within 8k eps and build up from there
+	vol = 0.0005 (down from 0.001)
+
+- Test 13:
+	n Tree Agents (n = 3)
+
+- Test 14:
+	n = 8? Why not use the whole ep since inaccurate later predicitons seems to be an issue
+	#eps_min = 0.08 (surely we want at least 1 random move per ep?)
+
+Still seems to be considerable bias towards the first popular action
 
 
+- Test 15:
+	n = 10
+	UCBAgent w/ n = 5
+
+- Test 16:
+	same but n = 5 for both, UCBc = 50
 
 
 

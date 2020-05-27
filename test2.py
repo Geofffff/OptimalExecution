@@ -6,6 +6,7 @@ import numpy as np
 from library.market_modelsM import market
 #from library.local_environments import agent_environmentM
 from library.market_modelsM import bs_stock
+import library.agents
 import library.simulations
 import library.WIPAgentsv2
 

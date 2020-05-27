@@ -14,6 +14,7 @@ class agent_environmentM:
         self.action_values = np.array(action_values_pct) * position 
         self.num_actions = len(self.action_values)
         self.state_size = 2
+        self.reward_scaling = self.initial / (num_steps)
 
 
     def sell(self,volumes):
@@ -53,6 +54,8 @@ class agent_environmentM:
         if any(self.position < 0):
             print("Warning position is ",self.position)
         done = np.array(done,dtype = bool)
+
+        rewards = self.scale_rewards(rewards)
         #print("times ",self.time, self.terminal)
             
 		# Reward is currently just the returned cash / 100...
@@ -61,3 +64,8 @@ class agent_environmentM:
         # Ufortunately this is no longer the format of the AI gym env
         # Ideally this would be flexible depending on the input (array vs scalar)
         return self.state(), rewards, done
+
+
+    def scale_rewards(self,rewards):
+        return rewards / self.initial
+
