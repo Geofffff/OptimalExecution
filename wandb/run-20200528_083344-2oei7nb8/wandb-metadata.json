@@ -1,0 +1,26 @@
+{
+    "root": "/Users/tobyweston/Documents/Imperial/Thesis/ThesisCode",
+    "program": "<python with no main file>",
+    "git": {
+        "remote": "https://github.com/Geofffff/ThesisCode.git",
+        "commit": "cce3b0aa6f49839d16f14eca2e98c1a0ed137c21"
+    },
+    "email": "tobyweston94@gmail.com",
+    "startedAt": "2020-05-28T08:34:06.890063",
+    "host": "Tobys-MacBook.local",
+    "username": "tobyweston",
+    "executable": "/Users/tobyweston/Applications/anaconda3/bin/python",
+    "os": "Darwin-19.4.0-x86_64-i386-64bit",
+    "python": "3.7.3",
+    "cpu_count": 4,
+    "args": [
+        "-f",
+        "/Users/tobyweston/Library/Jupyter/runtime/kernel-0c0bb84b-a073-4bb5-8b07-426e0d1ead44.json"
+    ],
+    "state": "running",
+    "jobType": null,
+    "mode": "run",
+    "name": "Daisy100a N31 UCB50",
+    "project": "OptEx",
+    "heartbeatAt": "2020-05-28T09:57:03.338817"
+}

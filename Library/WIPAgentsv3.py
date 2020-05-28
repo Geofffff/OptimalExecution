@@ -31,8 +31,8 @@ gamma = 1 # Discount factor
 #learning_rate = 0.01
 # This would result in uniform prob (not sure if this is the right approach)
 state_size = 2
-action_values = np.array([0,0.001,0.005,0.01,0.02,0.05,0.1])
-action_values = action_values * 10
+#action_values = np.array([0,0.001,0.005,0.01,0.02,0.05,0.1])
+#action_values = action_values * 10
 
 class distAgentL(learningAgent):
 
@@ -51,8 +51,6 @@ class distAgentL(learningAgent):
 		self.learning_rate = 0.001
 		# This would result in uniform prob (not sure if this is the right approach)
 		self.state_size = 2
-		self.action_values = np.array([0,0.001,0.005,0.01,0.02,0.05,0.1])
-		self.action_values = self.action_values * 10
 
 		self.memory = deque(maxlen=2000)
 		self.action_size = len(self.action_values)
@@ -60,10 +58,6 @@ class distAgentL(learningAgent):
 		self.agent_name = agent_name
 		self.epsilon = 1
 		self.epsilon_decay = 0.998
-
-		# Transformations
-		self.trans_a = 2 / (np.amax(self.action_values) - np.amin(self.action_values))
-		self.trans_b = -self.trans_a * np.amin(self.action_values) - 1
 
 		# Target networks
 		self.C = C
@@ -142,9 +136,6 @@ class distAgentL(learningAgent):
 						optimizer=Adam(lr=self.learning_rate))
 		return model
 
-	# CURRENTLY: Action index goes in - transformed action value out
-	def _transform_action(self,action_index):
-		return action_values[action_index] * self.trans_a + self.trans_b
 
 	def fit(self,state, action_index, reward, next_state, done):
 		#action = self._transform_action(action_index)

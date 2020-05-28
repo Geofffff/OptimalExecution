@@ -3,10 +3,10 @@ from library.local_environments import agent_environmentM
 import numpy as np
 from matplotlib import pyplot as plt
 import random
-
+import wandb
 class simulator:
 
-	def __init__(self,market_,agents, params = None):
+	def __init__(self,market_,agents, params = None, test_name = 'undefined'):
 		
 		# Default params
 		if params is None:
@@ -31,6 +31,7 @@ class simulator:
 		
 		
 		self.intensive_training = False
+		self.test_name = test_name
 
 		# Stats
 		self.final_timestep = [] # Inactive
@@ -45,8 +46,29 @@ class simulator:
 		self.episode_actions = np.zeros((len(self.possible_actions),self.n_agents))
 		self.record_frequency = 200
 		self.plot_y_lim = (0.96,0.99)
-		
-		
+		self.episode = 0
+
+		# Wandb record parameters
+		self.wandb_agents = []
+		for agent in self.agents:
+			new_run = wandb.init(project="OptEx",name = agent.agent_name,reinit=True)
+			new_run.group = self.test_name
+			new_run.config.update({"num_trades": self.num_steps,
+			 "batch_size": self.batch_size,
+			 "action_size": len(self.possible_actions),
+			 "target_lag": agent.C,
+			 "alt_target": agent.alternative_target,
+			 "tree_horizon": agent.tree_n
+			 })
+			if agent.UCB:
+				new_run.config.UCBc = agent.UCBc
+			else:
+				new_run.config.epsilon_min = agent.epsilon_min
+				new_run.config.epsilon_decay = agent.epsilon_decay
+
+			# Agent specifics
+			self.wandb_agents.append(new_run)
+
 
 	def _moving_average(self,a, n=300):
 		ret = np.cumsum(a, dtype=float)
@@ -160,25 +182,26 @@ class simulator:
 				if show_details and not evaluate:
 					current_training_step = len(self.eval_rewards_mean) # CHANGED TO EVAL
 					self.evaluate(self.eval_window,show_stats=False)
-					ax.clear()
+					#ax.clear()
 					#print(self.eval_rewards_mean)
 					
 					for i in range(self.eval_rewards_mean.shape[1]):
-						y_vals = self._moving_average(self.eval_rewards_mean[:,i],n=3)
-						x_vals = np.arange(len(y_vals)) * self.record_frequency
-						agent_label = self.agents[i].agent_name + "(" + str(round(self.agents[i].epsilon,3)) + ")"
-						ax.plot(x_vals,y_vals, label  = agent_label )
-					plt.legend()
-					plt.ylim(self.plot_y_lim) # Temporary
-					plt.title(self.plot_title)
-					plt.grid(b=True, which='major', axis='both')
+						self.wandb_agents[i].log({'episode': self.eval_rewards_mean.shape[0] * self.record_frequency, 'eval_rewards': self.eval_rewards_mean[-1,i]})
+						#y_vals = self._moving_average(self.eval_rewards_mean[:,i],n=3)
+						#x_vals = np.arange(len(y_vals)) * self.record_frequency
+						#agent_label = self.agents[i].agent_name + "(" + str(round(self.agents[i].epsilon,3)) + ")"
+						#ax.plot(x_vals,y_vals, label  = agent_label )
+					#plt.legend()
+					#plt.ylim(self.plot_y_lim) # Temporary
+					#plt.title(self.plot_title)
+					#plt.grid(b=True, which='major', axis='both')
 					### TEMPORARY ###
 					#twap_stat = 9.849
 					#if len(x_vals) > 0:
 						#plt.plot([0, x_vals[-1]], [twap_stat, twap_stat], 'k--')
 					### TEMPORARY ###
-					plt.pause(0.0001)
-					plt.draw()
+					#plt.pause(0.0001)
+					#plt.draw()
 		if not evaluate:
 			self.show_stats(trained_from = current_training_step) 
 			for i, d in enumerate(agent_reward_dists):
@@ -186,6 +209,8 @@ class simulator:
 		else:
 			self.eval_rewards_mean = np.vstack((self.eval_rewards_mean,self.eval_rewards / self.eval_window))
 			self.eval_rewards = np.zeros((1,self.n_agents))
+		for run in wandb_agents:
+			run.join()
 
 	def episode(self,actions, verbose = False,evaluate = False):
 		states = self.env.reset() # reset state at start of each new episode of the game
@@ -193,8 +218,8 @@ class simulator:
 
 		if not evaluate:
 			for i, agent in enumerate(self.agents):
-				self.episode_actions[:,i] = agent.predict(states[i])
-
+				self.episode += 1
+				self.wandb_agents[i].log({'episode': self.episode, 'action_values': agent.predict(states[i])})
 			self.train_actions = np.concatenate((self.train_actions,[self.episode_actions]))
 					
 		done = np.zeros(self.n_agents) # Has the episode finished

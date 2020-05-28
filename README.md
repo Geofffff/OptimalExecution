@@ -5,13 +5,17 @@ Code for optimal execution
 
 ## TODO:
 
-1) Agents 
-- Agents don't seem to converge so diagnose and fix this before adding / improving anything else [DONE]
-- Trying making the problem simpler (higher temp impact and lower vol)
-- Approach should possibly be adapted to the Jaimungal approach
-- Find average trade sizes from data
-- Incorporate changes from the paper (reread)
-- Set seed to control reproducability [DONE] - add seed to stock price
+Thursday:
+- Simulator rebuild
+	- Move over to Wandb
+		- track action values
+		- track eval rewards
+		- track distributions
+	- Automatic test classification & model saving
+- distAgent Cleanup
+	- tidy up parameters and tranisiton to wandb
+- Continue testing UCB models
+- Test and work on neural net - look at batch regulisation
 
 ### Agents
 - The build model function should probably be broken out of the learning agents
@@ -19,19 +23,26 @@ Code for optimal execution
 - Test target network concept [DONE]
 - Add Sutton and Barto n step approach
 - Prioritised Sampling
-- Distributional Agent
-	#### Distributional Agent
-		- Dynamic V_min and V_max dependent on vol etc?
+- Distributional Agent [DONE]
+
 
 ### Simulator
 - Silent training option
 - Major rework needed once its working
 - Evaluation option to continue from random strategy [Think about this - not sure its necessary, problem is markov]
-- [IMPORTANT] Track action values and calculate how they diverge from theoretical ones
-- Investigate what this suboptimal strategy is that agents converge to
+- Track action values and calculate how they diverge from theoretical ones [DONE]
+- Investigate what this suboptimal strategy is that agents converge to [SEMI DONE]
+
+#### Simulator Version 2
+- Transition to Wandb:
+	- test metric tracking
+	- remove live plots
+	- integrate agent hyperparameters
+	- sweep integration
+
 
 ### Market Models and Environment
-- Add new market models
+- Add new market models 
 - Expand the feature set
 
 ### Reading
@@ -40,12 +51,15 @@ Code for optimal execution
 - Deep L in py book (buy)
 - Double deep q paper [DONE]
 - Prioritised replay
-- Distributional approach [WIP]
+- Distributional approach
+	- C51 [DONE]
+	- IQN 
+- Neural net papers / reading [PRIORITY]
 
 
 #### Other Reading
-- Restricted Boltzman machines
-- Random Forests
+- Restricted Boltzman machines [SCRAP]
+- Random Forests [SCRAP]
 - Target Networks [DONE]
 
 ### Writing

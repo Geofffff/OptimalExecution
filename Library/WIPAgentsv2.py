@@ -109,7 +109,8 @@ class distAgent(learningAgent):
 			self.target_model = clone_model(self.model)
 
 			if alternative_target:
-				self.prior_weights = deque(maxlen = C)
+				#self.prior_weights = deque(maxlen = C)
+				self.prior_weights = self.model.get_weights()
 
 	def probs(self,state,target=False):
 		#action = self._transform_action(action_index)
@@ -205,9 +206,9 @@ class distAgent(learningAgent):
 	def _build_model(self):
 		# Using Keras functional API
 		state_in = Input(shape=(self.state_size,))
-		hidden1 = Dense(20, activation='relu')(state_in)
-		hidden1_n = BatchNormalization() (hidden1)
-		hidden2 = Dense(20, activation='relu')(hidden1_n)
+		hidden1 = Dense(32, activation='relu')(state_in)
+		#hidden1_n = BatchNormalization() (hidden1)
+		hidden2 = Dense(32, activation='relu')(hidden1)
 		#hidden3 = Dense(5, activation='relu')(hidden2)
 		outputs =[]
 		for i in range(self.action_size):
@@ -275,10 +276,15 @@ class distAgent(learningAgent):
 					# Alternative Implementation with permenant lag
 		else:
 			if self.C > 0:
-				if len(self.prior_weights) >= self.C: # Update the target network if at least C weights in memory
-					self.target_model.set_weights(self.prior_weights.pop())
+				self.n_since_updated += 1
+				if self.n_since_updated >= self.C:
+					self.n_since_updated = 0
+					self.target_model.set_weights(self.prior_weights)
+					self.prior_weights = self.model.get_weights()
+				#if len(self.prior_weights) >= self.C: # Update the target network if at least C weights in memory
+					#self.target_model.set_weights(self.prior_weights.pop())
 					#print("DEBUG: prior weights: ",self.prior_weights)
-				self.prior_weights.appendleft(self.model.get_weights())
+				#self.prior_weights.appendleft(self.model.get_weights())
 # Testing the code
 if __name__ == "__main__":
 	myAgent = distAgent(5,"TonyTester",N=5)
