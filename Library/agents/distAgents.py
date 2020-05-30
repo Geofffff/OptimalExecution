@@ -3,77 +3,52 @@ from keras.models import Sequential
 from keras.models import clone_model
 from keras.layers import Dense
 from keras.layers import Softmax
-from keras.layers import Add
-from keras.layers import BatchNormalization
+from keras.layers import Multiply
 from keras import Input
 from keras import Model
 from keras.optimizers import Adam
+from keras.losses import huber_loss 
 from collections import deque
 import random
+import keras.backend as K
 
 if __name__ == "__main__":
-	from agents import learningAgent
+	from baseAgents import learningAgent, replayMemory
 	DEBUG = True
 else:
-	from library.agents import learningAgent
+	from library.agents.baseAgents import learningAgent, replayMemory
 	DEBUG = False
 
-# Define support for the value distribution model
-# Note that V_min and V_max should be dynamic and depend on vol - how would this work on real data (max historical?)
-# Is V_min for the total value? In this case it can be capped by the remaining position
-#V_min = 0; V_max = 10
-
-#N = 2 # This could be dynamic depending on state?
-# This granularity is problematic - can we do this without discretisation?
-# Especially if V_min and V_max are not dynamic
-# Paper: increasing N always increases returns
-#dz = (V_max - V_min) / (N - 1)
-#z = np.array(range(N)) * (V_max - V_min) / (N - 1) + V_min
-#theta = np.ones(N)
-#gamma = 1 # Discount factor
-#learning_rate = 0.01
-# This would result in uniform prob (not sure if this is the right approach)
-#state_size = 2
-#action_values = np.array([0,0.001,0.005,0.01,0.02,0.05,0.1])
-#action_values = action_values * 10
-
-# https://stackoverflow.com/questions/40181284/how-to-get-random-sample-from-deque-in-python-3
-class LengthMetaclass(type):
-
-    def __len__(self):
-        return self.clslength()
-
-
-class replayMemory:
-    def __init__(self, max_size):
-        self.buffer = [None] * max_size
-        self.max_size = max_size
-        self.index = 0
-        self.size = 0
-
-    def append(self, obj):
-        self.buffer[self.index] = obj
-        self.size = min(self.size + 1, self.max_size)
-        self.index = (self.index + 1) % self.max_size
-
-    def sample(self, batch_size):
-        indices = random.sample(range(self.size), batch_size)
-        return [(index,self.buffer[index]) for index in indices]
-
-    def __len__(self):
-        return self.size
-
-    def __getitem__(self, index):
-        return self.buffer[index]
-
-
-
 class distAgent(learningAgent):
+	def __init__(self, state_size, action_size, agent_name,C, alternative_target,,UCB=False,UCBc = 1,agent_type,tree_horizon):
+		learningAgent.__init__(state_size, action_size, agent_name,C, alternative_target,agent_type,tree_horizon)
+		self.UCB = UCB
+		self.c = UCBc
+		self.geometric_decay = True
+
+		if self.UCB:
+			self.t = 1
+
+	def act(self, state):
+		# No eps greedy required for 'UCB' type update
+		if self.UCB:
+			self.ct = self.c * np.sqrt(np.log(self.t) / self.t)
+			act_values = self.predict(state)
+			return np.argmax(act_values[0] + self.ct * np.sqrt(self.variance(state)))
+		# random action
+		if np.random.rand() <= self.epsilon:
+			rand_act = random.randrange(self.action_size)
+			return rand_act#random.randrange(self.action_size)
+		# Predict return
+		act_values = self.predict(state)		
+		return np.argmax(act_values[0])
+
+
+class C51(distAgent):
 
 	def __init__(self,action_size, agent_name,N=51,C = 0,alternative_target = False,UCB = False,UCBc = 1):
-		self.V_max = 0.02
-		self.V_min = -0.06
-		self.agent_type = "dist" 
+		self.V_max = 0.1
+		self.V_min = -0.15
 
 		self.N = N # This could be dynamic depending on state?
 		# This granularity is problematic - can we do this without discretisation?
@@ -81,46 +56,8 @@ class distAgent(learningAgent):
 		# Paper: increasing N always increases returns
 		self.dz = 2 * self.V_max / (self.N - 1) # (self.V_max - self.V_min)
 		self.z = np.array(range(self.N)) * (self.V_max - self.V_min) / (self.N - 1) + self.V_min
-		#theta = np.ones(N)
-		self.gamma = 1 # Discount factor
-		self.learning_rate = 0.001
-		# This would result in uniform prob (not sure if this is the right approach)
-		self.state_size = 2
-		self.epsilon_min = 0.01 
-		self.replay_buffer_size = 3000
-		self.memory = replayMemory(max_size=self.replay_buffer_size)
-		self.action_size = action_size
-		self.model = self._build_model()
-		self.agent_name = agent_name
-		self.epsilon = 1
-		self.epsilon_decay = 0.998
-		self.geometric_decay = True
-		self.reward_mapping = True
-
-		self.action_values = [0.05,0.075,0.1,0.15,0.2]
-
-		# Transformations
-		self.trans_a = 2 / (np.amax(self.action_values) - np.amin(self.action_values))
-		self.trans_b = -self.trans_a * np.amin(self.action_values) - 1
-		self.result_scaling_factor = 1 # This is initial price - should be dynamic
-
-		self.tree_n = 1
-
-		self.UCB = UCB
-		if self.UCB:
-			self.c = UCBc
-			self.t = 1
-
-		# Target networks
-		self.C = C
-		self.alternative_target = alternative_target
-		self.n_since_updated = 0
-		if self.C > 0:
-			self.target_model = clone_model(self.model)
-
-			if alternative_target:
-				#self.prior_weights = deque(maxlen = C)
-				self.prior_weights = self.model.get_weights()
+		
+		self.reward_mapping = True # Purely for Wandb config purposes 
 
 	def return_mapping(self,state,ret,inverse = False):
 		if inverse:
@@ -167,28 +104,8 @@ class distAgent(learningAgent):
 	def mapped_bounds(self,state):
 		return (self.V_min + (state[0][0] / 2 + 0.5), self.V_max + (state[0][0] / 2 + 0.5))
 
-
-	# Think of how to do this in a more numpy way
-	# Note this ALWAYS uses the target network
-	# DDQN enabled (!!!)
-	# DEPRECIATED #
-	def projTZ(self,reward,next_state,done):
-		print("WARNING: Depreciated!")
-		assert False
-		res = []
-		if not done:
-			next_action_index = np.argmax(self.predict(next_state,target = False)[0])
-			#next_action = self.action_values[next_action_index]
-			all_probs = self.probs(next_state,next_action_index,target = True)[0]
-			for i in range(self.N):
-				res.append(np.sum(self._bound(1 - np.abs(self._bound(self.Tz(next_state,reward),self.V_min,self.V_max) - self.mapped_z(next_state)[i])/self.mapped_dz(next_state),0,1) * all_probs))
-		else:
-			#reward_v = np.ones(N) * reward
-			for i in range(self.N):
-				res.append(self._bound(1 - np.abs(self._bound(reward,self.V_min,self.V_max) - self.mapped_z(next_state)[i])/self.mapped_dz(next_state),0,1))
-				#print("reward ", self._bound(reward,self.V_min,self.V_max), " dz ", self.dz, " z[i] ", self.z[i], " append ",(self._bound(reward,self.V_min,self.V_max) - self.z[i])/self.dz)
-		return res
 	# Get unmapped results using basis: STATE
+	# Could be made more efficient
 	def projTZ_nTree(self,state,reward,next_state,done,horizon,mem_index):
 		res = []
 		tree_success = False
@@ -214,35 +131,7 @@ class distAgent(learningAgent):
 				#print("reward ", self._bound(reward,self.V_min,self.V_max), " dz ", self.dz, " z[i] ", self.z[i], " append ",(self._bound(reward,self.V_min,self.V_max) - self.z[i])/self.dz)
 		return res
 
-	# DEPRECIATED #
-	def project(self,state,ret,probs = None):
-		print("WARNING: Depreciated!")
-		assert False
-		# First scale the return for the state
-		ret_m = self.return_mapping(state,ret)
-		res = []
-		if probs is None:
-			for i in range(self.N):
-				res.append(self._bound(1 - np.abs(self._bound(reward,self.V_min,self.V_max) - self.z[i])/self.dz,0,1))
-		else:
-			for i in range(self.N):
-				res.append(np.sum(self._bound(1 - np.abs(self._bound(ret_m,self.V_min,self.V_max) - self.z[i])/self.dz,0,1) * probs))
-
-
-	def replay(self, batch_size):
-		'''Train with experiences sampled from memory'''
-		# sample a minibatch from memory
-		minibatch = self.memory.sample(batch_size)
-		
-		for mem_index, (state, action, reward, next_state, done) in minibatch:
-			self.fit(state, action, reward, next_state, done,mem_index)
-		
-		if self.epsilon > self.epsilon_min: 
-			if self.geometric_decay:
-				self.epsilon *= self.epsilon_decay
-			else:
-				self.epsilon -= self.epsilon_decay#*= self.epsilon_decay
-
+	
 	def _bound(self,vec,lower,upper):
 		return np.minimum(np.maximum(vec,lower),upper)
 
@@ -298,49 +187,73 @@ class distAgent(learningAgent):
 		return np.vectorize(self.var_act,excluded=['state'] )(state = state,action_index = action_indices,target = target)
 
 
-	def act(self, state):
-		# No eps greedy required for 'UCB' type update
-		if self.UCB:
-			self.ct = self.c * np.sqrt(np.log(self.t) / self.t)
-			act_values = self.predict(state)
-			return np.argmax(act_values[0] + self.ct * np.sqrt(self.variance(state)))
-		# random action
-		if np.random.rand() <= self.epsilon:
-			rand_act = random.randrange(self.action_size)
-			return rand_act#random.randrange(self.action_size)
-		# Predict return
-		act_values = self.predict(state)
-		#print("act_values ",act_values)
-		# Maximise return
-		
-		return np.argmax(act_values[0])
+class IQNAgent(distAgent):
 
-	def step(self):
-		if self.UCB:
-			self.t += 1 # For UCB method
-		# Implementation described in Google Paper
-		if not self.alternative_target:
-			if self.C > 0:
-				self.n_since_updated += 1
-				if self.n_since_updated >= self.C: # Update the target network if C steps have passed
-					if self.n_since_updated > self.C:
-						print("target network not updated on time")
-					#print("Debug: target network updated")
-					self.n_since_updated = 0
-					#self.target_model = clone_model(self.model)
-					self.target_model.set_weights(self.model.get_weights())
-					# Alternative Implementation with permenant lag
-		else:
-			if self.C > 0:
-				self.n_since_updated += 1
-				if self.n_since_updated >= self.C:
-					self.n_since_updated = 0
-					self.target_model.set_weights(self.prior_weights)
-					self.prior_weights = self.model.get_weights()
-				#if len(self.prior_weights) >= self.C: # Update the target network if at least C weights in memory
-					#self.target_model.set_weights(self.prior_weights.pop())
-					#print("DEBUG: prior weights: ",self.prior_weights)
-				#self.prior_weights.appendleft(self.model.get_weights())
+	def __init__(self):
+		self.N = 8
+		self.N_p = 8
+		self.embedding_dim = 64
+		self.state_model_size_out = 8
+		self.kappa = 2 # What should this be?
+		self.selected_qs = None
+		self.model = self._build_network()
+	
+	# https://stackoverflow.com/questions/55445712/custom-loss-function-in-keras-based-on-the-input-data
+	def huber_loss_quantile(self,tau):
+		def loss(yTrue,yPred):
+			bellman_errors = yTrue - yPred
+	    	return (K.abs(tau - K.to_float(bellman_errors < 0)) * huber_loss(yTrue,yPred)) / self.kappa
+	    return loss
+		
+
+	def _build_network(self):
+		# Using Keras functional API
+		state_in = Input(shape=(self.state_size + 1,))
+		state_hidden1 = Dense(8, activation='relu')(state_in)
+		state_hidden2 = Dense(self.state_model_size_out, activation='relu')(state_hidden1)
+		#hidden3 = Dense(30, activation='relu')(hidden2)
+
+		quantiles_in = Input(shape=(self.N,))
+		selected_qs.shape = (1,self.N)
+		embedded_range = np.arange(self.embedding_dim) + 1 # Note Chainer and dopamine implementation
+		embedded_range.shape = (self.embedding_dim,1)
+
+		embedded_qs = np.cos(np.dot(embedded_range, selected_qs) * np.pi)
+		quantile_in = Input(shape=(self.N,self.embedding_dim))
+		q_hidden = Dense(self.state_model_size_out, activation='relu')(quantile_in)
+
+		# Full Model
+		main_hidden1 = Multiply(q_hidden, state_hidden2)
+		main_hidden2 = Dense(30, activation='relu')(main_hidden1)
+		outputs = Dense(self.N, activation='linear')(hidden2)
+		main_model = Model(inputs=(state_in,quantile_in), outputs=outputs)
+
+		main_model.compile(loss = self.huber_loss_quantile(quantiles_in),
+						optimizer=Adam(lr=self.learning_rate))
+
+		return main_model
+
+	def predict(self,state,target = False):
+		if self.C > 0 and target:
+			return self.target_model.predict(state)
+
+		return self.model.predict(state)
+
+	def fit(self,state, action_index, reward, next_state, done):
+		quantiles_selected = np.random(self.N)
+		predicts = self.target_model.predict(next_state,quantiles_selected)
+		
+		target_f = np.reshape(target, [1, self.N])
+		#if DEBUG:
+			#print("target_f ",target_f[action_index][0], "target ", target)
+		#if DEBUG:
+		#print("fitting state:", state,",action:",action_index,",reward:",reward, " delta target_f ",target_f[action_index][0]-debug_target_f,"done:",done)
+		
+		self.model.fit(state_action, target_f,epochs=1, verbose=0)
+
+
+
+
 # Testing the code
 if __name__ == "__main__":
 	myAgent = distAgent(5,"TonyTester",N=5)
