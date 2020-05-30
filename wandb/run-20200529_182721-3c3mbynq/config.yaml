@@ -1,0 +1,46 @@
+wandb_version: 1
+
+UCBc:
+  desc: null
+  value: 100
+_wandb:
+  desc: null
+  value:
+    cli_version: 0.8.36
+    framework: keras
+    is_jupyter_run: true
+    is_kaggle_kernel: false
+    python_version: 3.7.3
+action_size:
+  desc: null
+  value: 5
+alt_target:
+  desc: null
+  value: true
+batch_size:
+  desc: null
+  value: 32
+buffer_size:
+  desc: null
+  value: 3000
+learning_rate:
+  desc: null
+  value: 0.001
+num_trades:
+  desc: null
+  value: 10
+reward_mapping:
+  desc: null
+  value: true
+state_size:
+  desc: null
+  value: 2
+support_range:
+  desc: null
+  value: 0.2
+target_lag:
+  desc: null
+  value: 150
+tree_horizon:
+  desc: null
+  value: 5

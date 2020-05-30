@@ -102,7 +102,7 @@ class distAgentL(learningAgent):
 
 	# Think of how to do this in a more numpy way
 	# Note this ALWAYS uses the target network
-	# DDQN NOT enabled (!!!)
+	# DDQN enabled (!!!)
 	def projTZ(self,reward,next_state,done):
 		res = []
 		if not done:

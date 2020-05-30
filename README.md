@@ -8,14 +8,22 @@ Code for optimal execution
 Thursday:
 - Simulator rebuild
 	- Move over to Wandb
-		- track action values
-		- track eval rewards
+		- track action values [DONE]
+		- track eval rewards [DONE]
 		- track distributions
-	- Automatic test classification & model saving
+	- Automatic test classification & model saving [PARTIALLY DONE]
 - distAgent Cleanup
-	- tidy up parameters and tranisiton to wandb
-- Continue testing UCB models
+	- tidy up parameters 
+	- tranisiton to wandb [DONE]
+- Continue testing UCB models [DONE]
 - Test and work on neural net - look at batch regulisation
+
+Friday:
+- Dynamic V_min / V_max depending on vol?
+- distAgent efficiency drive - currently slow to train
+- Optimise V_max and V_min
+- Look at reducing plummeting behaviour
+- Once optimised, start working on non TWAP optimal environments
 
 ### Agents
 - The build model function should probably be broken out of the learning agents

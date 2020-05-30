@@ -18,3 +18,5 @@
 {"episode": 10800, "eval_rewards": 0.9784618729717858, "_runtime": 8364.679905653, "_timestamp": 1590659651.207098, "_step": 53}
 {"episode": 11000, "eval_rewards": 0.9784944038022436, "_runtime": 8438.830245494843, "_timestamp": 1590659725.3574378, "_step": 54}
 {"episode": 11200, "eval_rewards": 0.9784756328803684, "_runtime": 8515.348401546478, "_timestamp": 1590659801.875594, "_step": 55}
+{"episode": 11400, "eval_rewards": 0.9785708529848074, "_runtime": 8590.830494642258, "_timestamp": 1590659877.357687, "_step": 56}
+{"episode": 11600, "eval_rewards": 0.9784769845065048, "_runtime": 8669.58808851242, "_timestamp": 1590659956.1152809, "_step": 57}

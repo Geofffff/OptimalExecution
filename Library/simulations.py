@@ -38,15 +38,16 @@ class simulator:
 		self.train_rewards = np.zeros((0,self.n_agents))
 		self.eval_rewards = np.zeros((1,self.n_agents)) 
 		self.eval_rewards_mean = np.zeros((0,self.n_agents)) 
-		self.eval_window = 40
+		self.eval_window = 20
 		self.plot_title = "Unlabelled Performance Test"
 
 		# Record actions
 		self.train_actions = np.zeros((0,len(self.possible_actions),self.n_agents))
 		self.episode_actions = np.zeros((len(self.possible_actions),self.n_agents))
 		self.record_frequency = 200
+		self.action_record_frequency = 50
 		self.plot_y_lim = (0.96,0.99)
-		self.episode = 0
+		self.episode_n = 0
 
 		# Wandb record parameters
 		self.wandb_agents = []
@@ -58,13 +59,21 @@ class simulator:
 			 "action_size": len(self.possible_actions),
 			 "target_lag": agent.C,
 			 "alt_target": agent.alternative_target,
-			 "tree_horizon": agent.tree_n
+			 "tree_horizon": agent.tree_n,
+			 "buffer_size": agent.replay_buffer_size,
+			 "learning_rate": agent.learning_rate,
+			 "state_size": self.env.state_size
 			 })
 			if agent.UCB:
-				new_run.config.UCBc = agent.UCBc
+				new_run.config.UCBc = agent.c
 			else:
 				new_run.config.epsilon_min = agent.epsilon_min
 				new_run.config.epsilon_decay = agent.epsilon_decay
+
+			if agent.agent_type == "dist":
+				new_run.config.reward_mapping = agent.reward_mapping
+				new_run.config.support_range = agent.V_max - agent.V_min
+
 
 			# Agent specifics
 			self.wandb_agents.append(new_run)
@@ -75,6 +84,17 @@ class simulator:
 		ret[n:] = ret[n:] - ret[:-n]
 		return ret[n - 1:] / n
 
+	def _pretrain_position(self):
+		t = random.uniform(-1,1)
+		a = random.randrange(len(self.possible_actions))
+		state = [-1,t]
+		next_time = max(1,t + 2 / self.num_steps)
+		next_state = [-1,next_time]
+		state = np.reshape(state, [1, self.env.state_size])
+		next_state = np.reshape(next_state, [1, self.env.state_size])
+		for agent in self.agents:
+			agent.remember(state, a, 0, next_state, True)
+
 	def pretrain(self,n_samples = 2000,n_iterations = 500):
 		pretain_position = True
 		pretrain_time = False
@@ -83,15 +103,7 @@ class simulator:
 			
 			# Randomly sample transformed t in the time interval [-1,1] and action from space
 			if pretain_position:
-				t = random.uniform(-1,1)
-				a = random.randrange(len(self.possible_actions))
-				state = [-1,t]
-				next_time = max(1,t + 2 / self.num_steps)
-				next_state = [-1,next_time]
-				state = np.reshape(state, [1, self.env.state_size])
-				next_state = np.reshape(next_state, [1, self.env.state_size])
-				for agent in self.agents:
-					agent.remember(state, a, 0, next_state, True)
+				self._pretrain_position()
 
 			## Pretrain for state where time is 0 ##
 			if pretrain_time:
@@ -125,13 +137,14 @@ class simulator:
 		# Number of agents to be trained
 		
 		### Live Plots ###
-		if not evaluate:
-			fig = plt.figure(0)
-			ax = fig.add_subplot(111)
-			plt.ion()
-			ax.grid(b=True, which='major', axis='both')
-			fig.show()
-			fig.canvas.draw()
+		#if not evaluate:
+			#pass
+			#fig = plt.figure(0)
+			#ax = fig.add_subplot(111)
+			#plt.ion()
+			#ax.grid(b=True, which='major', axis='both')
+			#fig.show()
+			#fig.canvas.draw()
 		### Live Plots ###
 		
 		# Default training parameters if not provided
@@ -168,6 +181,9 @@ class simulator:
 
 			# Record the initial action values if training
 			#self.episode_actions.fill(0)
+			
+			# Inject synthetic positon 0 observation to memory
+			self._pretrain_position()
 			
 			self.episode(actions = actions, evaluate = evaluate)
 			if not self.intensive_training:
@@ -206,20 +222,22 @@ class simulator:
 			self.show_stats(trained_from = current_training_step) 
 			for i, d in enumerate(agent_reward_dists):
 				self.show_dist(self.dist_agent_for_plot,d,figure = i + 1)
+			wandb.join()
 		else:
 			self.eval_rewards_mean = np.vstack((self.eval_rewards_mean,self.eval_rewards / self.eval_window))
 			self.eval_rewards = np.zeros((1,self.n_agents))
-		for run in wandb_agents:
-			run.join()
 
 	def episode(self,actions, verbose = False,evaluate = False):
 		states = self.env.reset() # reset state at start of each new episode of the game
 		states = np.reshape(states, [self.n_agents,1, self.env.state_size])
 
+		# Log action values
 		if not evaluate:
-			for i, agent in enumerate(self.agents):
-				self.episode += 1
-				self.wandb_agents[i].log({'episode': self.episode, 'action_values': agent.predict(states[i])})
+			self.episode_n += 1
+			if self.episode_n % self.action_record_frequency == 0:
+				for i, agent in enumerate(self.agents):
+					for j in range(len(self.possible_actions)):
+						self.wandb_agents[i].log({'episode': self.episode_n, ('act_val' + str(j)): agent.predict(states[i])[0][j]})
 			self.train_actions = np.concatenate((self.train_actions,[self.episode_actions]))
 					
 		done = np.zeros(self.n_agents) # Has the episode finished

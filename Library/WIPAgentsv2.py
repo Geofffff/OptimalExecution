@@ -3,6 +3,7 @@ from keras.models import Sequential
 from keras.models import clone_model
 from keras.layers import Dense
 from keras.layers import Softmax
+from keras.layers import Add
 from keras.layers import BatchNormalization
 from keras import Input
 from keras import Model
@@ -209,10 +210,11 @@ class distAgent(learningAgent):
 		hidden1 = Dense(32, activation='relu')(state_in)
 		#hidden1_n = BatchNormalization() (hidden1)
 		hidden2 = Dense(32, activation='relu')(hidden1)
+		skip_layer = Add()([hidden1, hidden2])
 		#hidden3 = Dense(5, activation='relu')(hidden2)
 		outputs =[]
 		for i in range(self.action_size):
-			outputs.append(Dense(self.N, activation='softmax')(hidden2))
+			outputs.append(Dense(self.N, activation='softmax')(skip_layer))
 		model = Model(inputs=state_in, outputs=outputs)
 		model.compile(loss='categorical_crossentropy',
 						optimizer=Adam(lr=self.learning_rate))

@@ -35,6 +35,7 @@ Simulator v3:
 
 - practical considerations:
 	- less data - no unlimited games like atari
+		- Note that we could try training on limited synthetic dataset to test overfitting
 	- more noise
 	- theoretically, if following DDQN Opt Ex, the reward for every action could be evaluated?
 		- Or, more optimally the same data could be trained on multiple times? - new perspective each time but risk of overfitting
@@ -135,6 +136,14 @@ Still seems to be considerable bias towards the first popular action
 		- UCB50 n =3
 		- UCB30 n = 5 lag = 30a
 
+	Notes: Converged to TWAP extremely quickly but distributions were strange and might not be a valid result
+- Test 18:
+	Control based on Test 17, pausing early to check value function progression
 
+- Test 21:
+	Trial injecting synthetic states with value 0 every episode:
+		- random time, position 0, value 0
+	single agent with UCBc = 100
+	Investigate why action values are still overestimated at the start...
 
 
