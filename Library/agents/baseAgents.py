@@ -70,7 +70,7 @@ class basicAgent:
 		pass
 
 class learningAgent:
-	def __init__(self, state_size, action_size, agent_name,C=0, alternative_target=False,agent_type,tree_horizon = 1):
+	def __init__(self, state_size, action_size, agent_name,C=0, alternative_target=False,agent_type="Undefined",tree_horizon=1):
 		# Default Params: state_size, action_size
 		self.agent_type = agent_type
 		self.agent_name = agent_name

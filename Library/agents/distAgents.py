@@ -20,8 +20,8 @@ else:
 	DEBUG = False
 
 class distAgent(learningAgent):
-	def __init__(self, state_size, action_size, agent_name,C, alternative_target,,UCB=False,UCBc = 1,agent_type,tree_horizon):
-		learningAgent.__init__(state_size, action_size, agent_name,C, alternative_target,agent_type,tree_horizon)
+	def __init__(self, state_size, action_size, agent_name,C, alternative_target,UCB=False,UCBc = 1,tree_horizon = 3):
+		super(distAgent,self).__init__(state_size, action_size, agent_name,C, alternative_target,"dist",tree_horizon)
 		self.UCB = UCB
 		self.c = UCBc
 		self.geometric_decay = True
@@ -46,7 +46,8 @@ class distAgent(learningAgent):
 
 class C51(distAgent):
 
-	def __init__(self,action_size, agent_name,N=51,C = 0,alternative_target = False,UCB = False,UCBc = 1):
+	def __init__(self,state_size, action_size, agent_name,N=51,C = 0,alternative_target = False,UCB = False,UCBc = 1,tree_horizon = 3):
+		distAgent.__init__(self,state_size, action_size, agent_name,C, alternative_target,UCB,UCBc,tree_horizon)
 		self.V_max = 0.1
 		self.V_min = -0.15
 
@@ -188,38 +189,36 @@ class C51(distAgent):
 
 
 class IQNAgent(distAgent):
-
-	def __init__(self):
+	def __init__(self,state_size, action_size, agent_name,C, alternative_target = False,UCB=False,UCBc = 1,tree_horizon = 3):
 		self.N = 8
 		self.N_p = 8
 		self.embedding_dim = 64
 		self.state_model_size_out = 8
 		self.kappa = 2 # What should this be?
 		self.selected_qs = None
-		self.model = self._build_network()
+		print("Sucessfully initialised")
+		super(IQNAgent,self).__init__(state_size, action_size, agent_name,C, alternative_target,UCB,UCBc,tree_horizon)
+		
 	
 	# https://stackoverflow.com/questions/55445712/custom-loss-function-in-keras-based-on-the-input-data
+	@staticmethod
 	def huber_loss_quantile(self,tau):
 		def loss(yTrue,yPred):
 			bellman_errors = yTrue - yPred
-	    	return (K.abs(tau - K.to_float(bellman_errors < 0)) * huber_loss(yTrue,yPred)) / self.kappa
-	    return loss
+			return (K.abs(tau - K.to_float(bellman_errors < 0)) * huber_loss(yTrue,yPred)) / self.kappa
+		return loss
 		
 
-	def _build_network(self):
+	def _build_model(self):
 		# Using Keras functional API
 		state_in = Input(shape=(self.state_size + 1,))
 		state_hidden1 = Dense(8, activation='relu')(state_in)
 		state_hidden2 = Dense(self.state_model_size_out, activation='relu')(state_hidden1)
 		#hidden3 = Dense(30, activation='relu')(hidden2)
-
-		quantiles_in = Input(shape=(self.N,))
-		selected_qs.shape = (1,self.N)
-		embedded_range = np.arange(self.embedding_dim) + 1 # Note Chainer and dopamine implementation
-		embedded_range.shape = (self.embedding_dim,1)
-
-		embedded_qs = np.cos(np.dot(embedded_range, selected_qs) * np.pi)
+		
 		quantile_in = Input(shape=(self.N,self.embedding_dim))
+		# This needs fixing - transforming to tf functions etc.
+		
 		q_hidden = Dense(self.state_model_size_out, activation='relu')(quantile_in)
 
 		# Full Model
@@ -228,19 +227,23 @@ class IQNAgent(distAgent):
 		outputs = Dense(self.N, activation='linear')(hidden2)
 		main_model = Model(inputs=(state_in,quantile_in), outputs=outputs)
 
-		main_model.compile(loss = self.huber_loss_quantile(quantiles_in),
+		main_model.compile(loss = huber_loss_quantile(quantiles_in),
 						optimizer=Adam(lr=self.learning_rate))
 
 		return main_model
 
 	def predict(self,state,target = False):
-		if self.C > 0 and target:
-			return self.target_model.predict(state)
+		quantiles_selected = np.random(self.N)
 
-		return self.model.predict(state)
+		quantiles_selected.shape = (1,self.N)
+		if self.C > 0 and target:
+			return np.add.reduce(self.target_model.predict(state,embedded_qs))
+
+		return np.add.reduce(self.model.predict(state,embedded_qs))
 
 	def fit(self,state, action_index, reward, next_state, done):
 		quantiles_selected = np.random(self.N)
+		quantile_in = self.process_quantiles(quantiles_selected)
 		predicts = self.target_model.predict(next_state,quantiles_selected)
 		
 		target_f = np.reshape(target, [1, self.N])
@@ -252,7 +255,11 @@ class IQNAgent(distAgent):
 		self.model.fit(state_action, target_f,epochs=1, verbose=0)
 
 
-
+	def process_quantiles(self,quantiles_selected):
+		# Move to class init (why reinitialise?)
+		embedded_range = np.arange(self.embedding_dim) + 1 # Note Chainer and dopamine implementation
+		embedded_range.shape = (self.embedding_dim,1)
+		return np.cos(np.dot(embedded_range, quantiles_selected) * np.pi)
 
 # Testing the code
 if __name__ == "__main__":

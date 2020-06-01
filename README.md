@@ -23,7 +23,13 @@ Friday:
 - distAgent efficiency drive - currently slow to train
 - Optimise V_max and V_min
 - Look at reducing plummeting behaviour
-- Once optimised, start working on non TWAP optimal environments
+- Once optimised, start working on non TWAP optimal environments [POSTPONED]
+
+Monday:
+- Get IQN Agent working
+- Efficiency possibilities: there are a finite (and not huge) number of states considering only the agents personal environment so some precomputation could be done?
+- Look at simulations with signal (HFT course notes)
+- Testing of new cleaned up code
 
 ### Agents
 - The build model function should probably be broken out of the learning agents
