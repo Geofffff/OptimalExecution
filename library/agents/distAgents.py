@@ -20,11 +20,17 @@ else:
 	DEBUG = False
 
 class distAgent(learningAgent):
-	def __init__(self, state_size, action_size, agent_name,C, alternative_target,UCB=False,UCBc = 1,tree_horizon = 3):
+	def __init__(self, state_size, action_values, agent_name,C, alternative_target,UCB=False,UCBc = 1,tree_horizon = 3):
+		self.action_size = len(action_values)
+		self.action_values = action_values
 		super(distAgent,self).__init__(state_size, action_size, agent_name,C, alternative_target,"dist",tree_horizon)
 		self.UCB = UCB
 		self.c = UCBc
 		self.geometric_decay = True
+
+		# Transformations
+		self.trans_a = 2 / (np.amax(self.action_values) - np.amin(self.action_values))
+		self.trans_b = -self.trans_a * np.amin(self.action_values) - 1
 
 		if self.UCB:
 			self.t = 1
@@ -42,6 +48,10 @@ class distAgent(learningAgent):
 		# Predict return
 		act_values = self.predict(state)		
 		return np.argmax(act_values[0])
+
+	# CURRENTLY: Action index goes in - transformed action value out
+	def _transform_action(self,action_index):
+		return action_values[action_index] * self.trans_a + self.trans_b
 
 
 class C51(distAgent):
@@ -232,19 +242,30 @@ class IQNAgent(distAgent):
 
 		return main_model
 
-	def predict(self,state,target = False):
+	def predict_action(self,state,action_index,target = False):
 		quantiles_selected = np.random(self.N)
-
-		quantiles_selected.shape = (1,self.N)
+		quantile_in = self.process_quantiles(quantiles_selected)
+		action = self._transform_action(action_index)
+		state_action = np.append(state,action)
 		if self.C > 0 and target:
-			return np.add.reduce(self.target_model.predict(state,embedded_qs))
+			return np.add.reduce(self.target_model.predict(state_action,quantile_in))
 
 		return np.add.reduce(self.model.predict(state,embedded_qs))
+
+	# predict function could be moved to distAgent and transitioned to np
+	def predict(self,state,target = False):
+		res = []
+		for i in range(action_size):
+			res.append(self.predict_action(state,i,target = target))
+
+
 
 	def fit(self,state, action_index, reward, next_state, done):
 		quantiles_selected = np.random(self.N)
 		quantile_in = self.process_quantiles(quantiles_selected)
-		predicts = self.target_model.predict(next_state,quantiles_selected)
+		action = self._transform_action(action_index)
+		next_state_action = np.append(state,action)
+		predicts = self.target_model.predict(next_state_action,quantile_in)
 		
 		target_f = np.reshape(target, [1, self.N])
 		#if DEBUG:
