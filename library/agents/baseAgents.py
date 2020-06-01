@@ -110,7 +110,7 @@ class learningAgent:
 		raise "No predict function available."
 
 	# 'Virtual' function    
-	def fit(self,state, action, reward, next_state, done):
+	def fit(self,state, action, reward, next_state, done,mem_index):
 		raise "No fit function available."
 		
 

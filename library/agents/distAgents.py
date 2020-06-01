@@ -51,7 +51,7 @@ class distAgent(learningAgent):
 
 	# CURRENTLY: Action index goes in - transformed action value out
 	def _transform_action(self,action_index):
-		return action_values[action_index] * self.trans_a + self.trans_b
+		return self.action_values[action_index] * self.trans_a + self.trans_b
 
 
 class C51Agent(distAgent):
@@ -197,6 +197,21 @@ class C51Agent(distAgent):
 	def vvar(self,state,action_indices,target = False):
 		return np.vectorize(self.var_act,excluded=['state'] )(state = state,action_index = action_indices,target = target)
 
+# Build the network seperately
+class IQNNetwork(Model):
+	def __init__(self,state_dim,action_dim):
+		super(IQNNetwork,self).__init__()
+		self.state_hidden1 = Dense(8, activation='relu')
+		self.state_hidden2 = Dense(self.state_model_size_out, activation='relu')
+		self.q_hidden = Dense(self.state_model_size_out, activation='relu')
+		self.main_hidden1 = Multiply()
+		self.main_hidden2 = Dense(30, activation='relu')
+		self.outputs = Dense(self.N, activation='linear')
+
+	def call(self,state):
+		# Should this be called every time?
+		select_quantiles = np.
+
 
 class IQNAgent(distAgent):
 	def __init__(self,state_size, action_values, agent_name,C, alternative_target = False,UCB=False,UCBc = 1,tree_horizon = 3):
@@ -207,12 +222,12 @@ class IQNAgent(distAgent):
 		#self.kappa = 2 # What should this be? Moved to loss fun
 		self.selected_qs = None
 		super(IQNAgent,self).__init__(state_size, action_values, agent_name,C, alternative_target,UCB,UCBc,tree_horizon)
+		self.kappa = 2
 		
-	
 	# https://stackoverflow.com/questions/55445712/custom-loss-function-in-keras-based-on-the-input-data
 	@staticmethod
-	def huber_loss_quantile(tau):
-		kappa = 2
+	def huber_loss_quantile(tau,kappa):
+		#kappa = 2
 		def loss(yTrue,yPred):
 			bellman_errors = yTrue - yPred
 			#tau = np.array(quantile_in)
@@ -236,9 +251,9 @@ class IQNAgent(distAgent):
 		main_hidden1 = Multiply()([q_hidden, state_hidden2])
 		main_hidden2 = Dense(30, activation='relu')(main_hidden1)
 		outputs = Dense(self.N, activation='linear')(main_hidden1)
-		main_model = Model(inputs=(state_in,quantile_in), outputs=outputs)
+		main_model = Model(inputs=(state_in,quantile_in,), outputs=outputs)
 
-		main_model.compile(loss = self.huber_loss_quantile(quantile_in),
+		main_model.compile(loss = self.huber_loss_quantile(quantile_in,self.kappa),
 						optimizer=Adam(lr=self.learning_rate))
 
 		return main_model
@@ -250,18 +265,18 @@ class IQNAgent(distAgent):
 		if self.C > 0 and target:
 			return np.add.reduce(self.target_model.predict(state_action,quantile_in))
 
-		return np.add.reduce(self.model.predict(state,embedded_qs))
+		return np.add.reduce(self.model.predict(state,quantile_in))
 
 	# predict function could be moved to distAgent and transitioned to np
 	def predict(self,state,quantiles_selected = None,target = False):
 		res = []
 		if quantiles_selected == None:
-			quantiles_selected = np.random(self.N)
-		for i in range(action_size):
-			res.append(self.predict_action(state,i,quantile_in,target = target))
+			quantiles_selected = np.random.uniform(self.N)
+		for i in range(self.action_size):
+			res.append(self.predict_action(state,i,quantiles_selected,target = target))
 
-	def fit(self,state, action_index, reward, next_state, done):
-		quantiles_selected = np.random(self.N)
+	def fit(self,state, action_index, reward, next_state, done,mem_index = -1):
+		quantiles_selected = np.random.uniform(self.N)
 		action = self._transform_action(action_index)
 		state_action = np.append(state,action)
 		# For Double Deep

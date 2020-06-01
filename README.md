@@ -10,26 +10,27 @@ Thursday:
 	- Move over to Wandb
 		- track action values [DONE]
 		- track eval rewards [DONE]
-		- track distributions
+		- track distributions [TODO]
 	- Automatic test classification & model saving [PARTIALLY DONE]
 - distAgent Cleanup
-	- tidy up parameters 
+	- tidy up parameters [DONE]
 	- tranisiton to wandb [DONE]
 - Continue testing UCB models [DONE]
 - Test and work on neural net - look at batch regulisation
 
 Friday:
-- Dynamic V_min / V_max depending on vol?
-- distAgent efficiency drive - currently slow to train
-- Optimise V_max and V_min
-- Look at reducing plummeting behaviour
+- Dynamic V_min / V_max depending on vol? [REPLACED WITH IQN]
+- distAgent efficiency drive - currently slow to train [POSTPONED]
+- Optimise V_max and V_min [DONE]
+- Look at reducing plummeting behaviour [DONE?]
 - Once optimised, start working on non TWAP optimal environments [POSTPONED]
 
 Monday:
+- Testing of new cleaned up code
 - Get IQN Agent working
 - Efficiency possibilities: there are a finite (and not huge) number of states considering only the agents personal environment so some precomputation could be done?
 - Look at simulations with signal (HFT course notes)
-- Testing of new cleaned up code
+
 
 ### Agents
 - The build model function should probably be broken out of the learning agents

@@ -28,3 +28,5 @@ agents = [
 simple_stock = bs_stock(1,0,0.0005) # No drift, 0.0005 vol
 simple_market = market(simple_stock,num_strats = len(agents))
 my_simulator = library.simulations.simulator(simple_market,agents,params,test_name = "IQN Testing")
+
+my_simulator.train(500)
