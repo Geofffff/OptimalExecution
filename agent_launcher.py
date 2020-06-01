@@ -18,7 +18,7 @@ state_size = 2
 action_size = len(params["action_values"])
 
 # Define Agents
-brian = library.agents.distAgents.IQNAgent(state_size, action_size, "Isabelle",C=0, alternative_target = False,UCB=False,UCBc = 1,tree_horizon = 3)
+brian = library.agents.distAgents.IQNAgent(state_size, params["action_values"], "Isabelle",C=0, alternative_target = False,UCB=False,UCBc = 1,tree_horizon = 3)
 
 agents = [
     brian
@@ -27,4 +27,4 @@ agents = [
 # Initialise Simulator
 simple_stock = bs_stock(1,0,0.0005) # No drift, 0.0005 vol
 simple_market = market(simple_stock,num_strats = len(agents))
-my_simulator = library.simulations.simulator(simple_market,agents,params,test_name = "Test 29")
+my_simulator = library.simulations.simulator(simple_market,agents,params,test_name = "IQN Testing")

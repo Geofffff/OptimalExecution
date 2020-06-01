@@ -84,6 +84,7 @@ class learningAgent:
 		self.alternative_target = alternative_target
 		self.C = C
 		self.tree_n = tree_horizon
+		self.epsilon_min = 0.01
 		
 		self.update_paramaters() # to defaults
 		

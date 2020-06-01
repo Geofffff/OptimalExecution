@@ -23,7 +23,7 @@ class distAgent(learningAgent):
 	def __init__(self, state_size, action_values, agent_name,C, alternative_target,UCB=False,UCBc = 1,tree_horizon = 3):
 		self.action_size = len(action_values)
 		self.action_values = action_values
-		super(distAgent,self).__init__(state_size, action_size, agent_name,C, alternative_target,"dist",tree_horizon)
+		super(distAgent,self).__init__(state_size, self.action_size, agent_name,C, alternative_target,"dist",tree_horizon)
 		self.UCB = UCB
 		self.c = UCBc
 		self.geometric_decay = True
@@ -54,10 +54,10 @@ class distAgent(learningAgent):
 		return action_values[action_index] * self.trans_a + self.trans_b
 
 
-class C51(distAgent):
+class C51Agent(distAgent):
 
-	def __init__(self,state_size, action_size, agent_name,N=51,C = 0,alternative_target = False,UCB = False,UCBc = 1,tree_horizon = 3):
-		distAgent.__init__(self,state_size, action_size, agent_name,C, alternative_target,UCB,UCBc,tree_horizon)
+	def __init__(self,state_size, action_values, agent_name,N=51,C = 0,alternative_target = False,UCB = False,UCBc = 1,tree_horizon = 3):
+		distAgent.__init__(self,state_size, action_values, agent_name,C, alternative_target,UCB,UCBc,tree_horizon)
 		self.V_max = 0.1
 		self.V_min = -0.15
 
@@ -199,23 +199,24 @@ class C51(distAgent):
 
 
 class IQNAgent(distAgent):
-	def __init__(self,state_size, action_size, agent_name,C, alternative_target = False,UCB=False,UCBc = 1,tree_horizon = 3):
+	def __init__(self,state_size, action_values, agent_name,C, alternative_target = False,UCB=False,UCBc = 1,tree_horizon = 3):
 		self.N = 8
 		self.N_p = 8
-		self.embedding_dim = 64
+		self.embedding_dim = 1
 		self.state_model_size_out = 8
-		self.kappa = 2 # What should this be?
+		#self.kappa = 2 # What should this be? Moved to loss fun
 		self.selected_qs = None
-		print("Sucessfully initialised")
-		super(IQNAgent,self).__init__(state_size, action_size, agent_name,C, alternative_target,UCB,UCBc,tree_horizon)
+		super(IQNAgent,self).__init__(state_size, action_values, agent_name,C, alternative_target,UCB,UCBc,tree_horizon)
 		
 	
 	# https://stackoverflow.com/questions/55445712/custom-loss-function-in-keras-based-on-the-input-data
 	@staticmethod
-	def huber_loss_quantile(self,tau):
+	def huber_loss_quantile(tau):
+		kappa = 2
 		def loss(yTrue,yPred):
 			bellman_errors = yTrue - yPred
-			return (K.abs(tau - K.to_float(bellman_errors < 0)) * huber_loss(yTrue,yPred)) / self.kappa
+			#tau = np.array(quantile_in)
+			return (K.abs(tau - K.cast(bellman_errors < 0,"float32")) * huber_loss(yTrue,yPred)) / kappa
 		return loss
 		
 
@@ -232,41 +233,40 @@ class IQNAgent(distAgent):
 		q_hidden = Dense(self.state_model_size_out, activation='relu')(quantile_in)
 
 		# Full Model
-		main_hidden1 = Multiply(q_hidden, state_hidden2)
+		main_hidden1 = Multiply()([q_hidden, state_hidden2])
 		main_hidden2 = Dense(30, activation='relu')(main_hidden1)
-		outputs = Dense(self.N, activation='linear')(hidden2)
+		outputs = Dense(self.N, activation='linear')(main_hidden1)
 		main_model = Model(inputs=(state_in,quantile_in), outputs=outputs)
 
-		main_model.compile(loss = huber_loss_quantile(quantiles_in),
+		main_model.compile(loss = self.huber_loss_quantile(quantile_in),
 						optimizer=Adam(lr=self.learning_rate))
 
 		return main_model
 
-	def predict_action(self,state,action_index,target = False):
-		quantiles_selected = np.random(self.N)
-		quantile_in = self.process_quantiles(quantiles_selected)
+	def predict_action(self,state,action_index,quantiles_selected,target = False):
 		action = self._transform_action(action_index)
 		state_action = np.append(state,action)
+		quantile_in = self.process_quantiles(quantiles_selected)
 		if self.C > 0 and target:
 			return np.add.reduce(self.target_model.predict(state_action,quantile_in))
 
 		return np.add.reduce(self.model.predict(state,embedded_qs))
 
 	# predict function could be moved to distAgent and transitioned to np
-	def predict(self,state,target = False):
+	def predict(self,state,quantiles_selected = None,target = False):
 		res = []
+		if quantiles_selected == None:
+			quantiles_selected = np.random(self.N)
 		for i in range(action_size):
-			res.append(self.predict_action(state,i,target = target))
-
-
+			res.append(self.predict_action(state,i,quantile_in,target = target))
 
 	def fit(self,state, action_index, reward, next_state, done):
 		quantiles_selected = np.random(self.N)
-		quantile_in = self.process_quantiles(quantiles_selected)
 		action = self._transform_action(action_index)
-		next_state_action = np.append(state,action)
-		predicts = self.target_model.predict(next_state_action,quantile_in)
-		
+		state_action = np.append(state,action)
+		# For Double Deep
+		next_action_index = np.argmax(self.predict(next_state,quantiles_selected = quantiles_selected))
+		target = reward + self.gamma * self.predict_action(next_state,next_action_index,quantiles_selected,target = True)
 		target_f = np.reshape(target, [1, self.N])
 		#if DEBUG:
 			#print("target_f ",target_f[action_index][0], "target ", target)

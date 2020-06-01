@@ -71,8 +71,9 @@ class simulator:
 				new_run.config.epsilon_decay = agent.epsilon_decay
 
 			if agent.agent_type == "dist":
-				new_run.config.reward_mapping = agent.reward_mapping
-				new_run.config.support_range = agent.V_max - agent.V_min
+				if type(agent).__name__ == "C51Agent":
+					new_run.config.reward_mapping = agent.reward_mapping
+					new_run.config.support_range = agent.V_max - agent.V_min
 
 
 			# Agent specifics
