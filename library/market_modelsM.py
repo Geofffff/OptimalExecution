@@ -14,9 +14,9 @@ class bs_stock:
 
 	def __init__(self, initial, drift, vol):
 		self.initial = initial
-		self.price = initial
 		self.drift = drift
 		self.vol = vol
+		self.reset()
 
 	def generate_price(self,dt,St = None):
 		if St is None:
@@ -69,6 +69,27 @@ class mean_rev_stock(bs_stock):
 		self.alpha += - self.alpha * self.xi * dt + self.beta * dt**0.5 * gauss(0,1) + jump * self.eps * gauss(0,1)
 		self.price = St * np.exp((self.drift - 0.5 * self.vol) * dt + self.vol * dt**0.5 * gauss(0,1))
 		return self.price
+
+class signal_stock(bs_stock):
+	def __init__(self, initial, vol, gamma, drift_vol):
+		self.gamma = gamma
+		self.drift_vol = drift_vol
+		super(signal_stock,self).__init__(initial, vol, 0)
+
+	def generate_price(self,dt,St = None):
+		if St is None:
+			St = self.price
+
+		# Mean reverting OU process for the signal
+		self.signal = - self.gamma * self.signal * dt + self.signal_vol * dt**0.5 * gauss(0,1)
+
+		self.price = St * np.exp((self.signal - 0.5 * self.vol ** 2) * dt + self.vol * dt**0.5 * gauss(0,1))
+		return self.price
+
+	def reset(self):
+		self.price = self.initial
+		self.signal = 0 # Always start with no signal (could improve this)
+
 
 
 class market:
