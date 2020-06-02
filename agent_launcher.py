@@ -2,8 +2,9 @@
 import numpy as np
 
 # Internal Library
-from library.market_modelsM import market, bs_stock
-from library.agents.distAgents import IQNAgent
+from library.market_modelsM import market, bs_stock, signal_stock
+from library.agents.distAgentsWIP import IQNAgent, C51Agent
+#from library.agents.distAgents import C51Agent
 import library.simulations
 
 # Define setup
@@ -16,17 +17,26 @@ params = {
 }
 state_size = 2
 action_size = len(params["action_values"])
+print("XXXXXXXXXXX STARTING HERE XXXXXXXXXXX")
 
 # Define Agents
-brian = library.agents.distAgents.IQNAgent(state_size, params["action_values"], "Isabelle",C=0, alternative_target = False,UCB=False,UCBc = 1,tree_horizon = 3)
-
+isabelle = library.agents.distAgentsWIP.IQNAgent(state_size, params["action_values"], "Isabelle",C=0, alternative_target = False,UCB=False,UCBc = 1,tree_horizon = 3)
+brian = library.agents.distAgentsWIP.C51Agent(state_size, params["action_values"], "Brian sup0_8",C=100, alternative_target = True,UCB=True,UCBc = 100,tree_horizon = 4)
+#print(brian.model.summary())
 agents = [
-    brian
+    isabelle
 ]
+
+# NOTE: Cosine basis for Isabelle results in a lot of params...
 
 # Initialise Simulator
 simple_stock = bs_stock(1,0,0.0005) # No drift, 0.0005 vol
 simple_market = market(simple_stock,num_strats = len(agents))
-my_simulator = library.simulations.simulator(simple_market,agents,params,test_name = "IQN Testing")
+my_simulator = library.simulations.simulator(simple_market,agents,params,test_name = "Support Range Test 2")
 
-my_simulator.train(500)
+my_simulator.train(20000)
+
+# Signal market
+signal_stock = signal_stock(1,0.0005,0.0005,0.0005) # initial 1, vol 0.0005, signal vol 0.0005, signal reversion 0.0005
+signal_market = market(signal_stock,num_strats = len(agents))
+signal_simulator = library.simulations.simulator(signal_market,agents,params,test_name = "Signal Testing 1")

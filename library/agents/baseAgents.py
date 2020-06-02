@@ -187,4 +187,32 @@ class randomAgent(basicAgent):
 
 class TWAPAgent(basicAgent):
 	def act(self, state):
-		return self.acti
+		return self.action
+
+class optimalSignalAgent(basicAgent):
+	def __init__(self,action, agent_name, temp_impact_coef,gamma,dt,terminal,action_values):
+		self.temp_impact_coef = temp_impact_coef
+		self.gamma = gamma
+		self.t = 0
+		self.terminal = terminal
+		self.dt = dt
+		self.action_values = action_values
+		super(optimalSignalAgent,self).__init__(action, agent_name, len(action_values))
+
+	#https://link.springer.com/article/10.1007/s00780-019-00382-7
+	def act(self, state):
+		print("Unfinished - see notes")
+		return
+		optimal_rate = - state[0][2] / (2 * self.temp_impact_coef * self.gamma) * (1 - np.exp(- self.gamma * (self.terminal - self.t)))
+		optimal_trade = optimal_rate * self.dt
+		np.argmin()
+		# ISSUE: we actually want to return the cloest action index to the optimal action
+		return 
+
+	def step(self,state):
+		self.t += dt
+
+
+
+
+## End		
