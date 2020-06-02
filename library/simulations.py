@@ -74,6 +74,8 @@ class simulator:
 				if type(agent).__name__ == "C51Agent":
 					new_run.config.reward_mapping = agent.reward_mapping
 					new_run.config.support_range = agent.V_max - agent.V_min
+				if type(agent).__name__ == "QRAgent":
+					new_run.config.n_quantiles = agent.N
 
 
 			# Agent specifics

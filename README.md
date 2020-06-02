@@ -26,10 +26,20 @@ Friday:
 - Once optimised, start working on non TWAP optimal environments [POSTPONED]
 
 Monday:
-- Testing of new cleaned up code
-- Get IQN Agent working
-- Efficiency possibilities: there are a finite (and not huge) number of states considering only the agents personal environment so some precomputation could be done?
-- Look at simulations with signal (HFT course notes)
+- Testing of new cleaned up code [DONE]
+- Get IQN Agent working [STARTED]
+- Efficiency possibilities: there are a finite (and not huge) number of states considering only the agents personal environment so some precomputation could be done? [POSTPONED]
+- Look at simulations with signal (HFT course notes) [DONE]
+
+Tuesday:
+- IQN Agent
+	- Get it working
+	- Clean up
+- Continue cleanup of learningAgent
+	- getter / setters, strip out update_params, make more efficient, doccument
+- Unit testing?
+- Get Crypto Data
+
 
 
 ### Agents
@@ -102,5 +112,13 @@ Deep reinforcement learning hands on
 ### Paul Meeting 3
 - Evaluation (run for 100 steps, evaluate for 40)
 - Takes many episodes to converge (if ever) and limited data available
+- C51
+- QRDQN
+- Wandb and performance
+- Testing on data
+- Temporary impact
+
+
+
 
 

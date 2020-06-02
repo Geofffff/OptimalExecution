@@ -16,26 +16,27 @@ import random
 random.seed(84)
 
 class replayMemory:
-    def __init__(self, max_size):
-        self.buffer = [None] * max_size
-        self.max_size = max_size
-        self.index = 0
-        self.size = 0
+	'''Container for recalling agents interactions with the environment'''
+	def __init__(self, max_size):
+		self.buffer = [None] * max_size
+		self.max_size = max_size
+		self.index = 0
+		self.size = 0
 
-    def append(self, obj):
-        self.buffer[self.index] = obj
-        self.size = min(self.size + 1, self.max_size)
-        self.index = (self.index + 1) % self.max_size
+	def append(self, obj):
+		self.buffer[self.index] = obj
+		self.size = min(self.size + 1, self.max_size)
+		self.index = (self.index + 1) % self.max_size
 
-    def sample(self, batch_size):
-        indices = random.sample(range(self.size), batch_size)
-        return [(index,self.buffer[index]) for index in indices]
+	def sample(self, batch_size):
+		indices = random.sample(range(self.size), batch_size)
+		return [(index,self.buffer[index]) for index in indices]
 
-    def __len__(self):
-        return self.size
+	def __len__(self):
+		return self.size
 
-    def __getitem__(self, index):
-        return self.buffer[index]
+	def __getitem__(self, index):
+		return self.buffer[index]
 
 class basicAgent:
 	'''Base class for a deterministic agent'''

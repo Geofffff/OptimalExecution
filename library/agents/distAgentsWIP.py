@@ -58,7 +58,9 @@ class distAgent(learningAgent):
 		'''Non agent specific preprocessing of the last n stock prices'''
 		# Should be moved to learning agent
 
-
+	# 'Virtual' Function
+	def variance(self,state):
+		assert False, "Variance must be overwritten by child"
 
 class C51Agent(distAgent):
 
@@ -268,16 +270,13 @@ class CosineBasisLayer(Layer):
 		embedded_inputs = K.reshape(embedded_inputs,(1,self.units,self.input_dim))
 
 		res = K.dot(inputs, self.w) #+ self.b
-		print("XXXXXXXXXXX",res)
 		res = K.sum(res, axis = 1) + self.b
-		print("XXXXXXXXXXX",res)
 		return ReLU()(res)
 
-
-
-class IQNAgent(distAgent):
+# Temporarily swtiched to QRAgent
+class QRAgent(distAgent):
 	def __init__(self,state_size, action_values, agent_name,C, alternative_target = False,UCB=False,UCBc = 1,tree_horizon = 3):
-		self.N = 8
+		self.N = 3
 		self.N_p = 8
 		self.embedding_dim = 3
 		self.state_model_size_out = 8
@@ -287,22 +286,24 @@ class IQNAgent(distAgent):
 		self.embedded_range = np.arange(self.embedding_dim) + 1 # Note Chainer and dopamine implementation
 		self.embedded_range.shape = (self.embedding_dim,1)
 
-		self.quantiles_selected = np.random.rand(self.N)
+		# Temporarily uniformly parition [0,1] for the quantiles
+		self.quantiles_selected = np.arange(1,self.N + 1) / (self.N+1) # np.random.rand(self.N) This should be a random partition of [0,1]
+		#print(self.quantiles_selected)
+		self.qi = 1 / (self.N)#self.quantiles_selected[1] - self.quantiles_selected[0] # WARNING: SHOULD BE DYNAMIC
 		self.quantiles_selected.shape = (1,len(self.quantiles_selected))
 		self.embedded_quantiles = np.cos(np.dot(self.embedded_range, self.quantiles_selected) * np.pi)
 		self.embedded_quantiles.shape = (1,self.embedding_dim,self.N)
-		self.kappa = 2
+		self.kappa = 1
 		super(IQNAgent,self).__init__(state_size, action_values, agent_name,C, alternative_target,UCB,UCBc,tree_horizon)
-		
-
-		
+			
 	# https://stackoverflow.com/questions/55445712/custom-loss-function-in-keras-based-on-the-input-data
 	@staticmethod
 	def huber_loss_quantile(tau,kappa):
 		#kappa = 2
 		def loss(yTrue,yPred):
-			bellman_errors = yTrue - yPred
+			bellman_errors =   yPred - yTrue
 			#tau = np.array(quantile_in)
+			#print("loss",(K.abs(tau - K.cast(bellman_errors < 0,"float32")) * huber_loss(yTrue,yPred)) / kappa)
 			return (K.abs(tau - K.cast(bellman_errors < 0,"float32")) * huber_loss(yTrue,yPred)) / kappa
 		return loss
 		
@@ -325,9 +326,9 @@ class IQNAgent(distAgent):
 		#quantile_col = ReLU()(quantile_col)
 		
 		# Full Model
-		main_hidden1 = Multiply()([cosine_layer, state_hidden2])
-		main_hidden2 = Dense(30, activation='relu')(main_hidden1)
-		outputs = Dense(self.N, activation='linear')(main_hidden1)
+		#main_hidden1 = Multiply()([cosine_layer, state_hidden2])
+		main_hidden2 = Dense(30, activation='relu')(state_hidden2) #main_hidden1
+		outputs = Dense(self.N, activation='linear')(main_hidden2)
 		main_model = Model(inputs=(state_in,quantile_in), outputs=outputs)
 
 		main_model.compile(loss = self.huber_loss_quantile(self.quantiles_selected,self.kappa),
@@ -338,22 +339,36 @@ class IQNAgent(distAgent):
 		main_model.compile(loss = self.huber_loss_quantile(quantiles_selected,self.kappa),
 						optimizer=Adam(lr=self.learning_rate))
 		'''
-		print(main_model.summary())
 		return main_model
 
 	def predict_action(self,state,action_index,quantiles_selected,target = False):
-		print("quantiles",self.quantiles_selected)
-		print(np.dot(self.embedded_range, self.quantiles_selected))
+		#print("quantiles",self.quantiles_selected)
+		#print(np.dot(self.embedded_range, self.quantiles_selected))
+		#print("action index",action_index)
 		action = self._transform_action(action_index)
 		state_action = np.append(state,action)
 		state_action.shape = (1,len(state_action))
 		#quantile_in = self.process_quantiles(quantiles_selected)
-		print("state action",state_action,"embedded_quantiles",self.embedded_quantiles)
-		print(self.model.summary())
+		#print("state action",state_action,"embedded_quantiles",self.embedded_quantiles)
+		#print(self.model.summary())
 		if self.C > 0 and target:
-			return np.add.reduce(self.target_model.predict([state_action,self.quantiles_selected]))
+			return np.add.reduce(self.quantiles_selected * self.target_model.predict([state_action,self.quantiles_selected]),1)
+		#print("pre reduce predict_action output",np.add.reduce(self.model.predict([state_action,self.quantiles_selected]),1))
+		#print("predict_action output",self.model.predict([state_action,self.quantiles_selected]))
 
-		return np.add.reduce(self.model.predict([state_action,self.quantiles_selected]))
+		return np.add.reduce(self.qi * self.model.predict([state_action,self.quantiles_selected]),1)
+
+	# This function needs to be rolled into predict_action
+	def predict_quantiles(self,state,action_index,quantiles_selected,target = False):
+		action = self._transform_action(action_index)
+		state_action = np.append(state,action)
+		if DEBUG:
+			print("predict state action", state_action)
+		state_action.shape = (1,len(state_action))
+		if self.C > 0 and target:
+			return self.target_model.predict([state_action,self.quantiles_selected])
+		return self.model.predict([state_action,self.quantiles_selected])
+
 
 	# predict function could be moved to distAgent and transitioned to np
 	def predict(self,state,quantiles_selected = None,target = False):
@@ -363,20 +378,32 @@ class IQNAgent(distAgent):
 		for i in range(self.action_size):
 			res.append(self.predict_action(state,i,quantiles_selected,target = target))
 
+		res = np.array(res)
+		res.shape = (1,len(res))
+		return res
+
 	def fit(self,state, action_index, reward, next_state, done,mem_index = -1):
 		quantiles_selected = np.random.uniform(self.N)
 		action = self._transform_action(action_index)
 		state_action = np.append(state,action)
+		if DEBUG:
+			print("State Action",state_action)
+		state_action.shape = (1,len(state_action))
 		# For Double Deep
-		next_action_index = np.argmax(self.predict(next_state,quantiles_selected = quantiles_selected))
-		target = reward + self.gamma * self.predict_action(next_state,next_action_index,quantiles_selected,target = True)
+		#print("predictions",self.predict(next_state,quantiles_selected = quantiles_selected))
+		next_action_index = np.argmax(self.predict(next_state,quantiles_selected = quantiles_selected)[0])
+		if not done:
+			target = reward + self.gamma * self.predict_quantiles(next_state,next_action_index,quantiles_selected,target = True)
+		else:
+			target = np.ones(self.N) * reward
+		if DEBUG:
+			print("Target", target)
+		#print("target shape",target.shape)
 		target_f = np.reshape(target, [1, self.N])
-		#if DEBUG:
-			#print("target_f ",target_f[action_index][0], "target ", target)
-		#if DEBUG:
-		#print("fitting state:", state,",action:",action_index,",reward:",reward, " delta target_f ",target_f[action_index][0]-debug_target_f,"done:",done)
+		#print("predicted", self.predict_quantiles(state,action_index,self.quantiles_selected,target = False),"target",target_f)
+		#print("loss", self.huber_loss_quantile(self.quantiles_selected,1)(target_f,self.predict_quantiles(state,action_index,self.quantiles_selected,target = False)))
 		
-		self.model.fit(state_action, target_f,epochs=1, verbose=0)
+		self.model.fit([state_action,self.quantiles_selected], target_f,epochs=1, verbose=0)
 
 
 	def process_quantiles(self,quantiles_selected):
@@ -385,6 +412,7 @@ class IQNAgent(distAgent):
 
 # Testing the code
 if __name__ == "__main__":
+	'''
 	myAgent = distAgent(5,"TonyTester",N=5)
 	state = [-0.8,0.8] 
 	state = np.reshape(state, [1, 2])
@@ -393,7 +421,27 @@ if __name__ == "__main__":
 	next_state = [-1,0.9] 
 	next_state = np.reshape(state, [1, 2])
 	myAgent.epsilon_min = 0.01
-	
+	'''
+	myAgent = IQNAgent(2,[0.1,0.5,1.0],"TonyTester",C=0)
+	DEBUG = True
+	myAgent.learning_rate = 0.0001
+	state = [-1,1] 
+	state = np.reshape(state, [1, 2])
+	state1 = [-0.5,0.9] 
+	state1 = np.reshape(state1, [1, 2])
+	next_state = [-1,1] 
+	next_state = np.reshape(state, [1, 2])
+	print("state ", state,"predict ",myAgent.predict(state) ,"quantiles(",0,") ", myAgent.predict_quantiles(state,0,myAgent.quantiles_selected))
+	for i in range(200):
+		myAgent.fit(state,0,0.1,next_state,True)
+		myAgent.fit(state,2,-0.2,next_state,True)
+		myAgent.fit(state,0,0.5,next_state,True)
+		myAgent.fit(state1,0,-0.5,next_state,False)
+		myAgent.fit(state1,2,0.5,next_state,False)
+	print("state ", state,"predict ",myAgent.predict(state) ,"quantiles(",0,") ", myAgent.predict_quantiles(state,0,myAgent.quantiles_selected),"quantiles(",2,") ", myAgent.predict_quantiles(state,2,myAgent.quantiles_selected))
+	print("state ", state1,"predict ",myAgent.predict(state1) ,"quantiles(",0,") ", myAgent.predict_quantiles(state1,0,myAgent.quantiles_selected),"quantiles(",2,") ", myAgent.predict_quantiles(state1,2,myAgent.quantiles_selected))
+
+
 	if False:
 		#print(bound(Tz(1),0,10))
 		#print("test_pred ", predict_act(state,1))
@@ -422,7 +470,7 @@ if __name__ == "__main__":
 		print(myAgent.act(state))
 		print("predict change ",myAgent.predict(state)  ,"probs ")#, probs(state,6))
 
-	if True:
+	if False:
 		print("Tz:",myAgent.Tz(state,0.1))
 		print("Next State Value:",myAgent.predict(next_state)[0])
 		my_next_action = np.argmax(myAgent.predict(next_state)[0])
