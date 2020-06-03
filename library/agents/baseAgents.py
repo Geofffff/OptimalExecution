@@ -48,6 +48,9 @@ class basicAgent:
 		self.epsilon_decay = 0
 		self.epsilon = 1
 		self.action_size = action_size
+		self.agent_type = "basic"
+		self.predicts = np.zeros(action_size)
+		self.predicts.shape = (1,action_size)
 		
 	def remember(self, state, action, reward, next_state, done):
 		pass
@@ -65,43 +68,70 @@ class basicAgent:
 	# 'Virtual' function
 	def predict(self, state):
 		#raise "predict() must be overriden by the child class"
-		return 0
+		return self.predicts
 
 	def update_paramaters(self,epsilon = 1.0,epsilon_decay = 0.9992,gamma = 1.0, epsilon_min = 0.01):
 		pass
 
 class learningAgent:
-	def __init__(self, state_size, action_size, agent_name,C=0, alternative_target=False,agent_type="Undefined",tree_horizon=1):
-		# Default Params: state_size, action_size
-		self.agent_type = agent_type
-		self.agent_name = agent_name
+	'''Base class for trainable agents'''
+	def __init__(self, 
+		state_size, 
+		action_size, 
+		agent_name,
+		C=0, 
+		alternative_target=False,
+		agent_type="Undefined",
+		tree_horizon=1):
+		
+		# Agent identification
+		self._agent_type = agent_type
+		self._agent_name = agent_name
+
+		# Input sizes
 		self.state_size = state_size
 		self.action_size = action_size
-		# double-ended queue; acts like list, but elements can be added/removed from either end:
+		# TODO: Expand for market data
+
+		# Replay buffer
 		self.replay_buffer_size = 3000
 		self.memory = replayMemory(max_size=self.replay_buffer_size)
-		self.n_since_updated = 0
+
+		# Epsilon Greedy
+		self.epsilon_greedy = True # Can be overridden by the subclass
 		self.geometric_decay = True
+		self.epsilon_min = 0.01
+		self.epsilon_decay = 0.9992
+		self.epsilon = 1
+
+		# Target Network
 		self.alternative_target = alternative_target
 		self.C = C
+		
+		# Other parameters
 		self.tree_n = tree_horizon
-		self.epsilon_min = 0.01
-		
-		self.update_paramaters() # to defaults
-		
-		# rate at which NN adjusts models parameters via SGD to reduce cost:
 		self.learning_rate = 0.001
-		#self.model = self._build_model() # private method 
-
+		self.gamma = gamma
+		
 		self.model = self._build_model()
+
+		# Target network
 		self.n_since_updated = 0
 		if self.C > 0:
 			self.target_model = clone_model(self.model)
 
 			if alternative_target:
-				#self.prior_weights = deque(maxlen = C)
 				self.prior_weights = self.model.get_weights()
+
+	@property
+	def agent_name(self):
+		return self._agent_name
+
+	@property
+	def agent_type(self):
+		return self._agent_type
 	
+
 	def remember(self, state, action, reward, next_state, done):
 		'''Record the current environment for later replay'''
 		self.memory.append((state, action, reward, next_state, done))
@@ -116,69 +146,52 @@ class learningAgent:
 		
 
 	def act(self, state):
-		# random action
+		'''Choose action based on state'''
+		# Note this applies only to epsilon greedy algorithms
+
+		# Epsilon case
 		if np.random.rand() <= self.epsilon:
 			rand_act = random.randrange(self.action_size)
-			return rand_act#random.randrange(self.action_size)
-		# Predict return
+			return rand_act
+		
+		# Greedy case
 		act_values = self.predict(state)
-		#print("act_values ",act_values)
-		# Maximise return
 		return np.argmax(act_values[0])
 
 	def replay(self, batch_size):
 		'''Train with experiences sampled from memory'''
-		# sample a minibatch from memory
+		
 		minibatch = self.memory.sample(batch_size)
 		
 		for mem_index, (state, action, reward, next_state, done) in minibatch:
 			self.fit(state, action, reward, next_state, done,mem_index)
-		
-		if self.epsilon > self.epsilon_min: 
-			if self.geometric_decay:
-				self.epsilon *= self.epsilon_decay
-			else:
-				self.epsilon -= self.epsilon_decay#*= self.epsilon_decay
 
 	def step(self):
-		if self.UCB:
-			self.t += 1 # For UCB method
-		# Implementation described in Google Paper
-		if not self.alternative_target:
-			if self.C > 0:
-				self.n_since_updated += 1
-				if self.n_since_updated >= self.C: # Update the target network if C steps have passed
-					if self.n_since_updated > self.C:
-						print("target network not updated on time")
-					#print("Debug: target network updated")
-					self.n_since_updated = 0
-					#self.target_model = clone_model(self.model)
-					self.target_model.set_weights(self.model.get_weights())
-					# Alternative Implementation with permenant lag
-		else:
-			if self.C > 0:
-				self.n_since_updated += 1
-				if self.n_since_updated >= self.C:
-					self.n_since_updated = 0
+		'''Agent training update'''
+		if self.epsilon_greedy:
+			if self.epsilon > self.epsilon_min: 
+				if self.geometric_decay:
+					self.epsilon *= self.epsilon_decay
+				else:
+					self.epsilon -= self.epsilon_decay
+
+		# Target network
+		if self.C > 0:
+			self.n_since_updated += 1
+
+			if self.n_since_updated >= self.C:
+				self.n_since_updated = 0
+				if self.alternative_target:
 					self.target_model.set_weights(self.prior_weights)
 					self.prior_weights = self.model.get_weights()
-				#if len(self.prior_weights) >= self.C: # Update the target network if at least C weights in memory
-					#self.target_model.set_weights(self.prior_weights.pop())
-					#print("DEBUG: prior weights: ",self.prior_weights)
-				#self.prior_weights.appendleft(self.model.get_weights())
+				else:
+					self.target_model.set_weights(self.model.get_weights())
 
 	def load(self, file_name):
 		self.model.load_weights(file_name)
 
 	def save(self, file_name):
 		self.model.save_weights(file_name)
-
-	def update_paramaters(self,epsilon = 1.0,epsilon_decay = 0.9992,gamma = 1, epsilon_min = 0.01):
-		# No discounting but this can be enabled
-		self.gamma = gamma
-		self.epsilon = epsilon
-		self.epsilon_decay = epsilon_decay
-		#self.epsilon_min = epsilon_min
 
 class randomAgent(basicAgent):
 	def act(self,state):

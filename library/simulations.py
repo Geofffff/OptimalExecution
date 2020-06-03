@@ -57,18 +57,20 @@ class simulator:
 			new_run.config.update({"num_trades": self.num_steps,
 			 "batch_size": self.batch_size,
 			 "action_size": len(self.possible_actions),
-			 "target_lag": agent.C,
-			 "alt_target": agent.alternative_target,
-			 "tree_horizon": agent.tree_n,
-			 "buffer_size": agent.replay_buffer_size,
-			 "learning_rate": agent.learning_rate,
 			 "state_size": self.env.state_size
 			 })
-			if agent.UCB:
-				new_run.config.UCBc = agent.c
-			else:
-				new_run.config.epsilon_min = agent.epsilon_min
-				new_run.config.epsilon_decay = agent.epsilon_decay
+			if agent.agent_type != "basic":
+				new_run.config.target_lag: agent.C
+				new_run.config.alt_target: agent.alternative_target
+				new_run.config.tree_horizon: agent.tree_n
+				new_run.config.buffer_size: agent.replay_buffer_size
+				new_run.config.learning_rate: agent.learning_rate
+				
+				if agent.UCB:
+					new_run.config.UCBc = agent.c
+				else:
+					new_run.config.epsilon_min = agent.epsilon_min
+					new_run.config.epsilon_decay = agent.epsilon_decay
 
 			if agent.agent_type == "dist":
 				if type(agent).__name__ == "C51Agent":

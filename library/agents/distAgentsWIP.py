@@ -39,9 +39,13 @@ class distAgent(learningAgent):
 	def act(self, state):
 		# No eps greedy required for 'UCB' type update
 		if self.UCB:
-			self.ct = self.c * np.sqrt(np.log(self.t) / self.t)
-			act_values = self.predict(state)
-			return np.argmax(act_values[0] + self.ct * np.sqrt(self.variance(state)))
+			if self.t < 10:
+				act = random.randrange(self.action_size)
+			else:
+				self.ct = self.c * np.sqrt(np.log(self.t) / self.t)
+				act_values = self.predict(state)
+				act = np.argmax(act_values[0] + self.ct * np.sqrt(self.variance(state)))
+			return act
 		# random action
 		if np.random.rand() <= self.epsilon:
 			rand_act = random.randrange(self.action_size)
@@ -192,8 +196,13 @@ class C51Agent(distAgent):
 	def variance(self,state,target = False):
 		res = self.vvar(state,range(len(self.action_values)),target = target) - np.power(self.predict(state,target),2)
 		if not all(np.round(res[0],5) >= 0):
+			print("WARNING")
 			print(res)
-		assert all(np.round(res[0],5) >= 0)
+			print(np.power(self.predict(state,target),2))
+			print(self.t)
+			print("mapped_z",self.mapped_z(state))
+			print("probs0",self.probs(state,0))
+		#assert all(np.round(res[0],5) >= 0)
 		return np.max(res,0)#np.reshape(res, [1, res.shape[0]])
 
 	def var_act(self,state,action_index,target = False):

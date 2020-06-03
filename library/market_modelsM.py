@@ -117,7 +117,9 @@ class real_stock:
 		else:
 			self.data_index = randint(0,len(self.df) - self.n_steps)
 		self.in_period_index = 0
+		#print(self.data_index,len(self.df))
 		self.initial = self.df[self.data_index]
+
 
 	def _scale_price(self,initial,price):
 		pass

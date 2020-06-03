@@ -38,7 +38,15 @@ Tuesday:
 - Continue cleanup of learningAgent
 	- getter / setters, strip out update_params, make more efficient, doccument
 - Unit testing?
-- Get Crypto Data
+- Get Crypto Data [DELAYED]
+
+Wednesday
+- Test with real data
+- Code cleanup
+	- QR Agent needs work
+	- General cleanup
+	- Unittesting
+
 
 
 

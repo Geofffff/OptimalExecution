@@ -4,6 +4,7 @@ import numpy as np
 # Internal Library
 from library.market_modelsM import market, bs_stock, signal_stock, real_stock
 from library.agents.distAgentsWIP import QRAgent, C51Agent
+from library.agents.baseAgents import TWAPAgent
 #from library.agents.distAgents import C51Agent
 import library.simulations
 import pandas as pd
@@ -22,6 +23,7 @@ action_size = len(params["action_values"])
 # Define Agents
 quentin = library.agents.distAgentsWIP.QRAgent(state_size, params["action_values"], "Quentin",C=0, alternative_target = False,UCB=False,UCBc = 1,tree_horizon = 1)
 brian = library.agents.distAgentsWIP.C51Agent(state_size, params["action_values"], "Brian sup0_8",C=100, alternative_target = True,UCB=True,UCBc = 100,tree_horizon = 4)
+tim = library.agents.baseAgents.TWAPAgent(2,"TWAP_APPL", len(params["action_values"]))
 #print(brian.model.summary())
 agents = [
     brian
@@ -41,13 +43,13 @@ my_simulator = library.simulations.simulator(simple_market,agents,params,test_na
 # Retrieve data
 df = pd.read_csv("data/2020_05_04_SPX_yFinance") # Load .csv
 appl_data = df["Adj Close.3"][2:]
-appl_data.to_numpy() # Extract APPL as np array
+appl_data = appl_data.values # Extract APPL as np array
 appl_data = appl_data.astype(float) # convert any rouge strings to floats
-print("appl_data length",len(appl_data))
+print("appl_data head",appl_data[:5])
 appl_stock = real_stock(appl_data,recycle = True) # create stock - traded once per minute and recycled
 appl_market = market(appl_stock,num_strats = len(agents))
 my_simulator = library.simulations.simulator(appl_market,agents,params,test_name = "Apple Stock Testing")
-my_simulator.train(2000)
+my_simulator.train(6000)
 
 # Signal market
 '''
