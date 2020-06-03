@@ -222,9 +222,9 @@ class simulator:
 					#plt.pause(0.0001)
 					#plt.draw()
 		if not evaluate:
-			self.show_stats(trained_from = current_training_step) 
-			for i, d in enumerate(agent_reward_dists):
-				self.show_dist(self.dist_agent_for_plot,d,figure = i + 1)
+			#self.show_stats(trained_from = current_training_step) 
+			#for i, d in enumerate(agent_reward_dists):
+				#self.show_dist(self.dist_agent_for_plot,d,figure = i + 1)
 			wandb.join()
 		else:
 			self.eval_rewards_mean = np.vstack((self.eval_rewards_mean,self.eval_rewards / self.eval_window))

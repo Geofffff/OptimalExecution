@@ -1,2 +1,3 @@
 wandb/
 .DS_Store
+data/

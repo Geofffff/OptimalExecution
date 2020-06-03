@@ -2,14 +2,15 @@
 import numpy as np
 
 # Internal Library
-from library.market_modelsM import market, bs_stock, signal_stock
+from library.market_modelsM import market, bs_stock, signal_stock, real_stock
 from library.agents.distAgentsWIP import QRAgent, C51Agent
 #from library.agents.distAgents import C51Agent
 import library.simulations
+import pandas as pd
 
 # Define setup
 params = {
-    "terminal" : 1,
+    "terminal" : 10,
     "num_trades" : 10,
     "position" : 10,
     "batch_size" : 32,
@@ -23,17 +24,30 @@ quentin = library.agents.distAgentsWIP.QRAgent(state_size, params["action_values
 brian = library.agents.distAgentsWIP.C51Agent(state_size, params["action_values"], "Brian sup0_8",C=100, alternative_target = True,UCB=True,UCBc = 100,tree_horizon = 4)
 #print(brian.model.summary())
 agents = [
-    quentin
+    brian
 ]
 
 # NOTE: Cosine basis for Isabelle results in a lot of params...
 
 # Initialise Simulator
+# BS market
+'''
 simple_stock = bs_stock(1,0,0.0005) # No drift, 0.0005 vol
 simple_market = market(simple_stock,num_strats = len(agents))
 my_simulator = library.simulations.simulator(simple_market,agents,params,test_name = "QR Testing")
+'''
 
-my_simulator.train(8000)
+# real stock testing
+# Retrieve data
+df = pd.read_csv("data/2020_05_04_SPX_yFinance") # Load .csv
+appl_data = df["Adj Close.3"][2:]
+appl_data.to_numpy() # Extract APPL as np array
+appl_data = appl_data.astype(float) # convert any rouge strings to floats
+print("appl_data length",len(appl_data))
+appl_stock = real_stock(appl_data,recycle = True) # create stock - traded once per minute and recycled
+appl_market = market(appl_stock,num_strats = len(agents))
+my_simulator = library.simulations.simulator(appl_market,agents,params,test_name = "Apple Stock Testing")
+my_simulator.train(2000)
 
 # Signal market
 '''

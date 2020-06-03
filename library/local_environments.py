@@ -3,9 +3,10 @@ import numpy as np
 
 class agent_environmentM:
 
-    def __init__(self, market, position,num_steps,terminal,action_values_pct,n_strats):
+    def __init__(self, market, position,num_steps,terminal,action_values_pct,n_strats,market_data = False):
         self.m = market
-        self.initial = np.ones(n_strats) * position
+        self.market_data = market_data
+        self.initial_position = np.ones(n_strats) * position
         self.n_strats = n_strats
         self.reset()
         self.terminal = terminal
@@ -14,7 +15,7 @@ class agent_environmentM:
         self.action_values = np.array(action_values_pct) * position 
         self.num_actions = len(self.action_values)
         self.state_size = 2
-        self.reward_scaling = self.initial / (num_steps)
+        #self.reward_scaling = self.initial / (num_steps)
 
 
     def sell(self,volumes):
@@ -27,7 +28,7 @@ class agent_environmentM:
         return returns
 
     def reset(self):
-        self.position = self.initial.copy()
+        self.position = self.initial_position.copy()
         self.cash = np.zeros(self.n_strats)
         self.time = 0
         self.m.reset()
@@ -41,8 +42,11 @@ class agent_environmentM:
 
         times = np.ones(self.n_strats) * 2 * self.time - 1
         # TODO: Store state as a seprate variable
+        res = np.vstack((2 * self.position/self.initial_position[0] - 1,times)) # Assuming initial position always the same
+        if self.market_data:
+            res = np.vstack((res,m.state))
         
-        return np.vstack((2 * self.position/self.initial[0] - 1,times)).T # Assuming initial position always the same
+        return res.T
     
     def step(self,actions):
         self.progress(self.step_size)
@@ -67,5 +71,6 @@ class agent_environmentM:
 
 
     def scale_rewards(self,rewards):
-        return rewards / self.initial
+        #print(type(self.m.stock.initial),self.m.stock.initial)
+        return rewards / (self.initial_position[0] * self.m.stock.initial)
 

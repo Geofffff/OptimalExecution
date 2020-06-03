@@ -1,4 +1,4 @@
-from random import gauss, sample
+from random import gauss, randint, shuffle
 import numpy as np
 np.random.seed(84)
 
@@ -99,27 +99,36 @@ class real_stock:
 		if self.recycle:
 			pass
 		else:
-			print("Assuming 1M frequency",if recycle "with" else "without","recycling")
-			self.final_period = floor(len(data) / self.terminal)
+			print("Assuming 1M frequency",("with" if recycle else "without"),"recycling")
+			self.final_period = floor(len(data) / self.n_steps)
 			self.available_periods = range(self.final_period)
 			shuffle(self.available_periods)
-			self.period_index = -1
-		
+
+		self.period_index = -1
 		self.reset()
 
 		self.price = self.df[self.data_index] # This will need changing with the format of input
 
 	def reset(self):
-		if self.recycle:
+		if not self.recycle:
 			self.period_index += 1
-			assert self.period_index <= self.terminal, "Dataset finished"
+			assert self.period_index <= self.final_period, "Dataset finished"
 			self.data_index = self.period_index * n_steps
 		else:
-			self.data_index = random.randint(len(data) - self.n_steps)
+			self.data_index = randint(0,len(self.df) - self.n_steps)
+		self.in_period_index = 0
+		self.initial = self.df[self.data_index]
 
 	def _scale_price(self,initial,price):
 		pass
 
+	def generate_price(self,dt):
+		assert dt == 1, "Currently only dt = 1 supported for real stocks"
+		self.data_index += 1
+		self.in_period_index += 1
+		#print("period_index",self.period_index,"data_index",self.data_index)
+		assert self.in_period_index <= self.n_steps, "Stock price requested outside of period"
+		return self.df[self.data_index]
 
 
 
@@ -139,7 +148,6 @@ class market:
 		ret = (self.stock.price * self.price_adjust - np.vectorize(self.f)(volume/dt) - 0.5 * self.spread) * volume 
 		return ret
 
-
 	def g(self,v):
 		return v * 0.0005
     
@@ -157,4 +165,6 @@ class market:
 		self.stock.generate_price(dt)
 
 	def state(self):
-		return (self.stock.price)
+		transformed_price = self.stock.price / self.stock.initial - 1 # Needs work
+		return (transformed_price * self.price_adjust)
+
