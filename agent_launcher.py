@@ -3,7 +3,7 @@ import numpy as np
 
 # Internal Library
 from library.market_modelsM import market, bs_stock, signal_stock
-from library.agents.distAgentsWIP import IQNAgent, C51Agent
+from library.agents.distAgentsWIP import QRAgent, C51Agent
 #from library.agents.distAgents import C51Agent
 import library.simulations
 
@@ -23,7 +23,7 @@ quentin = library.agents.distAgentsWIP.QRAgent(state_size, params["action_values
 brian = library.agents.distAgentsWIP.C51Agent(state_size, params["action_values"], "Brian sup0_8",C=100, alternative_target = True,UCB=True,UCBc = 100,tree_horizon = 4)
 #print(brian.model.summary())
 agents = [
-    isabelle
+    quentin
 ]
 
 # NOTE: Cosine basis for Isabelle results in a lot of params...
@@ -31,7 +31,7 @@ agents = [
 # Initialise Simulator
 simple_stock = bs_stock(1,0,0.0005) # No drift, 0.0005 vol
 simple_market = market(simple_stock,num_strats = len(agents))
-my_simulator = library.simulations.simulator(simple_market,agents,params,test_name = "IQN Testing")
+my_simulator = library.simulations.simulator(simple_market,agents,params,test_name = "QR Testing")
 
 my_simulator.train(8000)
 

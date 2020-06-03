@@ -1,4 +1,4 @@
-from random import gauss
+from random import gauss, sample
 import numpy as np
 np.random.seed(84)
 
@@ -89,6 +89,37 @@ class signal_stock(bs_stock):
 	def reset(self):
 		self.price = self.initial
 		self.signal = 0 # Always start with no signal (could improve this)
+
+class real_stock:
+	def __init__(self,data,n_steps = 60, recycle = False):
+		self.recycle = recycle
+		self.n_steps = n_steps
+		self.df = data
+
+		if self.recycle:
+			pass
+		else:
+			print("Assuming 1M frequency",if recycle "with" else "without","recycling")
+			self.final_period = floor(len(data) / self.terminal)
+			self.available_periods = range(self.final_period)
+			shuffle(self.available_periods)
+			self.period_index = -1
+		
+		self.reset()
+
+		self.price = self.df[self.data_index] # This will need changing with the format of input
+
+	def reset(self):
+		if self.recycle:
+			self.period_index += 1
+			assert self.period_index <= self.terminal, "Dataset finished"
+			self.data_index = self.period_index * n_steps
+		else:
+			self.data_index = random.randint(len(data) - self.n_steps)
+
+	def _scale_price(self,initial,price):
+		pass
+
 
 
 

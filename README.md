@@ -104,6 +104,12 @@ Tuesday:
 	- Reuse training data
 	- prioritised sweeping
 
+### Data
+- real_stock
+	- option of reusing data or not (random sampling with replacement or without)
+		- if reuse: start at random time
+		- if not: split the data into n 1hr intervals
+
 ### Questions for Paul
 
 
