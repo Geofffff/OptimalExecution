@@ -47,8 +47,13 @@ Wednesday
 	- General cleanup
 	- Unittesting?
 
+Thursday & Friday
+- Writeup
+- Fixes for working with real data
 
-
+Saturday
+- Start work on Stock processing unit
+- Start cleanup of distAgent, C51 and QR Agent
 
 ### Agents
 - The build model function should probably be broken out of the learning agents
