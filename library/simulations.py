@@ -164,7 +164,8 @@ class simulator:
 		
 		# Set up the agents:
 		for i ,agent in enumerate(self.agents):
-			agent.update_paramaters(epsilon = epsilon[i], epsilon_decay = epsilon_decay[i])
+			agent.epsilon = epsilon[i]
+			agent.epsilon_decay = epsilon_decay[i]
 			
 		# Setup action list
 		actions = [-1] * self.n_agents
@@ -308,7 +309,8 @@ class simulator:
 		self.train(n_episodes = n_episodes, epsilon = epsilon, show_details = False,evaluate = True)
 		# Return agent epsilons to their original values:
 		for i, agent in enumerate(self.agents):
-			agent.update_paramaters(epsilon = epsilon_old[i],epsilon_decay = epsilon_decay_old[i])
+			agent.epsilon = epsilon_old[i]
+			agent.epsilon_decay = epsilon_decay_old[i]
 
 		if show_stats:
 			start_iteration = len(self.eval_rewards)

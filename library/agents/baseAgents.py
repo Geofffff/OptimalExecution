@@ -16,7 +16,7 @@ import random
 random.seed(84)
 
 class replayMemory:
-	'''Container for recalling agents interactions with the environment'''
+	'''Container for recalling an agents interactions with the environment'''
 	def __init__(self, max_size):
 		self.buffer = [None] * max_size
 		self.max_size = max_size
@@ -37,6 +37,15 @@ class replayMemory:
 
 	def __getitem__(self, index):
 		return self.buffer[index]
+
+class stockProcessingNetwork(Model):
+	'''Network for preprocessing of stock prices'''
+	def __init__(self,depth,units,input_dim,output_dim):
+		super(stockProcessingNetwork,self).__init__()
+		pass
+
+	def call(self,inputs):
+		pass
 
 class basicAgent:
 	'''Base class for a deterministic agent'''
@@ -111,7 +120,7 @@ class learningAgent:
 		# Other parameters
 		self.tree_n = tree_horizon
 		self.learning_rate = 0.001
-		self.gamma = gamma
+		self.gamma = 1
 		
 		self.model = self._build_model()
 

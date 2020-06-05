@@ -107,7 +107,7 @@ class real_stock:
 		self.period_index = -1
 		self.reset()
 
-		self.price = self.df[self.data_index] # This will need changing with the format of input
+		#self.df[self.data_index] # This will need changing with the format of input
 
 	def reset(self):
 		if not self.recycle:
@@ -119,6 +119,7 @@ class real_stock:
 		self.in_period_index = 0
 		#print(self.data_index,len(self.df))
 		self.initial = self.df[self.data_index]
+		self.price = 1
 
 
 	def _scale_price(self,initial,price):
@@ -128,9 +129,15 @@ class real_stock:
 		assert dt == 1, "Currently only dt = 1 supported for real stocks"
 		self.data_index += 1
 		self.in_period_index += 1
+		self.price = self.df[self.data_index] / self.initial
 		#print("period_index",self.period_index,"data_index",self.data_index)
 		assert self.in_period_index <= self.n_steps, "Stock price requested outside of period"
-		return self.df[self.data_index]
+		
+		# WARNING: For now we return a scaled price (scaled by initial price at the start of every episode)
+		error = np.isnan(self.price)
+		assert not error, "Price must be a finite real number"
+
+		return self.price
 
 
 
@@ -157,7 +164,10 @@ class market:
 		return np.exp(-self.g(v))
 
 	def f(self,v):
-		return v * 0.00186
+		return v * 0.1#0.00186 # Temporarily adjusting by 10 to account for non unit terminal
+		# What should this be?
+			# - HFT book (position = 1, terminal  = 1, k = 0.01)
+			# Since position = 1 but terminal = 10 I've *10
 
 	def reset(self):
 		self.stock.reset()

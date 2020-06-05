@@ -35,6 +35,13 @@ class distAgent(learningAgent):
 
 		if self.UCB:
 			self.t = 1
+			self.epsilon_greedy = False
+
+	def step(self):
+		if self.UCB:
+			self.t += 1
+
+		super(distAgent,self).step()
 
 	def act(self, state):
 		# No eps greedy required for 'UCB' type update

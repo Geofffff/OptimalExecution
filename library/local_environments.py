@@ -4,17 +4,24 @@ import numpy as np
 class agent_environmentM:
 
     def __init__(self, market, position,num_steps,terminal,action_values_pct,n_strats,market_data = False):
-        self.m = market
-        self.market_data = market_data
-        self.initial_position = np.ones(n_strats) * position
+        
+        # Parameters
         self.n_strats = n_strats
+        self.state_size = 2
+
+        # Market environment
+        self.m = market
+        self.market_data = market_data # bool: use market data
+
+        # Local environment
+        self.initial_position = np.ones(n_strats) * position
         self.reset()
         self.terminal = terminal
         self.step_size = terminal / num_steps
+        
         # Possible amounts to sell: 0 - 10% of the total position
         self.action_values = np.array(action_values_pct) * position 
         self.num_actions = len(self.action_values)
-        self.state_size = 2
         #self.reward_scaling = self.initial / (num_steps)
 
 
@@ -72,5 +79,5 @@ class agent_environmentM:
 
     def scale_rewards(self,rewards):
         #print(type(self.m.stock.initial),self.m.stock.initial)
-        return rewards / (self.initial_position[0] * self.m.stock.initial)
+        return rewards / (self.initial_position[0] ) # /* self.m.stock.initial
 

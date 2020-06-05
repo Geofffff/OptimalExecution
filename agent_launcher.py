@@ -13,7 +13,7 @@ import pandas as pd
 params = {
     "terminal" : 10,
     "num_trades" : 10,
-    "position" : 10,
+    "position" : 1,
     "batch_size" : 32,
     "action_values" : [0.05,0.075,0.1,0.15,0.2] 
 }
@@ -43,13 +43,14 @@ my_simulator = library.simulations.simulator(simple_market,agents,params,test_na
 # Retrieve data
 df = pd.read_csv("data/2020_05_04_SPX_yFinance") # Load .csv
 appl_data = df["Adj Close.3"][2:]
+print("Warning: dropping",sum(pd.isnull(appl_data)), "nan value(s)")
+appl_data = appl_data.dropna()
 appl_data = appl_data.values # Extract APPL as np array
 appl_data = appl_data.astype(float) # convert any rouge strings to floats
-print("appl_data head",appl_data[:5])
 appl_stock = real_stock(appl_data,recycle = True) # create stock - traded once per minute and recycled
 appl_market = market(appl_stock,num_strats = len(agents))
 my_simulator = library.simulations.simulator(appl_market,agents,params,test_name = "Apple Stock Testing")
-my_simulator.train(6000)
+my_simulator.train(10000)
 
 # Signal market
 '''
