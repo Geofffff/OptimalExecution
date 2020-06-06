@@ -52,7 +52,7 @@ Thursday & Friday
 - Fixes for working with real data
 
 Saturday
-- Start work on Stock processing unit
+- Start work on Stock processing network
 - Start cleanup of distAgent, C51 and QR Agent
 
 ### Agents

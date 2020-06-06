@@ -8,7 +8,7 @@ from collections import deque
 from keras.models import Sequential
 from keras.models import clone_model
 from keras.layers import Dense
-from keras.layers import Softmax
+from keras.layers import Softmax, Conv1D
 from keras.optimizers import Adam
 from keras import Input
 from keras import Model
@@ -45,10 +45,10 @@ class stockProcessingNetwork(Model):
 		self.hidden1 = Conv1D(units,4,activation = 'relu')
 		self.hidden2 = Conv1D(units,4,activation = 'relu')
 		self.hidden3 = Conv1D(units,4,activation = 'relu')
-		self.input = Input(shape=(input_dim,))
+		self.input_layer = Input(shape=(input_dim,))
 
 	def call(self,inputs):
-		res = self.input(inputs)
+		res = self.input_layer(inputs)
 		res = self.hidden1(res)
 		res = self.hidden2(res)
 		res = self.hidden3(res)
@@ -99,7 +99,7 @@ class learningAgent:
 		alternative_target=False,
 		agent_type="Undefined",
 		tree_horizon=1,
-		market_data_size= 0):
+		market_data_size=0):
 		
 		# Agent identification
 		self._agent_type = agent_type

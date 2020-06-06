@@ -21,10 +21,10 @@ else:
 	DEBUG = False
 
 class distAgent(learningAgent):
-	def __init__(self, state_size, action_values, agent_name,C, alternative_target,UCB=False,UCBc = 1,tree_horizon = 3):
+	def __init__(self, state_size, action_values, agent_name,C, alternative_target,UCB=False,UCBc = 1,tree_horizon = 3,market_data_size=0):
 		self.action_size = len(action_values)
 		self.action_values = action_values
-		super(distAgent,self).__init__(state_size, self.action_size, agent_name,C, alternative_target,"dist",tree_horizon)
+		super(distAgent,self).__init__(state_size, self.action_size, agent_name,C, alternative_target,"dist",tree_horizon,market_data_size=market_data_size)
 		self.UCB = UCB
 		self.c = UCBc
 		self.geometric_decay = True
@@ -75,7 +75,7 @@ class distAgent(learningAgent):
 
 class C51Agent(distAgent):
 
-	def __init__(self,state_size, action_values, agent_name,N=51,C = 0,alternative_target = False,UCB = False,UCBc = 1,tree_horizon = 3):
+	def __init__(self,state_size, action_values, agent_name,N=51,C = 0,alternative_target = False,UCB = False,UCBc = 1,tree_horizon = 3,market_data_size=0):
 		self.V_max = 0.02
 		self.V_min = -0.06
 
@@ -87,7 +87,7 @@ class C51Agent(distAgent):
 		self.z = np.array(range(self.N)) * (self.V_max - self.V_min) / (self.N - 1) + self.V_min
 		
 		self.reward_mapping = True # Purely for Wandb config purposes 
-		distAgent.__init__(self,state_size, action_values, agent_name,C, alternative_target,UCB,UCBc,tree_horizon)
+		distAgent.__init__(self,state_size, action_values, agent_name,C, alternative_target,UCB,UCBc,tree_horizon,market_data_size=market_data_size)
 
 	def return_mapping(self,state,ret,inverse = False):
 		if inverse:

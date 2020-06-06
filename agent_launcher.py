@@ -19,10 +19,11 @@ params = {
 }
 state_size = 2
 action_size = len(params["action_values"])
+n_hist_prices = 16
 
 # Define Agents
 quentin = library.agents.distAgentsWIP.QRAgent(state_size, params["action_values"], "Quentin",C=0, alternative_target = False,UCB=False,UCBc = 1,tree_horizon = 1)
-brian = library.agents.distAgentsWIP.C51Agent(state_size, params["action_values"], "Brian sup0_8",C=100, alternative_target = True,UCB=True,UCBc = 100,tree_horizon = 4)
+brian = library.agents.distAgentsWIP.C51Agent(state_size, params["action_values"], "Brian Appl md16",C=100, alternative_target = True,UCB=True,UCBc = 100,tree_horizon = 4,market_data_size=n_hist_prices)
 tim = library.agents.baseAgents.TWAPAgent(2,"TWAP_APPL", len(params["action_values"]))
 #print(brian.model.summary())
 agents = [
@@ -41,6 +42,7 @@ my_simulator = library.simulations.simulator(simple_market,agents,params,test_na
 
 # real stock testing
 # Retrieve data
+
 df = pd.read_csv("data/2020_05_04_SPX_yFinance") # Load .csv
 appl_data = df["Adj Close.3"][2:]
 print("Warning: dropping",sum(pd.isnull(appl_data)), "nan value(s)")
@@ -48,9 +50,9 @@ appl_data = appl_data.dropna()
 appl_data = appl_data.values # Extract APPL as np array
 appl_data = appl_data.astype(float) # convert any rouge strings to floats
 appl_stock = real_stock(appl_data,recycle = True) # create stock - traded once per minute and recycled
-appl_market = market(appl_stock,num_strats = len(agents))
+appl_market = market(appl_stock,num_strats = len(agents),n_hist_prices = n_hist_prices)
 my_simulator = library.simulations.simulator(appl_market,agents,params,test_name = "Apple Stock Testing")
-my_simulator.train(10000)
+my_simulator.train(200)
 
 # Signal market
 '''

@@ -1,4 +1,5 @@
 from random import gauss, randint, shuffle
+from collections import deque
 import numpy as np
 np.random.seed(84)
 
@@ -95,12 +96,13 @@ class real_stock:
 		self.recycle = recycle
 		self.n_steps = n_steps
 		self.df = data
+		self.hist_buffer = hist_buffer
 
 		if self.recycle:
 			pass
 		else:
 			print("Assuming 1M frequency",("with" if recycle else "without"),"recycling")
-			self.final_period = floor(len(data) / self.n_steps)
+			self.final_period = floor((len(data) - self.hist_buffer) / self.n_steps)
 			self.available_periods = range(self.final_period)
 			shuffle(self.available_periods)
 
@@ -113,9 +115,9 @@ class real_stock:
 		if not self.recycle:
 			self.period_index += 1
 			assert self.period_index <= self.final_period, "Dataset finished"
-			self.data_index = self.period_index * n_steps
+			self.data_index = self.period_index * n_steps * self.hist_buffer
 		else:
-			self.data_index = randint(0,len(self.df) - self.n_steps)
+			self.data_index = randint(hist_buffer,len(self.df) - self.n_steps)
 		self.in_period_index = 0
 		#print(self.data_index,len(self.df))
 		self.initial = self.df[self.data_index]
@@ -139,22 +141,30 @@ class real_stock:
 
 		return self.price
 
+	def get_prices(self,n):
+		return self.df[self.data_index-n:self.data_index] / self.initial
+
 
 # Need to rework to record n previous prices...
 class market:
 	'''Basic market model, base class for more complex models'''
 
-	def __init__(self,stock_,num_strats = 1):
+	def __init__(self,stock_,num_strats = 1,n_hist_prices = 0):
 		self.stock = stock_
+		self.stock.hist_buffer = n_hist_prices
 		self.spread = 0
 		self.price_adjust = np.ones(num_strats)
+		self.n_hist_prices = n_hist_prices
+		if self.n_hist_prices > 0:
+			assert num_strats == 1, "Currently historical data does not support more than one strat"
+			self.hist_prices = deque(maxlen = self.n_hist_prices)
 
 
 	def sell(self,volume,dt):
 		'''sell *volume* of stock over time window dt, volume is np array'''
 		self.price_adjust *= np.vectorize(self.exp_g)(volume)
 		#print("volume ", volume, "price_adjust ",self.price_adjust)        
-		ret = (self.stock.price * self.price_adjust - np.vectorize(self.f)(volume/dt) - 0.5 * self.spread) * volume 
+		ret = (self._adjusted_price - np.vectorize(self.f)(volume/dt) - 0.5 * self.spread) * volume 
 		return ret
 
 	def g(self,v):
@@ -169,13 +179,19 @@ class market:
 			# - HFT book (position = 1, terminal  = 1, k = 0.01)
 			# Since position = 1 but terminal = 10 I've *10
 
+	def _adjusted_price(self):
+		return self.stock.price * self.price_adjust
+
 	def reset(self):
 		self.stock.reset()
 		self.price_adjust = np.ones(len(self.price_adjust))
+		self.hist_prices = self.stock.get_prices(self.n_hist_prices)
+		#return self.hist_prices
 
 	def progress(self,dt):
 		self.stock.generate_price(dt)
+		self.hist_prices.append(self._adjusted_price())
 
 	def state(self,n_prices = 1):
-		return (transformed_price * self.price_adjust)
+		return self.hist_prices
 

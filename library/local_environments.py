@@ -51,7 +51,7 @@ class agent_environmentM:
         # TODO: Store state as a seprate variable
         res = np.vstack((2 * self.position/self.initial_position[0] - 1,times)) # Assuming initial position always the same
         if self.market_data:
-            res = np.vstack((res,m.state))
+            return res.T, self.m.state()
         
         return res.T
     
