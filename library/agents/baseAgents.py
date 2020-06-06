@@ -40,12 +40,19 @@ class replayMemory:
 
 class stockProcessingNetwork(Model):
 	'''Network for preprocessing of stock prices'''
-	def __init__(self,depth,units,input_dim,output_dim):
+	def __init__(self,input_dim,output_dim = None,units=16):
 		super(stockProcessingNetwork,self).__init__()
-		pass
+		self.hidden1 = Conv1D(units,4,activation = 'relu')
+		self.hidden2 = Conv1D(units,4,activation = 'relu')
+		self.hidden3 = Conv1D(units,4,activation = 'relu')
+		self.input = Input(shape=(input_dim,))
 
 	def call(self,inputs):
-		pass
+		res = self.input(inputs)
+		res = self.hidden1(res)
+		res = self.hidden2(res)
+		res = self.hidden3(res)
+		return res
 
 class basicAgent:
 	'''Base class for a deterministic agent'''
@@ -91,7 +98,8 @@ class learningAgent:
 		C=0, 
 		alternative_target=False,
 		agent_type="Undefined",
-		tree_horizon=1):
+		tree_horizon=1,
+		market_data_size= 0):
 		
 		# Agent identification
 		self._agent_type = agent_type
@@ -121,6 +129,11 @@ class learningAgent:
 		self.tree_n = tree_horizon
 		self.learning_rate = 0.001
 		self.gamma = 1
+
+		# Market data (currently only prices)
+		self.market_data_size = market_data_size
+		if self.market_data_size > 0:
+			self.stock_model = stockProcessingNetwork(market_data_size)
 		
 		self.model = self._build_model()
 

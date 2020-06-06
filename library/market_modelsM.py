@@ -140,7 +140,7 @@ class real_stock:
 		return self.price
 
 
-
+# Need to rework to record n previous prices...
 class market:
 	'''Basic market model, base class for more complex models'''
 
@@ -176,7 +176,6 @@ class market:
 	def progress(self,dt):
 		self.stock.generate_price(dt)
 
-	def state(self):
-		transformed_price = self.stock.price / self.stock.initial - 1 # Needs work
+	def state(self,n_prices = 1):
 		return (transformed_price * self.price_adjust)
 

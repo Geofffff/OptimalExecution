@@ -2,7 +2,7 @@ import numpy as np
 from keras.models import Sequential
 from keras.models import clone_model
 # Sort this out...
-from keras.layers import Dense, Softmax, Multiply, Add, Input, ReLU, Lambda, Layer
+from keras.layers import Dense, Softmax, Multiply, Add, Input, ReLU, Lambda, Layer, concatenate
 from keras.initializers import RandomNormal
 
 #from keras import Input
@@ -169,13 +169,23 @@ class C51Agent(distAgent):
 	def _build_model(self):
 		# Using Keras functional API
 		state_in = Input(shape=(self.state_size + 1,))
-		hidden1 = Dense(32, activation='relu')(state_in)
+		
+		# If using market data
+		if self.market_data_size > 0:
+			input_layer = concatenate([state_in,self.stock_model.output])
+		else:
+			input_layer = state_in
+
+		hidden1 = Dense(32, activation='relu')(input_layer)
 		#hidden1_n = BatchNormalization() (hidden1)
 		hidden2 = Dense(32, activation='relu')(hidden1)
 		skip_layer = Add()([hidden1, hidden2])
 		#hidden3 = Dense(5, activation='relu')(hidden2)
 		outputs = Dense(self.N, activation='softmax')(skip_layer)
-		model = Model(inputs=state_in, outputs=outputs)
+		if self.market_data_size > 0:
+			model = Model(inputs=[state_in,self.stock_model.input], outputs=outputs)
+		else:
+			model = Model(inputs=state_in, outputs=outputs)
 		model.compile(loss='categorical_crossentropy',
 						optimizer=Adam(lr=self.learning_rate))
 		return model
