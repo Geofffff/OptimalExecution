@@ -85,7 +85,7 @@ class distAgent(learningAgent):
 class C51Agent(distAgent):
 
 	def __init__(self,state_size, action_values, agent_name,N=51,C = 0,alternative_target = False,UCB = False,UCBc = 1,tree_horizon = 3,market_data_size=0):
-		self.V_max = 0.02
+		self.V_max = 0.06
 		self.V_min = -0.06
 
 		self.N = N # This could be dynamic depending on state?

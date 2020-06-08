@@ -236,7 +236,7 @@ class simulator:
 			self.eval_rewards = np.zeros((1,self.n_agents))
 
 	def episode(self,actions, verbose = False,evaluate = False):
-		states = self.env.reset(training = (!evaluate)) # reset state at start of each new episode of the game
+		states = self.env.reset(training = (not evaluate)) # reset state at start of each new episode of the game
 		#states = np.reshape(states, [self.n_agents,1, self.env.state_size])
 
 		# Log action values

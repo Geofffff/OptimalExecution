@@ -16,7 +16,7 @@ class agent_environmentM:
         # Local environment
         self.initial_position = np.ones(n_strats) * position
         self.reset()
-        self.terminal = terminal
+        self.terminal = terminal # In seconds
         self.step_size = terminal / num_steps
         
         # Possible amounts to sell: 0 - 10% of the total position
@@ -38,7 +38,7 @@ class agent_environmentM:
         self.position = self.initial_position.copy()
         self.cash = np.zeros(self.n_strats)
         self.time = 0
-        self.m.reset(training)
+        self.m.reset(self.step_size,training)
         return self.state() # State not dynamic (full = False)
 
     def progress(self,dt):

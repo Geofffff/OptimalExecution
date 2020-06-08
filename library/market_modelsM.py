@@ -92,22 +92,24 @@ class signal_stock(bs_stock):
 		self.signal = 0 # Always start with no signal (could improve this)
 
 class real_stock:
-	def __init__(self,data,n_steps = 60, recycle = False,n_train = 0):
+	def __init__(self,data,n_steps = 3600, data_freq = 60,recycle = False,n_train = 0):
 		self.recycle = recycle
 		self.n_steps = n_steps
 		self.df = data
 		self.hist_buffer = 0
+		self.data_freq = data_freq # 1M = 60
 		
 		# Partition data into training and testing data
 		self.n_train = n_train
 		self.partition_training = (self.n_train > 0)
+		self.n_points_period = int(self.n_steps / self.data_freq)
 
 
 		if self.recycle:
 			pass
 		else:
 			print("Assuming 1M frequency",("with" if recycle else "without"),"recycling")
-			self.final_period = floor((len(data) - self.hist_buffer) / self.n_steps) - self.n_train
+			self.final_period = floor((len(data) - self.hist_buffer) / self.n_points_period) - self.n_train
 			self.available_periods = range(self.final_period)
 			shuffle(self.available_periods)
 
@@ -117,16 +119,17 @@ class real_stock:
 		#self.df[self.data_index] # This will need changing with the format of input
 
 	def reset(self,training=True):
-		if not training and self.partition_training:
-			randint(len(self.df) - self.n_train * self.n_steps,len(self.df) - self.n_steps)
+		if (not training) and self.partition_training:
+			self.data_index = randint(len(self.df) - self.n_train * self.n_points_period,len(self.df) - self.n_points_period - 1)
+			#print(self.data_index,len(self.df) - self.n_points_period)
 		else:
 			if not self.recycle:
 				self.period_index += 1
 				assert self.period_index <= self.final_period, "Dataset finished"
-				self.data_index = self.period_index * self.n_steps * self.hist_buffer
+				self.data_index = self.period_index * self.n_points_period * self.hist_buffer
 			else:
-				self.data_index = randint(self.hist_buffer,len(self.df) - (1 + self.n_steps) * self.n_train)
-			self.in_period_index = 0
+				self.data_index = randint(self.hist_buffer,len(self.df) - self.n_points_period * (1 + self.n_train))
+		self.in_period_index = 0
 		
 		self.initial = self.df[self.data_index]
 		self.price = 1
@@ -136,12 +139,15 @@ class real_stock:
 		pass
 
 	def generate_price(self,dt):
-		assert dt == 1, "Currently only dt = 1 supported for real stocks"
-		self.data_index += 1
-		self.in_period_index += 1
+		index_update = dt / self.data_freq
+		assert index_update.is_integer(), "Step size must be an integer unit of time"
+		index_update = int(index_update)
+		self.data_index += index_update
+		self.in_period_index += index_update
+
 		self.price = self.df[self.data_index] / self.initial
 		#print("period_index",self.period_index,"data_index",self.data_index)
-		assert self.in_period_index <= self.n_steps, "Stock price requested outside of period"
+		assert self.in_period_index <= self.n_points_period, "Stock price requested outside of period"
 		
 		# WARNING: For now we return a scaled price (scaled by initial price at the start of every episode)
 		error = np.isnan(self.price)
@@ -149,7 +155,10 @@ class real_stock:
 
 		return self.price
 
-	def hist_price(self,i):
+	def hist_price(self,n,dt):
+		res = []
+		for i in range(n):
+			res.append(self.df[self.data_index - i * dt])
 		return self.df[self.data_index-i:self.data_index] / self.initial
 
 
@@ -181,15 +190,16 @@ class market:
 		return np.exp(-self.g(v))
 
 	def f(self,v):
-		return v * 0.1#0.00186 # Temporarily adjusting by 10 to account for non unit terminal
+		return v * 0.00#0.00186 # Temporarily adjusting by 10 to account for non unit terminal
 		# What should this be?
 			# - HFT book (position = 1, terminal  = 1, k = 0.01)
 			# Since position = 1 but terminal = 10 I've *10
+			# NOW CHANGED TO 0.001 (V LOW) TO TEST STOCK PROCESSING NET
 
 	def _adjusted_price(self):
 		return self.stock.price * self.price_adjust
 
-	def reset(self,training = True):
+	def reset(self,dt,training = True):
 		self.stock.reset(training)
 		self.price_adjust = np.ones(len(self.price_adjust))
 		for i in range(self.n_hist_prices):

@@ -140,17 +140,28 @@ Deep reinforcement learning hands on
 
 ## Simulator
 - pretraining broken
+- action value record probably broken (how is it still working?)
 - multiple strategies broken
 
 ## baseAgent
+- tweaks to stock processing net
 
 ## distAgent
+- clean up
 
 ## localEnvironment
-- Needs standardising and cleaning
+- Needs standardising and cleaning - particularly state generation
 
 ## realStock
-- partition traing and testing data
+- partition training and testing data [DONE]
+
+## General:
+- overhaul time periods and standardise units of time
+	- All time periods measured in seconds
+		- Agent
+		- Simulator
+		- Market
+		
 
 
 
