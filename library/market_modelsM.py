@@ -92,17 +92,22 @@ class signal_stock(bs_stock):
 		self.signal = 0 # Always start with no signal (could improve this)
 
 class real_stock:
-	def __init__(self,data,n_steps = 60, recycle = False):
+	def __init__(self,data,n_steps = 60, recycle = False,n_train = 0):
 		self.recycle = recycle
 		self.n_steps = n_steps
 		self.df = data
-		self.hist_buffer = hist_buffer
+		self.hist_buffer = 0
+		
+		# Partition data into training and testing data
+		self.n_train = n_train
+		self.partition_training = (self.n_train > 0)
+
 
 		if self.recycle:
 			pass
 		else:
 			print("Assuming 1M frequency",("with" if recycle else "without"),"recycling")
-			self.final_period = floor((len(data) - self.hist_buffer) / self.n_steps)
+			self.final_period = floor((len(data) - self.hist_buffer) / self.n_steps) - self.n_train
 			self.available_periods = range(self.final_period)
 			shuffle(self.available_periods)
 
@@ -111,15 +116,18 @@ class real_stock:
 
 		#self.df[self.data_index] # This will need changing with the format of input
 
-	def reset(self):
-		if not self.recycle:
-			self.period_index += 1
-			assert self.period_index <= self.final_period, "Dataset finished"
-			self.data_index = self.period_index * n_steps * self.hist_buffer
+	def reset(self,training=True):
+		if not training and self.partition_training:
+			randint(len(self.df) - self.n_train * self.n_steps,len(self.df) - self.n_steps)
 		else:
-			self.data_index = randint(hist_buffer,len(self.df) - self.n_steps)
-		self.in_period_index = 0
-		#print(self.data_index,len(self.df))
+			if not self.recycle:
+				self.period_index += 1
+				assert self.period_index <= self.final_period, "Dataset finished"
+				self.data_index = self.period_index * self.n_steps * self.hist_buffer
+			else:
+				self.data_index = randint(self.hist_buffer,len(self.df) - (1 + self.n_steps) * self.n_train)
+			self.in_period_index = 0
+		
 		self.initial = self.df[self.data_index]
 		self.price = 1
 
@@ -141,8 +149,8 @@ class real_stock:
 
 		return self.price
 
-	def get_prices(self,n):
-		return self.df[self.data_index-n:self.data_index] / self.initial
+	def hist_price(self,i):
+		return self.df[self.data_index-i:self.data_index] / self.initial
 
 
 # Need to rework to record n previous prices...
@@ -157,14 +165,13 @@ class market:
 		self.n_hist_prices = n_hist_prices
 		if self.n_hist_prices > 0:
 			assert num_strats == 1, "Currently historical data does not support more than one strat"
-			self.hist_prices = deque(maxlen = self.n_hist_prices)
 
 
 	def sell(self,volume,dt):
 		'''sell *volume* of stock over time window dt, volume is np array'''
 		self.price_adjust *= np.vectorize(self.exp_g)(volume)
 		#print("volume ", volume, "price_adjust ",self.price_adjust)        
-		ret = (self._adjusted_price - np.vectorize(self.f)(volume/dt) - 0.5 * self.spread) * volume 
+		ret = (self._adjusted_price() - np.vectorize(self.f)(volume/dt) - 0.5 * self.spread) * volume 
 		return ret
 
 	def g(self,v):
@@ -182,15 +189,17 @@ class market:
 	def _adjusted_price(self):
 		return self.stock.price * self.price_adjust
 
-	def reset(self):
-		self.stock.reset()
+	def reset(self,training = True):
+		self.stock.reset(training)
 		self.price_adjust = np.ones(len(self.price_adjust))
-		self.hist_prices = self.stock.get_prices(self.n_hist_prices)
+		for i in range(self.n_hist_prices):
+			self.hist_prices = self.stock.hist_price(self.n_hist_prices)
 		#return self.hist_prices
 
 	def progress(self,dt):
 		self.stock.generate_price(dt)
-		self.hist_prices.append(self._adjusted_price())
+		# MULTIPLE STRATS NOT SUPPORTED HERE
+		self.hist_prices[:-1] = self.hist_prices[1:]; self.hist_prices[-1] = self._adjusted_price()[0]
 
 	def state(self,n_prices = 1):
 		return self.hist_prices

@@ -189,7 +189,9 @@ class simulator:
 			#self.episode_actions.fill(0)
 			
 			# Inject synthetic positon 0 observation to memory
-			self._pretrain_position()
+			
+			#### NO LONGER PRETRAINING POSITION ####
+			#self._pretrain_position()
 			
 			self.episode(actions = actions, evaluate = evaluate)
 			if not self.intensive_training:
@@ -234,8 +236,8 @@ class simulator:
 			self.eval_rewards = np.zeros((1,self.n_agents))
 
 	def episode(self,actions, verbose = False,evaluate = False):
-		states = self.env.reset() # reset state at start of each new episode of the game
-		states = np.reshape(states, [self.n_agents,1, self.env.state_size])
+		states = self.env.reset(training = (!evaluate)) # reset state at start of each new episode of the game
+		#states = np.reshape(states, [self.n_agents,1, self.env.state_size])
 
 		# Log action values
 		if not evaluate:
@@ -243,7 +245,7 @@ class simulator:
 			if self.episode_n % self.action_record_frequency == 0:
 				for i, agent in enumerate(self.agents):
 					for j in range(len(self.possible_actions)):
-						self.wandb_agents[i].log({'episode': self.episode_n, ('act_val' + str(j)): agent.predict(states[i])[0][j]})
+						self.wandb_agents[i].log({'episode': self.episode_n, ('act_val' + str(j)): agent.predict(states)[0][j]})
 			self.train_actions = np.concatenate((self.train_actions,[self.episode_actions]))
 					
 		done = np.zeros(self.n_agents) # Has the episode finished
@@ -258,7 +260,7 @@ class simulator:
 			for i, agent in enumerate(self.agents):
 				# Agents action only updated if still active
 				if not inactive[i]:
-					actions[i] = agent.act(states[i])
+					actions[i] = agent.act(states)
 				else:
 					actions[i] = -1 # Could speed up (only need to change once)
 			
@@ -266,13 +268,15 @@ class simulator:
 			
 			#rewards = (1 - done) * rewards
 			
-			next_states = np.reshape(next_states, [self.n_agents,1, self.env.state_size])
+			#next_states = np.reshape(next_states, [self.n_agents,1, self.env.state_size])
 			total_reward += rewards
 			#print(total_reward)
+			#print("sim next_state",next_states)
 			if not evaluate:
 				for i, agent in enumerate(self.agents):
 					if not inactive[i]:
-						agent.remember(states[i], actions[i], rewards[i], next_states[i], done[i])
+						assert len(self.agents) == 1, "Multiple agents not currently supported"
+						agent.remember(states, actions[i], rewards[i], next_states, done[i])
 
 			if verbose:
 				print("Agent 0 predict", self.agents[0].predict(states[0]))

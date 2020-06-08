@@ -138,6 +138,21 @@ Deep reinforcement learning hands on
 - Temporary impact
 
 
+## Simulator
+- pretraining broken
+- multiple strategies broken
+
+## baseAgent
+
+## distAgent
+
+## localEnvironment
+- Needs standardising and cleaning
+
+## realStock
+- partition traing and testing data
+
+
 
 
 

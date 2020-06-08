@@ -3,7 +3,7 @@ import numpy as np
 
 class agent_environmentM:
 
-    def __init__(self, market, position,num_steps,terminal,action_values_pct,n_strats,market_data = False):
+    def __init__(self, market, position,num_steps,terminal,action_values_pct,n_strats):
         
         # Parameters
         self.n_strats = n_strats
@@ -11,7 +11,7 @@ class agent_environmentM:
 
         # Market environment
         self.m = market
-        self.market_data = market_data # bool: use market data
+        self.market_data = (self.m.n_hist_prices > 0) # bool: use market data
 
         # Local environment
         self.initial_position = np.ones(n_strats) * position
@@ -34,11 +34,11 @@ class agent_environmentM:
         #print("time ", self.time, "capped_volume ", capped_volume, "state ", self.state(),"returns ", returns)
         return returns
 
-    def reset(self):
+    def reset(self,training = True):
         self.position = self.initial_position.copy()
         self.cash = np.zeros(self.n_strats)
         self.time = 0
-        self.m.reset()
+        self.m.reset(training)
         return self.state() # State not dynamic (full = False)
 
     def progress(self,dt):

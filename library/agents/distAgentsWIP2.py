@@ -64,7 +64,7 @@ class distAgent(learningAgent):
 	# THIS FUNCTION HAS REPLACED TRASNFORM ACTION - NEEDS PROPIGATING AND TESTING
 	# PROBABLY ALSO NEED TO RESHAPE NEW MARKET STATE
 	def _process_state_action(self,state,action_index):
-		print("state",state)
+		#print("state",state)
 		local_state, market_state = state
 
 		action = self.action_values[action_index] * self.trans_a + self.trans_b
@@ -72,8 +72,8 @@ class distAgent(learningAgent):
 		if self.market_data_size > 0:
 			# market_state[0] since *market_state collects all in list
 			#print(market_state)
-			market_state = np.reshape(market_state, [1, len(market_state)])
-			print(local_state_action,market_state)
+			market_state = np.reshape(market_state, [1, len(market_state),1])
+			#print(local_state_action,market_state)
 			return [local_state_action, market_state]
 
 		return local_state_action
@@ -105,7 +105,7 @@ class C51Agent(distAgent):
 		return ret + state[0][0] * self.result_scaling_factor
 
 	def probs(self,state,action_index,target=False):
-		action = self._process_state_action(state,action_index)
+		state_action = self._process_state_action(state,action_index)
 		
 		if DEBUG:
 			#print("probs of ",state_action,"are",self.model.predict(state_action))
@@ -117,6 +117,7 @@ class C51Agent(distAgent):
 		return res
 
 	def predict(self,state,target = False):
+		#print("predict state",state)
 		res = self.vpredict(state,range(len(self.action_values)),target = target)
 		return np.reshape(res, [1, len(res)])
 
@@ -134,13 +135,13 @@ class C51Agent(distAgent):
 		return Tz
 
 	def mapped_z(self,state):
-		return self.z + (state[0][0] / 2 + 0.5)
+		return self.z + (state[0][0][0] / 2 + 0.5)
 
 	def mapped_dz(self,state):
 		return self.dz
 
 	def mapped_bounds(self,state):
-		return (self.V_min + (state[0][0] / 2 + 0.5), self.V_max + (state[0][0] / 2 + 0.5))
+		return (self.V_min + (state[0][0][0] / 2 + 0.5), self.V_max + (state[0][0][0] / 2 + 0.5))
 
 	# Get unmapped results using basis: STATE
 	# Could be made more efficient
@@ -201,7 +202,7 @@ class C51Agent(distAgent):
 
 	def fit(self,state, action_index, reward, next_state, done,mem_index = -1):
 		state_action = self._process_state_action(state,action_index)
-		print(state_action)
+		#print("fit",next_state)
 		if self.tree_n > 1:
 			target = self.projTZ_nTree(state,reward,next_state,done,self.tree_n,mem_index)
 		else:

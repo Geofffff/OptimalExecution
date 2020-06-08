@@ -8,7 +8,7 @@ from collections import deque
 from keras.models import Sequential
 from keras.models import clone_model
 from keras.layers import Dense
-from keras.layers import Softmax, Conv1D
+from keras.layers import Softmax, Conv1D, Flatten
 from keras.optimizers import Adam
 from keras import Input
 from keras import Model
@@ -133,7 +133,7 @@ class learningAgent:
 		# Market data (currently only prices)
 		self.market_data_size = market_data_size
 		if self.market_data_size > 0:
-			self.stock_model = stockProcessingNetwork(market_data_size)
+			self.stock_model = self._build_stock_model(market_data_size)
 		
 		self.model = self._build_model()
 
@@ -153,9 +153,22 @@ class learningAgent:
 	def agent_type(self):
 		return self._agent_type
 	
+	def _build_stock_model(self,input_dim,units=16,depth=2):
+		assert depth > 0 and units > 0, "Invalid inputs"
+		inputs = Input(shape=(input_dim,1,))
+		res = Conv1D(units,4,activation = 'relu')(inputs)
+		for i in range(depth - 1):
+			res = Conv1D(units,4,activation = 'relu')(res)
+		
+		res = Flatten()(res)
+		model = Model(inputs=inputs,outputs=res)
+		return model
+		
+
 
 	def remember(self, state, action, reward, next_state, done):
 		'''Record the current environment for later replay'''
+		#print(len(state),len(next_state))
 		self.memory.append((state, action, reward, next_state, done))
 	 
 	# 'Virtual' function    
@@ -186,6 +199,7 @@ class learningAgent:
 		minibatch = self.memory.sample(batch_size)
 		
 		for mem_index, (state, action, reward, next_state, done) in minibatch:
+			#print("replay state",state)
 			self.fit(state, action, reward, next_state, done,mem_index)
 
 	def step(self):
