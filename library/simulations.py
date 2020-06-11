@@ -1,7 +1,7 @@
 import time
-from library.local_environments import agent_environmentM
+from library.local_environments import agent_environment
 import numpy as np
-from matplotlib import pyplot as plt
+#from matplotlib import pyplot as plt
 import random
 import wandb
 class simulator:
@@ -21,12 +21,10 @@ class simulator:
 
 		self.m = market_
 		self.possible_actions = params["action_values"]#[0,0.02,0.04,0.06,0.08,0.1,0.12,0.14,0.16,0.18,0.2]
-		self.env = agent_environmentM(self.m,
+		self.env = agent_environment(self.m,
 									 params["position"],
 									 params["num_trades"],
-									 params["terminal"],
-									 self.possible_actions,
-									 self.n_agents
+									 self.possible_actions
 									)
 		
 		
@@ -38,14 +36,14 @@ class simulator:
 		self.train_rewards = np.zeros((0,self.n_agents))
 		self.eval_rewards = np.zeros((1,self.n_agents)) 
 		self.eval_rewards_mean = np.zeros((0,self.n_agents)) 
-		self.eval_window = 20
+		self.eval_window = 25
 		self.plot_title = "Unlabelled Performance Test"
 
 		# Record actions
 		self.train_actions = np.zeros((0,len(self.possible_actions),self.n_agents))
 		self.episode_actions = np.zeros((len(self.possible_actions),self.n_agents))
-		self.record_frequency = 200
-		self.action_record_frequency = 50
+		self.record_frequency = 500
+		self.action_record_frequency = 100
 		self.plot_y_lim = (0.96,0.99)
 		self.episode_n = 0
 
@@ -157,23 +155,26 @@ class simulator:
 		### Live Plots ###
 		
 		# Default training parameters if not provided
-		if epsilon is None:
-			epsilon = [1] * self.n_agents
+		if epsilon is not None:
+			for i ,agent in enumerate(self.agents):
+				agent.epsilon = epsilon
+
 			
-		if epsilon_decay is None:
-			epsilon_decay = [0.998] * self.n_agents
+		if epsilon_decay is not None:
+			for i ,agent in enumerate(self.agents):
+				agent.epsilon_decay = epsilon_decay
+
+		# Set up the agents:
+		for i ,agent in enumerate(self.agents):
+			agent.evaluate = evaluate
 
 		# Evaluatory Stats
 		#current_training_step = len(self.eval_rewards) # CHANGED TO EVAL
 		
-		# Set up the agents:
-		for i ,agent in enumerate(self.agents):
-			agent.epsilon = epsilon[i]
-			agent.epsilon_decay = epsilon_decay[i]
-			agent.evaluate = evaluate
+		
 			
 		# Setup action list
-		actions = [-1] * self.n_agents
+		action = -1
 
 		agent_reward_dists = []
 		
@@ -198,7 +199,7 @@ class simulator:
 			#### NO LONGER PRETRAINING POSITION ####
 			#self._pretrain_position()
 			
-			self.episode(actions = actions, evaluate = evaluate)
+			self.episode(evaluate = evaluate)
 			if not self.intensive_training:
 				for i, agent in enumerate(self.agents):
 					if len(agent.memory) > self.batch_size and not evaluate:
@@ -240,8 +241,8 @@ class simulator:
 			self.eval_rewards_mean = np.vstack((self.eval_rewards_mean,self.eval_rewards / self.eval_window))
 			self.eval_rewards = np.zeros((1,self.n_agents))
 
-	def episode(self,actions, verbose = False,evaluate = False):
-		states = self.env.reset(training = (not evaluate)) # reset state at start of each new episode of the game
+	def episode(self, verbose = False,evaluate = False):
+		state = self.env.reset(training = (not evaluate)) # reset state at start of each new episode of the game
 		#states = np.reshape(states, [self.n_agents,1, self.env.state_size])
 		track_action_p = False
 		# Log action values
@@ -252,13 +253,13 @@ class simulator:
 				action_tracker = []
 				for i, agent in enumerate(self.agents):
 					for j in range(len(self.possible_actions)):
-						self.wandb_agents[i].log({'episode': self.episode_n, ('act_val' + str(j)): agent.predict(states)[0][j]})
+						self.wandb_agents[i].log({'episode': self.episode_n, ('act_val' + str(j)): agent.predict(state)[0][j]})
 			self.train_actions = np.concatenate((self.train_actions,[self.episode_actions]))
 					
-		done = np.zeros(self.n_agents) # Has the episode finished
-		inactive = np.zeros(self.n_agents) # Agents which are still trading
+		done = False # Has the episode finished
+		inactive = False # Agents which are still trading
 					
-		total_reward = np.zeros(self.n_agents)
+		total_reward = 0
 
 		for t in range(self.num_steps):
 			timer = []
@@ -266,35 +267,35 @@ class simulator:
 			# Get actions for each agent
 			for i, agent in enumerate(self.agents):
 				# Agents action only updated if still active
-				if not inactive[i]:
-					actions[i] = agent.act(states)
+				if not inactive:
+					action = agent.act(state)
 				else:
-					actions[i] = -1 # Could speed up (only need to change once)
+					action = -1 # Could speed up (only need to change once)
 			
-			next_states, rewards, done = self.env.step(actions)
+			next_state, reward, done = self.env.step(action)
 			
 			assert self.n_agents ==1,  "multiple agents not supported"
 			if track_action_p:
-				action_tracker.append(actions[0])
+				action_tracker.append(action)
 			#rewards = (1 - done) * rewards
 			
 			#next_states = np.reshape(next_states, [self.n_agents,1, self.env.state_size])
-			total_reward += rewards
+			total_reward += reward
 			#print(total_reward)
 			#print("sim next_state",next_states)
 			if not evaluate:
 				for i, agent in enumerate(self.agents):
-					if not inactive[i]:
+					if not inactive:
 						assert len(self.agents) == 1, "Multiple agents not currently supported"
-						agent.remember(states, actions[i], rewards[i], next_states, done[i])
+						agent.remember(state, action, reward, next_state, done)
 
 			if verbose:
-				print("Agent 0 predict", self.agents[0].predict(states))
-				print("State[0]: ",states, "Actions[0]: ", actions[0], "Rewards[0]: ", rewards[0], "Next_states[0]: ", next_states, "Done[0]: ", done[0])
-				print("Agent 0 next predict", self.agents[0].predict(next_states))
-			states = next_states
+				print("Agent 0 predict", self.agents[0].predict(state))
+				print("State[0]: ",state, "Actions[0]: ", action, "Rewards[0]: ", reward, "Next_states[0]: ", next_state, "Done[0]: ", done)
+				print("Agent 0 next predict", self.agents[0].predict(next_state))
+			state = next_state
 				
-			if all(done): 
+			if done: 
 				break # exit loop
 				
 			inactive = inactive + done
@@ -305,7 +306,8 @@ class simulator:
 						agent.replay(self.batch_size) # train the agent by replaying the experiences of the episode
 						agent.step() # Update target network if required
 
-		if not all(done):
+		if not done:
+			print(state)
 			print("We have a problem.")
 		
 		if evaluate:
@@ -317,19 +319,9 @@ class simulator:
 					self.wandb_agents[i].log({'episode': self.episode_n, ('act_count' + str(j)): action_tracker.count(j)})
 
 	def evaluate(self,n_episodes = 200,show_stats = True):
-		epsilon_old = []
-		epsilon_decay_old = []
-		# Get current epsilon values
-		for agent in self.agents:
-			epsilon_old.append(agent.epsilon)
-			epsilon_decay_old.append(agent.epsilon_decay)
-
-		epsilon = [0] * self.n_agents
-		self.train(n_episodes = n_episodes, epsilon = epsilon, show_details = False,evaluate = True)
+		self.train(n_episodes = n_episodes, show_details = False,evaluate = True)
 		# Return agent epsilons to their original values:
 		for i, agent in enumerate(self.agents):
-			agent.epsilon = epsilon_old[i]
-			agent.epsilon_decay = epsilon_decay_old[i]
 			agent.evaluate = False
 
 		if show_stats:
@@ -379,5 +371,6 @@ class simulator:
 
 			if all(done): 
 				break 
+
 		
 		

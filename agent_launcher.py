@@ -27,7 +27,7 @@ brian = library.agents.distAgentsWIP2.C51Agent(state_size, params["action_values
 tim = library.agents.baseAgents.TWAPAgent(3,"TWAP_APPL", len(params["action_values"]))
 #print(brian.model.summary())
 agents = [
-    brian
+    quentin
 ]
 brian.learning_rate = 0.0001
 
@@ -48,7 +48,12 @@ df1 = pd.read_csv("data/2020_05_04_SPX_yFinance") # Load .csv
 df1 = df1["Adj Close.3"][2:]
 df2 = pd.read_csv("data/2020_05_16_SPX_yFinance") # Load .csv
 df2 = df2["Adj Close.3"][2:]
-appl_data = pd.concat([df1,df2])
+df3 = pd.read_csv("data/2020_05_22_SPX_yFinance") # Load .csv
+df3 = df3["Adj Close.3"][2:]
+df4 = pd.read_csv("data/2020_05_28_SPX_yFinance") # Load .csv
+df4 = df4["Adj Close.3"][2:]
+
+appl_data = pd.concat([df1,df2,df3,df4])
 print("Warning: dropping",sum(pd.isnull(appl_data)), "nan value(s)")
 appl_data = appl_data.dropna()
 appl_data = appl_data.values # Extract APPL as np array

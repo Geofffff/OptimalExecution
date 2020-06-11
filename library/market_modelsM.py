@@ -3,39 +3,23 @@ from collections import deque
 import numpy as np
 np.random.seed(84)
 
-class stock:
-	
-	def __init__(self, initial, drift, vol):
-		self.initial = initial
-
-
-
 
 class bs_stock:
 
-	def __init__(self, initial, drift, vol):
+	def __init__(self, initial, drift, vol, terminal = 1):
 		self.initial = initial
 		self.drift = drift
 		self.vol = vol
+		self.terminal = terminal
 		self.reset()
 
 	def generate_price(self,dt,St = None):
+		dt = dt * self.terminal
 		if St is None:
 			St = self.price
 
 		self.price = St * np.exp((self.drift - 0.5 * self.vol ** 2) * dt + self.vol * dt**0.5 * gauss(0,1))
 		return self.price
-
-	def generate_path(self,T,grid_size):
-		res = []
-		self.reset()
-		next_price = self.price
-		res.append(next_price)
-		dt = T / grid_size
-
-		for i in range(grid_size):
-			next_price = generate_price(dt)
-			res.append(next_price)
 
 	def reset(self,training=None):
 		self.price = self.initial
@@ -92,7 +76,7 @@ class signal_stock(bs_stock):
 		self.signal = 0 # Always start with no signal (could improve this)
 
 class real_stock:
-	def __init__(self,data,n_steps = 3600, data_freq = 60,recycle = False,n_train = 0):
+	def __init__(self,data,n_steps = 60, data_freq = 60,recycle = True,n_train = 0):
 		self.recycle = recycle
 		self.n_steps = n_steps
 		self.df = data
@@ -104,10 +88,7 @@ class real_stock:
 		self.partition_training = (self.n_train > 0)
 		self.n_points_period = int(self.n_steps / self.data_freq)
 
-
-		if self.recycle:
-			pass
-		else:
+		if not self.recycle:
 			print("Assuming 1M frequency",("with" if recycle else "without"),"recycling")
 			self.final_period = floor((len(data) - self.hist_buffer) / self.n_points_period) - self.n_train
 			self.available_periods = range(self.final_period)
@@ -134,12 +115,8 @@ class real_stock:
 		self.initial = self.df[self.data_index]
 		self.price = 1
 
-
-	def _scale_price(self,initial,price):
-		pass
-
 	def generate_price(self,dt):
-		index_update = dt / self.data_freq
+		index_update = dt * self.n_steps
 		assert index_update.is_integer(), "Step size must be an integer unit of time"
 		index_update = int(index_update)
 		self.data_index += index_update
@@ -156,7 +133,7 @@ class real_stock:
 		return self.price
 
 	def hist_price(self,n,dt):
-		dt_adj = dt / self.data_freq
+		dt_adj = dt * self.n_steps
 		assert dt_adj.is_integer(), "Time step must be an integer"
 		dt_adj = int(dt_adj)
 		res = []
@@ -169,12 +146,12 @@ class real_stock:
 class market:
 	'''Basic market model, base class for more complex models'''
 
-	def __init__(self,stock_,num_strats = 1,n_hist_prices = 0):
+	def __init__(self,stock_,n_hist_prices = 0):
 		self.k = 0.00186
 		self.stock = stock_
 		self.stock.hist_buffer = n_hist_prices
 		self.spread = 0
-		self.price_adjust = np.ones(num_strats)
+		self.price_adjust = 1
 		self.n_hist_prices = n_hist_prices
 		if self.n_hist_prices > 0:
 			assert num_strats == 1, "Currently historical data does not support more than one strat"
@@ -182,9 +159,9 @@ class market:
 
 	def sell(self,volume,dt):
 		'''sell *volume* of stock over time window dt, volume is np array'''
-		self.price_adjust *= np.vectorize(self.exp_g)(volume)
+		self.price_adjust *= self.exp_g(volume)
 		#print("volume ", volume, "price_adjust ",self.price_adjust)        
-		ret = (self._adjusted_price() - np.vectorize(self.f)(volume/dt) - 0.5 * self.spread) * volume 
+		ret = (self._adjusted_price() - self.f(volume/dt) - 0.5 * self.spread) * volume 
 		#print("return",ret)
 		return ret
 
@@ -206,7 +183,7 @@ class market:
 
 	def reset(self,dt,training = True):
 		self.stock.reset(training)
-		self.price_adjust = np.ones(len(self.price_adjust))
+		self.price_adjust = 1
 		for i in range(self.n_hist_prices):
 			self.hist_prices = self.stock.hist_price(self.n_hist_prices,dt)
 		#return self.hist_prices
@@ -217,6 +194,6 @@ class market:
 		if self.n_hist_prices > 0:
 			self.hist_prices[:-1] = self.hist_prices[1:]; self.hist_prices[-1] = self._adjusted_price()[0]
 
-	def state(self,n_prices = 1):
+	def state(self):
 		return self.hist_prices
 

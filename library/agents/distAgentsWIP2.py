@@ -181,10 +181,8 @@ class C51Agent(distAgent):
 				#print("reward ", self._bound(reward,self.V_min,self.V_max), " dz ", self.dz, " z[i] ", self.z[i], " append ",(self._bound(reward,self.V_min,self.V_max) - self.z[i])/self.dz)
 		return res
 
-	
 	def _bound(self,vec,lower,upper):
 		return np.minimum(np.maximum(vec,lower),upper)
-
 
 	def _build_model(self):
 		# Using Keras functional API

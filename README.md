@@ -55,6 +55,10 @@ Saturday
 - Start work on Stock processing network
 - Start cleanup of distAgent, C51 and QR Agent
 
+Thursday 11th
+- Trial different terminal periods
+- Get running smoothly for real data
+
 ### Agents
 - The build model function should probably be broken out of the learning agents
 - Fix slightly hacky solution to non generalised parameters
@@ -140,8 +144,8 @@ Deep reinforcement learning hands on
 
 ## Simulator
 - pretraining broken
-- action value record probably broken (how is it still working?)
-- multiple strategies broken
+- action value record probably broken (how is it still working?) [FIXED]
+- multiple strategies broken [ABANDON]
 
 ## baseAgent
 - tweaks to stock processing net
@@ -161,7 +165,11 @@ Deep reinforcement learning hands on
 		- Agent
 		- Simulator
 		- Market
-		
+
+## QRAgent:
+	- Get working [DONE]
+	- Cleanup
+
 
 
 
