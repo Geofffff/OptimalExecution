@@ -45,27 +45,39 @@ class distAgent(learningAgent):
 
 	def act(self, state):
 		# No eps greedy required for 'UCB' type update
+
+		# Predict return
+		act_values = self.predict(state)
+
+		if self.evaluate:
+			return np.argmax(act_values[0])
+		
 		if self.UCB:
-			if self.t < 10:
+			if self.t < 50:
 				act = random.randrange(self.action_size)
 			else:
 				self.ct = self.c * np.sqrt(np.log(self.t) / self.t)
-				act_values = self.predict(state)
+				#act_values = self.predict(state)
+				#print("var",self.variance(state))
+				#print("act_values",act_values)
 				act = np.argmax(act_values[0] + self.ct * np.sqrt(self.variance(state)))
+				#print("Act",act)
 			return act
 		# random action
 		if np.random.rand() <= self.epsilon:
 			rand_act = random.randrange(self.action_size)
 			return rand_act#random.randrange(self.action_size)
-		# Predict return
-		act_values = self.predict(state)		
+				
 		return np.argmax(act_values[0])
 
 	# THIS FUNCTION HAS REPLACED TRASNFORM ACTION - NEEDS PROPIGATING AND TESTING
 	# PROBABLY ALSO NEED TO RESHAPE NEW MARKET STATE
 	def _process_state_action(self,state,action_index):
 		#print("state",state)
-		local_state, market_state = state
+		if self.market_data_size > 0:
+			local_state, market_state = state
+		else:
+			local_state = state
 
 		action = self.action_values[action_index] * self.trans_a + self.trans_b
 		local_state_action = np.reshape(np.append(local_state,action), [1, len(local_state[0]) + 1])
@@ -85,8 +97,8 @@ class distAgent(learningAgent):
 class C51Agent(distAgent):
 
 	def __init__(self,state_size, action_values, agent_name,N=51,C = 0,alternative_target = False,UCB = False,UCBc = 1,tree_horizon = 3,market_data_size=0):
-		self.V_max = 0.06
-		self.V_min = -0.06
+		self.V_max = 0.05
+		self.V_min = -0.1
 
 		self.N = N # This could be dynamic depending on state?
 		# This granularity is problematic - can we do this without discretisation?
@@ -95,7 +107,6 @@ class C51Agent(distAgent):
 		self.dz = (self.V_max - self.V_min) / (self.N - 1) # (2 * self.V_max)
 		self.z = np.array(range(self.N)) * (self.V_max - self.V_min) / (self.N - 1) + self.V_min
 		
-		self.reward_mapping = True # Purely for Wandb config purposes 
 		distAgent.__init__(self,state_size, action_values, agent_name,C, alternative_target,UCB,UCBc,tree_horizon,market_data_size=market_data_size)
 
 	def return_mapping(self,state,ret,inverse = False):
@@ -135,13 +146,13 @@ class C51Agent(distAgent):
 		return Tz
 
 	def mapped_z(self,state):
-		return self.z + (state[0][0][0] / 2 + 0.5)
+		return self.z + (state[0][0] / 2 + 0.5)
 
 	def mapped_dz(self,state):
 		return self.dz
 
 	def mapped_bounds(self,state):
-		return (self.V_min + (state[0][0][0] / 2 + 0.5), self.V_max + (state[0][0][0] / 2 + 0.5))
+		return (self.V_min + (state[0][0] / 2 + 0.5), self.V_max + (state[0][0] / 2 + 0.5))
 
 	# Get unmapped results using basis: STATE
 	# Could be made more efficient
@@ -272,7 +283,7 @@ class IQNNetwork(Model):
 	def call(self,inputs):
 		
 		state_action,quantiles_selected = inputs
-		embedded_quantiles = np.cos(np.dot(embedded_range, self.quantiles_selected) * np.pi)
+		embedded_quantiles = np.cos(np.dot(embedded_range, self.quantiles) * np.pi)
 		embedded_quantiles.shape = (self.N,1)
 		processed_state = self.process_state(state_action)
 		combined = self.main_hidden1([processed_state,embedded_quantiles])
@@ -293,7 +304,7 @@ class CosineBasisLayer(Layer):
 
 	def call(self, inputs):
 		# Should these lines be converted to TF?
-		#quantiles.shape = (1,len(self.quantiles_selected))
+		#quantiles.shape = (1,len(self.quantiles))
 
 		embedding_range = K.arange(1,self.units + 1) # Note this is DIFFERENT to paper
 		# dot does not do automatic type conversion so...
@@ -309,36 +320,38 @@ class CosineBasisLayer(Layer):
 
 # Temporarily swtiched to QRAgent
 class QRAgent(distAgent):
-	def __init__(self,state_size, action_values, agent_name,C, alternative_target = False,UCB=False,UCBc = 1,tree_horizon = 3):
-		self.N = 3
+	def __init__(self,state_size, action_values, agent_name,C, alternative_target = False,UCB=False,UCBc = 1,tree_horizon = 3,market_data_size=0):
+		self.N = 32
 		self.N_p = 8
 		self.embedding_dim = 3
 		self.state_model_size_out = 8
 		#self.kappa = 2 # What should this be? Moved to loss fun
-		self.selected_qs = None
-
-		self.embedded_range = np.arange(self.embedding_dim) + 1 # Note Chainer and dopamine implementation
-		self.embedded_range.shape = (self.embedding_dim,1)
+		#self.selected_qs = None
+		#self.embedded_range = np.arange(self.embedding_dim) + 1 # Note Chainer and dopamine implementation
+		#self.embedded_range.shape = (self.embedding_dim,1)
 
 		# Temporarily uniformly parition [0,1] for the quantiles
-		self.quantiles_selected = np.arange(1,self.N + 1) / (self.N+1) # np.random.rand(self.N) This should be a random partition of [0,1]
-		#print(self.quantiles_selected)
-		self.qi = 1 / (self.N)#self.quantiles_selected[1] - self.quantiles_selected[0] # WARNING: SHOULD BE DYNAMIC
-		self.quantiles_selected.shape = (1,len(self.quantiles_selected))
-		self.embedded_quantiles = np.cos(np.dot(self.embedded_range, self.quantiles_selected) * np.pi)
-		self.embedded_quantiles.shape = (1,self.embedding_dim,self.N)
+		self.quantiles = np.arange(1,self.N + 1) / (self.N+1) # np.random.rand(self.N) This should be a random partition of [0,1]
+		#print(self.quantiles)
+		self.qi = 1 / (self.N)#self.quantiles[1] - self.quantiles[0] # WARNING: SHOULD BE DYNAMIC
+		self.quantiles.shape = (1,len(self.quantiles))
+		#self.embedded_quantiles = np.cos(np.dot(self.embedded_range, self.quantiles) * np.pi)
+		#self.embedded_quantiles.shape = (1,self.embedding_dim,self.N)
 		self.kappa = 1
-		super(QRAgent,self).__init__(state_size, action_values, agent_name,C, alternative_target,UCB,UCBc,tree_horizon)
+		self.optimisticUCB = False
+		super(QRAgent,self).__init__(state_size, action_values, agent_name,C, alternative_target,UCB,UCBc,tree_horizon,market_data_size)
 			
 	# https://stackoverflow.com/questions/55445712/custom-loss-function-in-keras-based-on-the-input-data
 	@staticmethod
 	def huber_loss_quantile(tau,kappa):
 		#kappa = 2
 		def loss(yTrue,yPred):
-			bellman_errors =   yPred - yTrue
+			bellman_errors =   yTrue - yPred
 			#tau = np.array(quantile_in)
 			#print("loss",(K.abs(tau - K.cast(bellman_errors < 0,"float32")) * huber_loss(yTrue,yPred)) / kappa)
-			return (K.abs(tau - K.cast(bellman_errors < 0,"float32")) * huber_loss(yTrue,yPred)) / kappa
+			if kappa > 0:
+				return (K.abs(tau - K.cast(bellman_errors < 0,"float32")) * huber_loss(yTrue,yPred)) / kappa
+			return (K.abs(tau - K.cast(bellman_errors < 0,"float32")) * bellman_errors)
 		return loss
 		
 
@@ -346,8 +359,8 @@ class QRAgent(distAgent):
 		# Using Keras functional API
 		
 		state_in = Input(shape=(self.state_size + 1,))
-		state_hidden1 = Dense(8, activation='relu')(state_in)
-		state_hidden2 = Dense(self.state_model_size_out, activation='relu')(state_hidden1)
+		state_hidden1 = Dense(32, activation='relu')(state_in)
+		state_hidden2 = Dense(32, activation='relu')(state_hidden1)
 		#hidden3 = Dense(30, activation='relu')(hidden2)
 		
 
@@ -361,11 +374,16 @@ class QRAgent(distAgent):
 		
 		# Full Model
 		#main_hidden1 = Multiply()([cosine_layer, state_hidden2])
-		main_hidden2 = Dense(30, activation='relu')(state_hidden2) #main_hidden1
+		main_hidden2 = Dense(32, activation='relu')(state_hidden2) #main_hidden1
 		outputs = Dense(self.N, activation='linear')(main_hidden2)
-		main_model = Model(inputs=state_in, outputs=outputs)
+		#main_model = Model(inputs=state_in, outputs=outputs)
 
-		main_model.compile(loss = self.huber_loss_quantile(self.quantiles_selected,self.kappa),
+		if self.market_data_size > 0:
+			model = Model(inputs=[state_in,self.stock_model.input], outputs=outputs)
+		else:
+			model = Model(inputs=state_in, outputs=outputs)
+
+		model.compile(loss = self.huber_loss_quantile(self.quantiles,self.kappa),
 						optimizer=Adam(lr=self.learning_rate))
 		'''
 		main_model = IQNNetwork(self.state_size + 1,self.N,self.state_model_size_out,self.embedding_dim)
@@ -373,74 +391,116 @@ class QRAgent(distAgent):
 		main_model.compile(loss = self.huber_loss_quantile(quantiles_selected,self.kappa),
 						optimizer=Adam(lr=self.learning_rate))
 		'''
-		return main_model
+		return model
 
-	def predict_action(self,state,action_index,quantiles_selected,target = False):
-		#print("quantiles",self.quantiles_selected)
-		#print(np.dot(self.embedded_range, self.quantiles_selected))
+	def predict_action(self,state,action_index,target = False,above_med = False):
+		#print("quantiles",self.quantiles)
+		#print(np.dot(self.embedded_range, self.quantiles))
 		#print("action index",action_index)
 		state_action = self._process_state_action(state,action_index)
 		#quantile_in = self.process_quantiles(quantiles_selected)
 		#print("state action",state_action,"embedded_quantiles",self.embedded_quantiles)
 		#print(self.model.summary())
-		if self.C > 0 and target:
-			return np.add.reduce(self.quantiles_selected * self.target_model.predict([state_action,self.quantiles_selected]),1)
-		#print("pre reduce predict_action output",np.add.reduce(self.model.predict([state_action,self.quantiles_selected]),1))
-		#print("predict_action output",self.model.predict([state_action,self.quantiles_selected]))
-
-		return np.add.reduce(self.qi * self.model.predict(state_action),1)
+		predict = self.predict_quantiles(state_action,target)
+		#if self.C > 0 and target:
+			#assert not above_med, "Why is variance being used with target?"
+			#return np.add.reduce(self.qi * predict,1)
+		#print("pre reduce predict_action output",np.add.reduce(self.model.predict([state_action,self.quantiles]),1))
+		#print("predict_action output",self.model.predict([state_action,self.quantiles]))
+		#predict = self.model.predict(state_action)[0]
+		if above_med:
+			predict = predict[0][int(len(predict)/2):]
+			np.reshape(predict,[1,len(predict)])
+			#return np.add.reduce(self.qi * predict,1)
+		return np.add.reduce(self.qi * predict,1)
 
 	# This function needs to be rolled into predict_action
-	def predict_quantiles(self,state,action_index,quantiles_selected,target = False):
-		state_action = self._process_state_action(state,action_index)
+	def predict_quantiles(self,state_action,target = False):
+		#state_action = self._process_state_action(state,action_index)
 		if DEBUG:
 			print("predict state action", state_action)
-		state_action.shape = (1,len(state_action))
+		#state_action.shape = (1,len(state_action))
 		if self.C > 0 and target:
-			return self.target_model.predict([state_action,self.quantiles_selected])
-		return self.model.predict([state_action,self.quantiles_selected])
+			return self.target_model.predict(state_action) + state_action[0][0] / 2 + 0.5
+		return self.model.predict(state_action) + state_action[0][0] / 2 + 0.5
 
 
 	# predict function could be moved to distAgent and transitioned to np
-	def predict(self,state,quantiles_selected = None,target = False):
+	def predict(self,state,target = False):
 		res = []
-		if quantiles_selected == None:
-			quantiles_selected = np.random.uniform(self.N)
 		for i in range(self.action_size):
-			res.append(self.predict_action(state,i,quantiles_selected,target = target))
+			res.append(self.predict_action(state,i,target = target))
 
 		res = np.array(res)
 		res.shape = (1,len(res))
 		return res
 
+	def project(self,reward,next_state,done,horizon,mem_index):
+		tree_success = False
+		predict = []
+		if not done:
+			next_action_index = np.argmax(self.predict(next_state)[0])
+			if horizon > 1 and mem_index < (self.memory.size - 1):
+				state1, action1, reward1, next_state1, done1 = self.memory[mem_index + 1]
+				if next_action_index == action1:
+					predict = self.project(reward1,next_state1,done1,horizon - 1,mem_index + 1)
+					tree_success = True
+			if not tree_success:
+				next_state_action = self._process_state_action(next_state,next_action_index)
+				predict = self.predict_quantiles(next_state_action,target = True)
+		else:
+			predict = np.zeros(self.N)
+			predict = np.reshape(predict, [1, self.N])
+
+		return reward + self.gamma * predict
+
 	def fit(self,state, action_index, reward, next_state, done,mem_index = -1):
-		quantiles_selected = np.random.uniform(self.N)
 		state_action = self._process_state_action(state,action_index)
 		if DEBUG:
 			print("State Action",state_action)
 		# For Double Deep
 		#print("predictions",self.predict(next_state,quantiles_selected = quantiles_selected))
-		next_action_index = np.argmax(self.predict(next_state,quantiles_selected = quantiles_selected)[0])
-		if not done:
-			target = reward + self.gamma * self.predict_quantiles(next_state,next_action_index,quantiles_selected,target = True)
-		else:
-			target = np.ones(self.N) * reward
+		
+		
+		
+
+		target = self.project(reward,next_state,done,self.tree_n,mem_index) - state[0][0] / 2 - 0.5
+		#print(target)
+
+			
 		if DEBUG:
 			print("Target", target)
 		#print("target shape",target.shape)
-		target_f = np.reshape(target, [1, self.N])
-		#print("predicted", self.predict_quantiles(state,action_index,self.quantiles_selected,target = False),"target",target_f)
-		#print("loss", self.huber_loss_quantile(self.quantiles_selected,1)(target_f,self.predict_quantiles(state,action_index,self.quantiles_selected,target = False)))
+		target_f = target #np.reshape(target, [1, self.N])
+		#print("predicted", self.predict_quantiles(state,action_index,self.quantiles,target = False),"target",target_f)
+		#print("loss", self.huber_loss_quantile(self.quantiles,1)(target_f,self.predict_quantiles(state,action_index,self.quantiles,target = False)))
 		
-		self.model.fit([state_action,self.quantiles_selected], target_f,epochs=1, verbose=0)
+		self.model.fit(state_action, target_f,epochs=1, verbose=0)
 
 
 	def process_quantiles(self,quantiles_selected):
 		# Move to class init (why reinitialise?)
 		assert False
 
+	def action_variance(self,state,action_index):
+		state_action = self._process_state_action(state,action_index)
+		predict = self.predict_quantiles(state_action)[0]
+		if self.optimisticUCB:
+			predict = predict[int(len(predict) / 2):]
+		#print("action_var",np.add.reduce(self.qi * predict * predict))
+		return np.add.reduce(self.qi * predict * predict)
+
+	def variance(self,state):
+		res = []
+		#print("00",np.power(self.predict_action(state,0,above_med = self.optimisticUCB),2))
+		for i in range(self.action_size):
+			res.append(self.action_variance(state,i) - np.power(self.predict_action(state,i,above_med = self.optimisticUCB)[0],2))
+		return res
+
 # Testing the code
 if __name__ == "__main__":
+	pass
+
 	'''
 	myAgent = distAgent(5,"TonyTester",N=5)
 	state = [-0.8,0.8] 
@@ -450,7 +510,7 @@ if __name__ == "__main__":
 	next_state = [-1,0.9] 
 	next_state = np.reshape(state, [1, 2])
 	myAgent.epsilon_min = 0.01
-	'''
+	
 	myAgent = QRAgent(2,[0.1,0.5,1.0],"TonyTester",C=0,market_data_size = 16)
 	state = [-1,1] 
 	state = np.reshape(state, [1, 2])
@@ -510,7 +570,7 @@ if __name__ == "__main__":
 		print("... and the probs:",myAgent.probs(next_state,my_next_action)[0])
 		print("resulting in projTZ ", myAgent.projTZ_nTree(state,0.1,next_state,False,0,1))
 		myAgent.fit(state,2,0.1,next_state,False)
-
+	'''
 
 
 

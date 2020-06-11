@@ -57,28 +57,32 @@ class simulator:
 			new_run.config.update({"num_trades": self.num_steps,
 			 "batch_size": self.batch_size,
 			 "action_size": len(self.possible_actions),
-			 "state_size": self.env.state_size
+			 "state_size": self.env.state_size,
+			 "temp_impact": self.env.m.k,
+			 "stock": type(self.env.m.stock).__name__
 			 })
 			if agent.agent_type != "basic":
-				new_run.config.target_lag: agent.C
-				new_run.config.alt_target: agent.alternative_target
-				new_run.config.tree_horizon: agent.tree_n
-				new_run.config.buffer_size: agent.replay_buffer_size
-				new_run.config.learning_rate: agent.learning_rate
+				new_run.config.update({"target_lag": agent.C,
+				 "alt_target": agent.alternative_target,
+			 	 "tree_horizon": agent.tree_n,
+			 	 "buffer_size": agent.replay_buffer_size,
+			 	 "learning_rate": agent.learning_rate,
+			 	 "reward_scaling": agent.reward_scaling
+			 	})
 				
-				if agent.UCB:
-					new_run.config.UCBc = agent.c
-				else:
-					new_run.config.epsilon_min = agent.epsilon_min
-					new_run.config.epsilon_decay = agent.epsilon_decay
-
 			if agent.agent_type == "dist":
 				if type(agent).__name__ == "C51Agent":
-					new_run.config.reward_mapping = agent.reward_mapping
-					new_run.config.support_range = agent.V_max - agent.V_min
+					new_run.config.update({"support_range": agent.V_max - agent.V_min})
 				if type(agent).__name__ == "QRAgent":
-					new_run.config.n_quantiles = agent.N
-
+					new_run.config.update({"n_quantiles": agent.N})
+				if agent.UCB:
+					new_run.config.update({"UCBc": agent.c})
+				else:
+					new_run.config.update({"epsilon_min": agent.epsilon_min})
+					new_run.config.update({"epsilon_decay": agent.epsilon_decay})
+			else:
+				new_run.config.update({"epsilon_min": agent.epsilon_min})
+				new_run.config.update({"epsilon_decay": agent.epsilon_decay})
 
 			# Agent specifics
 			self.wandb_agents.append(new_run)
@@ -166,6 +170,7 @@ class simulator:
 		for i ,agent in enumerate(self.agents):
 			agent.epsilon = epsilon[i]
 			agent.epsilon_decay = epsilon_decay[i]
+			agent.evaluate = evaluate
 			
 		# Setup action list
 		actions = [-1] * self.n_agents
@@ -238,11 +243,13 @@ class simulator:
 	def episode(self,actions, verbose = False,evaluate = False):
 		states = self.env.reset(training = (not evaluate)) # reset state at start of each new episode of the game
 		#states = np.reshape(states, [self.n_agents,1, self.env.state_size])
-
+		track_action_p = False
 		# Log action values
 		if not evaluate:
 			self.episode_n += 1
 			if self.episode_n % self.action_record_frequency == 0:
+				track_action_p = True
+				action_tracker = []
 				for i, agent in enumerate(self.agents):
 					for j in range(len(self.possible_actions)):
 						self.wandb_agents[i].log({'episode': self.episode_n, ('act_val' + str(j)): agent.predict(states)[0][j]})
@@ -266,6 +273,9 @@ class simulator:
 			
 			next_states, rewards, done = self.env.step(actions)
 			
+			assert self.n_agents ==1,  "multiple agents not supported"
+			if track_action_p:
+				action_tracker.append(actions[0])
 			#rewards = (1 - done) * rewards
 			
 			#next_states = np.reshape(next_states, [self.n_agents,1, self.env.state_size])
@@ -279,9 +289,9 @@ class simulator:
 						agent.remember(states, actions[i], rewards[i], next_states, done[i])
 
 			if verbose:
-				print("Agent 0 predict", self.agents[0].predict(states[0]))
-				print("State[0]: ",states[0], "Actions[0]: ", actions[0], "Rewards[0]: ", rewards[0], "Next_states[0]: ", next_states[0], "Done[0]: ", done[0])
-				print("Agent 0 next predict", self.agents[0].predict(next_states[0]))
+				print("Agent 0 predict", self.agents[0].predict(states))
+				print("State[0]: ",states, "Actions[0]: ", actions[0], "Rewards[0]: ", rewards[0], "Next_states[0]: ", next_states, "Done[0]: ", done[0])
+				print("Agent 0 next predict", self.agents[0].predict(next_states))
 			states = next_states
 				
 			if all(done): 
@@ -301,6 +311,11 @@ class simulator:
 		if evaluate:
 			self.eval_rewards += total_reward
 
+		if track_action_p:
+			for i in range(len(self.wandb_agents)):
+				for j in range(len(self.possible_actions)):
+					self.wandb_agents[i].log({'episode': self.episode_n, ('act_count' + str(j)): action_tracker.count(j)})
+
 	def evaluate(self,n_episodes = 200,show_stats = True):
 		epsilon_old = []
 		epsilon_decay_old = []
@@ -315,6 +330,7 @@ class simulator:
 		for i, agent in enumerate(self.agents):
 			agent.epsilon = epsilon_old[i]
 			agent.epsilon_decay = epsilon_decay_old[i]
+			agent.evaluate = False
 
 		if show_stats:
 			start_iteration = len(self.eval_rewards)

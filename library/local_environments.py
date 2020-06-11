@@ -15,9 +15,9 @@ class agent_environmentM:
 
         # Local environment
         self.initial_position = np.ones(n_strats) * position
-        self.reset()
         self.terminal = terminal # In seconds
         self.step_size = terminal / num_steps
+        self.reset()
         
         # Possible amounts to sell: 0 - 10% of the total position
         self.action_values = np.array(action_values_pct) * position 
@@ -32,7 +32,7 @@ class agent_environmentM:
         returns = self.m.sell(capped_volume,self.step_size) 
         self.cash += returns
         #print("time ", self.time, "capped_volume ", capped_volume, "state ", self.state(),"returns ", returns)
-        return returns
+        return returns, capped_volume
 
     def reset(self,training = True):
         self.position = self.initial_position.copy()
@@ -47,7 +47,7 @@ class agent_environmentM:
 
     def state(self,full = False):
 
-        times = np.ones(self.n_strats) * 2 * self.time - 1
+        times = np.ones(self.n_strats) * 2 * self.time / self.terminal - 1
         # TODO: Store state as a seprate variable
         res = np.vstack((2 * self.position/self.initial_position[0] - 1,times)) # Assuming initial position always the same
         if self.market_data:
@@ -57,16 +57,19 @@ class agent_environmentM:
     
     def step(self,actions):
         self.progress(self.step_size)
-        if self.time < self.terminal:
-            rewards = self.sell(self.action_values[actions])
+        time_out = (round(self.time,7) >= self.terminal)
+        if time_out:
+            rewards, amount = self.sell(self.position)
+            #print("Selling off",amount)
         else:
-            rewards = self.sell(self.position)
+            rewards, amount = self.sell(self.action_values[actions])
+            #print("selling ",amount)
         done = (self.position <= 0) + (round(self.time,7) >= self.terminal)
         if any(self.position < 0):
             print("Warning position is ",self.position)
         done = np.array(done,dtype = bool)
 
-        rewards = self.scale_rewards(rewards)
+        rewards = self.scale_rewards(rewards,amount)
         #print("times ",self.time, self.terminal)
             
 		# Reward is currently just the returned cash / 100...
@@ -77,7 +80,7 @@ class agent_environmentM:
         return self.state(), rewards, done
 
 
-    def scale_rewards(self,rewards):
+    def scale_rewards(self,rewards,amount):
         #print(type(self.m.stock.initial),self.m.stock.initial)
-        return rewards / (self.initial_position[0] ) # /* self.m.stock.initial
+        return (rewards) / (self.initial_position[0] ) # /* self.m.stock.initial
 

@@ -37,7 +37,7 @@ class bs_stock:
 			next_price = generate_price(dt)
 			res.append(next_price)
 
-	def reset(self):
+	def reset(self,training=None):
 		self.price = self.initial
 
 	def __str__(self):
@@ -156,10 +156,13 @@ class real_stock:
 		return self.price
 
 	def hist_price(self,n,dt):
+		dt_adj = dt / self.data_freq
+		assert dt_adj.is_integer(), "Time step must be an integer"
+		dt_adj = int(dt_adj)
 		res = []
 		for i in range(n):
-			res.append(self.df[self.data_index - i * dt])
-		return self.df[self.data_index-i:self.data_index] / self.initial
+			res.append(self.df[self.data_index + (- n + i + 1 ) * dt_adj])
+		return np.array(res) / self.initial
 
 
 # Need to rework to record n previous prices...
@@ -167,6 +170,7 @@ class market:
 	'''Basic market model, base class for more complex models'''
 
 	def __init__(self,stock_,num_strats = 1,n_hist_prices = 0):
+		self.k = 0.00186
 		self.stock = stock_
 		self.stock.hist_buffer = n_hist_prices
 		self.spread = 0
@@ -181,6 +185,7 @@ class market:
 		self.price_adjust *= np.vectorize(self.exp_g)(volume)
 		#print("volume ", volume, "price_adjust ",self.price_adjust)        
 		ret = (self._adjusted_price() - np.vectorize(self.f)(volume/dt) - 0.5 * self.spread) * volume 
+		#print("return",ret)
 		return ret
 
 	def g(self,v):
@@ -190,7 +195,7 @@ class market:
 		return np.exp(-self.g(v))
 
 	def f(self,v):
-		return v * 0.00#0.00186 # Temporarily adjusting by 10 to account for non unit terminal
+		return v * self.k#0.00186 # Temporarily adjusting by 10 to account for non unit terminal
 		# What should this be?
 			# - HFT book (position = 1, terminal  = 1, k = 0.01)
 			# Since position = 1 but terminal = 10 I've *10
@@ -203,13 +208,14 @@ class market:
 		self.stock.reset(training)
 		self.price_adjust = np.ones(len(self.price_adjust))
 		for i in range(self.n_hist_prices):
-			self.hist_prices = self.stock.hist_price(self.n_hist_prices)
+			self.hist_prices = self.stock.hist_price(self.n_hist_prices,dt)
 		#return self.hist_prices
 
 	def progress(self,dt):
 		self.stock.generate_price(dt)
 		# MULTIPLE STRATS NOT SUPPORTED HERE
-		self.hist_prices[:-1] = self.hist_prices[1:]; self.hist_prices[-1] = self._adjusted_price()[0]
+		if self.n_hist_prices > 0:
+			self.hist_prices[:-1] = self.hist_prices[1:]; self.hist_prices[-1] = self._adjusted_price()[0]
 
 	def state(self,n_prices = 1):
 		return self.hist_prices

@@ -129,11 +129,15 @@ class learningAgent:
 		self.tree_n = tree_horizon
 		self.learning_rate = 0.001
 		self.gamma = 1
+		self.reward_scaling = True
 
 		# Market data (currently only prices)
 		self.market_data_size = market_data_size
 		if self.market_data_size > 0:
 			self.stock_model = self._build_stock_model(market_data_size)
+
+		# Switch for agent evaluation mode
+		self.evaluate = False ### TODO!!!!!
 		
 		self.model = self._build_model()
 
@@ -185,7 +189,7 @@ class learningAgent:
 		# Note this applies only to epsilon greedy algorithms
 
 		# Epsilon case
-		if np.random.rand() <= self.epsilon:
+		if np.random.rand() <= self.epsilon and not self.evaluate:
 			rand_act = random.randrange(self.action_size)
 			return rand_act
 		

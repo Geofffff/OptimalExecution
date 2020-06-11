@@ -66,13 +66,18 @@ class DQNAgent(learningAgent):
 
 	# Override predict and fit functions
 	def predict(self,state,target = False):
-		# Note that this predict function (without for_fitting) should only be used once per step!
-		if self.C > 0 and target:
-			return self.target_model.predict(state)
+		if self.reward_scaling:
+			scaling_factor = state[0][0]/2 + 0.5
+		else:
+			scaling_factor = 0
 
-		return self.model.predict(state)
+		if self.C > 0 and target:
+			return self.target_model.predict(state) + scaling_factor
+
+		return self.model.predict(state) + scaling_factor
  
 	def fit(self,state, action, reward, next_state, done):
+		
 		target = reward
 		# if not done then returns must incorporate predicted (discounted) future reward
 		if not done:
@@ -81,6 +86,8 @@ class DQNAgent(learningAgent):
 			#print("target ", target, ", reward ", reward)
 		target_f = self.predict(state,target = True) # predicted returns for all actions
 		target_f[0][action] = target 
+		if self.reward_scaling:
+			target_f -= state[0][0]/2 + 0.5
 		# Change the action taken to the reward + predicted max of next states
 		self.model.fit(state, target_f,epochs=1, verbose=0) # Single epoch?
 
@@ -108,5 +115,7 @@ class DDQNAgent(DQNAgent):
 		target = self.project(reward,next_state,done,self.tree_n,mem_index)
 		target_f = self.predict(state,target = True) # predicted returns for all actions
 		target_f[0][action] = target 
+		if self.reward_scaling:
+			target_f -= state[0][0]/2 + 0.5
 		# Change the action taken to the reward + predicted max of next states
 		self.model.fit(state, target_f,epochs=1, verbose=0) # Single epoch?	
