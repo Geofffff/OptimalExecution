@@ -59,6 +59,13 @@ Thursday 11th
 - Trial different terminal periods
 - Get running smoothly for real data
 
+Saturday
+- Start testing second scale micro intervals with TWAP macro strategy
+	- Check k is right
+	- decide how we operate (by the second or tick or n seconds?)
+		- requires extra layer on real_stock to process
+		- talk to Paul about it
+
 ### Agents
 - The build model function should probably be broken out of the learning agents
 - Fix slightly hacky solution to non generalised parameters

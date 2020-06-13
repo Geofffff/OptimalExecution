@@ -412,15 +412,26 @@ class QRAgent(distAgent):
 			#return np.add.reduce(self.qi * predict,1)
 		return np.add.reduce(self.qi * predict,1)
 
+	def _reward_scaling(self,state_action):
+		if self.reward_scaling:
+			if self.market_data_size > 0:
+				return state_action[0][0][0] / 2 + 0.5
+			else:
+				return state_action[0][0] / 2 + 0.5
+	
+		return 0
+
 	# This function needs to be rolled into predict_action
 	def predict_quantiles(self,state_action,target = False):
 		#state_action = self._process_state_action(state,action_index)
+		result_scaling_factor = self._reward_scaling(state_action)
+		
 		if DEBUG:
 			print("predict state action", state_action)
 		#state_action.shape = (1,len(state_action))
 		if self.C > 0 and target:
-			return self.target_model.predict(state_action) + state_action[0][0] / 2 + 0.5
-		return self.model.predict(state_action) + state_action[0][0] / 2 + 0.5
+			return self.target_model.predict(state_action) + result_scaling_factor
+		return self.model.predict(state_action) + result_scaling_factor
 
 
 	# predict function could be moved to distAgent and transitioned to np
@@ -458,11 +469,8 @@ class QRAgent(distAgent):
 			print("State Action",state_action)
 		# For Double Deep
 		#print("predictions",self.predict(next_state,quantiles_selected = quantiles_selected))
-		
-		
-		
 
-		target = self.project(reward,next_state,done,self.tree_n,mem_index) - state[0][0] / 2 - 0.5
+		target = self.project(reward,next_state,done,self.tree_n,mem_index) - self._reward_scaling(state_action)
 		#print(target)
 
 			

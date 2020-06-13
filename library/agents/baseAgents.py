@@ -63,6 +63,7 @@ class basicAgent:
 		self.memory = [1,2]
 		self.epsilon_decay = 0
 		self.epsilon = 1
+		self.epsilon_min = 0.01
 		self.action_size = action_size
 		self.agent_type = "basic"
 		self.predicts = np.zeros(action_size)

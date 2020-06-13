@@ -24,9 +24,6 @@ class bs_stock:
 	def reset(self,training=None):
 		self.price = self.initial
 
-	def __str__(self):
-		print(f"Stock Price: {self.price} \n \
-		 Black Scholes Dynamics, drift: {self.drift}, vol: {self.vol}")
 
 class mean_rev_stock(bs_stock):
 	def __init__(self, initial, drift, vol,reversion):
@@ -76,7 +73,7 @@ class signal_stock(bs_stock):
 		self.signal = 0 # Always start with no signal (could improve this)
 
 class real_stock:
-	def __init__(self,data,n_steps = 60, data_freq = 60,recycle = True,n_train = 0):
+	def __init__(self,data,n_steps = 60, data_freq = 6,recycle = True,n_train = 0):
 		self.recycle = recycle
 		self.n_steps = n_steps
 		self.df = data
@@ -86,11 +83,10 @@ class real_stock:
 		# Partition data into training and testing data
 		self.n_train = n_train
 		self.partition_training = (self.n_train > 0)
-		self.n_points_period = int(self.n_steps / self.data_freq)
 
 		if not self.recycle:
 			print("Assuming 1M frequency",("with" if recycle else "without"),"recycling")
-			self.final_period = floor((len(data) - self.hist_buffer) / self.n_points_period) - self.n_train
+			self.final_period = floor((len(data) - self.hist_buffer) / self.n_steps) - self.n_train
 			self.available_periods = range(self.final_period)
 			shuffle(self.available_periods)
 
@@ -101,15 +97,15 @@ class real_stock:
 
 	def reset(self,training=True):
 		if (not training) and self.partition_training:
-			self.data_index = randint(len(self.df) - self.n_train * self.n_points_period,len(self.df) - self.n_points_period - 1)
-			#print(self.data_index,len(self.df) - self.n_points_period)
+			self.data_index = randint(len(self.df) - self.n_train * self.n_steps,len(self.df) - self.n_steps - 1)
+			#print(self.data_index,len(self.df) - self.n_steps)
 		else:
 			if not self.recycle:
 				self.period_index += 1
 				assert self.period_index <= self.final_period, "Dataset finished"
-				self.data_index = self.period_index * self.n_points_period * self.hist_buffer
+				self.data_index = self.period_index * self.n_steps * self.hist_buffer
 			else:
-				self.data_index = randint(self.hist_buffer,len(self.df) - self.n_points_period * (1 + self.n_train))
+				self.data_index = randint(self.hist_buffer,len(self.df) - self.n_steps * (1 + self.n_train))
 		self.in_period_index = 0
 		
 		self.initial = self.df[self.data_index]
@@ -117,6 +113,7 @@ class real_stock:
 
 	def generate_price(self,dt):
 		index_update = dt * self.n_steps
+		
 		assert index_update.is_integer(), "Step size must be an integer unit of time"
 		index_update = int(index_update)
 		self.data_index += index_update
@@ -124,7 +121,7 @@ class real_stock:
 
 		self.price = self.df[self.data_index] / self.initial
 		#print("period_index",self.period_index,"data_index",self.data_index)
-		assert self.in_period_index <= self.n_points_period, "Stock price requested outside of period"
+		assert self.in_period_index <= self.n_steps, "Stock price requested outside of period"
 		
 		# WARNING: For now we return a scaled price (scaled by initial price at the start of every episode)
 		error = np.isnan(self.price)
@@ -147,20 +144,18 @@ class market:
 	'''Basic market model, base class for more complex models'''
 
 	def __init__(self,stock_,n_hist_prices = 0):
-		self.k = 0.00186
+		self.k = 0.001
 		self.stock = stock_
 		self.stock.hist_buffer = n_hist_prices
 		self.spread = 0
 		self.price_adjust = 1
 		self.n_hist_prices = n_hist_prices
-		if self.n_hist_prices > 0:
-			assert num_strats == 1, "Currently historical data does not support more than one strat"
-
 
 	def sell(self,volume,dt):
 		'''sell *volume* of stock over time window dt, volume is np array'''
+		#print(volume / dt)
 		self.price_adjust *= self.exp_g(volume)
-		#print("volume ", volume, "price_adjust ",self.price_adjust)        
+		#print("rate ", volume/dt, "price_adjust ",self.price_adjust)        
 		ret = (self._adjusted_price() - self.f(volume/dt) - 0.5 * self.spread) * volume 
 		#print("return",ret)
 		return ret
@@ -179,6 +174,7 @@ class market:
 			# NOW CHANGED TO 0.001 (V LOW) TO TEST STOCK PROCESSING NET
 
 	def _adjusted_price(self):
+		#print("price",self.stock.price,"adjust",self.price_adjust)
 		return self.stock.price * self.price_adjust
 
 	def reset(self,dt,training = True):
@@ -192,7 +188,7 @@ class market:
 		self.stock.generate_price(dt)
 		# MULTIPLE STRATS NOT SUPPORTED HERE
 		if self.n_hist_prices > 0:
-			self.hist_prices[:-1] = self.hist_prices[1:]; self.hist_prices[-1] = self._adjusted_price()[0]
+			self.hist_prices[:-1] = self.hist_prices[1:]; self.hist_prices[-1] = self._adjusted_price()
 
 	def state(self):
 		return self.hist_prices
