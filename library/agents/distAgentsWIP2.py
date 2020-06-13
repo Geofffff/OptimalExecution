@@ -323,6 +323,7 @@ class QRAgent(distAgent):
 		self.N_p = 8
 		self.embedding_dim = 3
 		self.state_model_size_out = 8
+		self.twap_scaling = True 
 		#self.kappa = 2 # What should this be? Moved to loss fun
 		#self.selected_qs = None
 		#self.embedded_range = np.arange(self.embedding_dim) + 1 # Note Chainer and dopamine implementation
@@ -414,10 +415,16 @@ class QRAgent(distAgent):
 
 	def _reward_scaling(self,state_action):
 		if self.reward_scaling:
-			if self.market_data_size > 0:
-				return state_action[0][0][0] / 2 + 0.5
+			if self.twap_scaling:
+				assert self.market_data_size > 0, "TWAP Scaling only available with market data"
+				# Inventory * initial_price - 0.001 * time
+				return state_action[0][0][0] - 0.001 * state_action[0][0][1]
 			else:
-				return state_action[0][0] / 2 + 0.5
+				if self.market_data_size > 0:
+					return state_action[0][0][0] / 2 + 0.5
+				else:
+					return state_action[0][0] / 2 + 0.5
+
 	
 		return 0
 

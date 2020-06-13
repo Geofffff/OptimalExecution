@@ -69,6 +69,7 @@ class simulator:
 			 	})
 				
 			if agent.agent_type == "dist":
+				new_run.config.update({"twap_scaling": agent.twap_scaling})
 				if type(agent).__name__ == "C51Agent":
 					new_run.config.update({"support_range": agent.V_max - agent.V_min})
 				if type(agent).__name__ == "QRAgent":
