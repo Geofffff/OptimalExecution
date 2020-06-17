@@ -25,7 +25,7 @@ else:
 # from keras.losses import huber_loss
 def huber_loss(y_true, y_pred, clip_delta=1.0):
   error = y_true - y_pred
-  cond  = K.backend.abs(error) < clip_delta
+  cond  = K.abs(error) < clip_delta
 
   squared_loss = 0.5 * K.square(error)
   linear_loss  = clip_delta * (K.abs(error) - 0.5 * clip_delta)
