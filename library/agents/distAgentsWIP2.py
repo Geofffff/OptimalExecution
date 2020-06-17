@@ -25,12 +25,12 @@ else:
 # from keras.losses import huber_loss
 def huber_loss(y_true, y_pred, clip_delta=1.0):
   error = y_true - y_pred
-  cond  = tf.keras.backend.abs(error) < clip_delta
+  cond  = K.backend.abs(error) < clip_delta
 
-  squared_loss = 0.5 * tf.keras.backend.square(error)
-  linear_loss  = clip_delta * (tf.keras.backend.abs(error) - 0.5 * clip_delta)
+  squared_loss = 0.5 * K.square(error)
+  linear_loss  = clip_delta * (K.abs(error) - 0.5 * clip_delta)
 
-  return tf.where(cond, squared_loss, linear_loss)
+  return K.tf.where(cond, squared_loss, linear_loss)
 
 class distAgent(learningAgent):
 	def __init__(self, state_size, action_values, agent_name,C, alternative_target,UCB=False,UCBc = 1,tree_horizon = 3,market_data_size=0):
