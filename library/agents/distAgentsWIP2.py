@@ -2,7 +2,7 @@ import numpy as np
 from keras.models import Sequential
 from keras.models import clone_model
 # Sort this out...
-from keras.layers import Dense, Softmax, Multiply, Add, Input, ReLU, Lambda, Layer, concatenate
+from keras.layers import Dense, Softmax, Multiply, Add, Input, Lambda, Layer, concatenate
 from keras.initializers import RandomNormal
 
 #from keras import Input
@@ -290,6 +290,7 @@ class IQNNetwork(Model):
 		return combined
 
 # https://www.tensorflow.org/guide/keras/custom_layers_and_models
+'''
 class CosineBasisLayer(Layer):
 	def __init__(self,units,input_dim,):
 		super(CosineBasisLayer, self).__init__()
@@ -315,15 +316,15 @@ class CosineBasisLayer(Layer):
 		res = K.dot(inputs, self.w) #+ self.b
 		res = K.sum(res, axis = 1) + self.b
 		return ReLU()(res)
-
+'''
 # Temporarily swtiched to QRAgent
 class QRAgent(distAgent):
 	def __init__(self,state_size, action_values, agent_name,C, alternative_target = False,UCB=False,UCBc = 1,tree_horizon = 3,market_data_size=0):
-		self.N = 32
+		self.N = 80
 		self.N_p = 8
 		self.embedding_dim = 3
 		self.state_model_size_out = 8
-		self.twap_scaling = True 
+		self.twap_scaling = False 
 		#self.kappa = 2 # What should this be? Moved to loss fun
 		#self.selected_qs = None
 		#self.embedded_range = np.arange(self.embedding_dim) + 1 # Note Chainer and dopamine implementation
