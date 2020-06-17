@@ -7,8 +7,7 @@ from keras.initializers import RandomNormal
 
 #from keras import Input
 from keras import Model
-from keras.optimizers import Adam
-from keras.losses import huber_loss 
+from keras.optimizers import Adam 
 from collections import deque
 import random
 import keras.backend as K
@@ -19,6 +18,19 @@ if __name__ == "__main__":
 else:
 	from library.agents.baseAgents import learningAgent, replayMemory
 	DEBUG = False
+
+# TEMPORARY, Copied and pasted from https://stackoverflow.com/questions/47840527/using-tensorflow-huber-loss-in-keras
+# Not required if not running on the cluster
+# Instead replace with 
+# from keras.losses import huber_loss
+def huber_loss(y_true, y_pred, clip_delta=1.0):
+  error = y_true - y_pred
+  cond  = tf.keras.backend.abs(error) < clip_delta
+
+  squared_loss = 0.5 * tf.keras.backend.square(error)
+  linear_loss  = clip_delta * (tf.keras.backend.abs(error) - 0.5 * clip_delta)
+
+  return tf.where(cond, squared_loss, linear_loss)
 
 class distAgent(learningAgent):
 	def __init__(self, state_size, action_values, agent_name,C, alternative_target,UCB=False,UCBc = 1,tree_horizon = 3,market_data_size=0):
