@@ -111,18 +111,20 @@ class real_stock:
 		self.initial = self.df_prices[self.data_index]
 		self.price = 1
 
-	def generate_price(self,dt):
+	def _update_data_index(self,dt):
 		index_update = dt * self.n_steps
 		
 		assert index_update.is_integer(), "Step size must be an integer unit of time"
 		index_update = int(index_update)
 		self.data_index += index_update
 		self.in_period_index += index_update
+		assert self.in_period_index <= self.n_steps, "Stock price requested outside of period"
+
+	def generate_price(self,dt):
+		self._update_data_index(dt)
 
 		self.price = self.df_prices[self.data_index] / self.initial
-		#print("period_index",self.period_index,"data_index",self.data_index)
-		assert self.in_period_index <= self.n_steps, "Stock price requested outside of period"
-		
+
 		# WARNING: For now we return a scaled price (scaled by initial price at the start of every episode)
 		error = np.isnan(self.price)
 		assert not error, "Price must be a finite real number"
@@ -141,13 +143,33 @@ class real_stock:
 class real_stock_lob(real_stock):
 
 	def __init__(self,data,n_steps, data_freq,recycle,n_train):
-		
+
 		super(real_stock_lob,self).__init__(data["price"],n_steps, data_freq,recycle,n_train)
 
 
 	def reset(self,training = True):
 		super(real_stock_lob,self).reset(training)
+		generate_price(first = True)
 
+	def generate_price(self,dt = None,first = False):
+		if not first:
+			assert dt is not None, "dt argument required for non initial price"
+			self._update_data_index(dt)
+
+		self.price = self.df_prices[self.data_index] / self.initial
+
+		# WARNING: For now we return a scaled price (scaled by initial price at the start of every episode)
+		error = np.isnan(self.price)
+		assert not error, "Price must be a finite real number"
+
+		self.bid = self.data["bid"][self.data_index] / self.initial
+		self.ask = self.data["ask"][self.data_index] / self.initial
+		# TODO: how do we scale these?
+		self.bidSize = self.data["bidSize"][self.data_index] 
+		self.askSize = self.data["askSize"][self.data_index]
+		if not first:
+			# Can this be depreciated?
+			return self.price
 
 
 # Need to rework to record n previous prices...
@@ -231,6 +253,13 @@ class lob_market(market):
 		self.lo_price = self.stock.ask # TODO: Implement
 		self.warn_solo_price = False
 
+	def reset(self,training = True):
+		super(lob_market,self).reset(training)
+
+		# Override the initial price with the mid price
+		self.initial = self.df_prices[self.data_index]
+		self.generate_price(first = False)
+
 	def exectute_lob(self):
 		# Stock market orders in considered time window
 		# NOTE: We are assuming that lo_position is monotonically increasing
@@ -279,7 +308,8 @@ class lob_market(market):
 
 
 		 
-
+if __name__ == "__main__":
+	
 
 
 
