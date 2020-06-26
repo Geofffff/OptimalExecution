@@ -131,6 +131,7 @@ class learningAgent:
 		self.learning_rate = 0.001
 		self.gamma = 1
 		self.reward_scaling = True
+		self.action_as_input = False
 
 		# Market data (currently only prices)
 		self.market_data_size = market_data_size

@@ -76,7 +76,7 @@ class real_stock:
 	def __init__(self,data,n_steps = 60, data_freq = 6,recycle = True,n_train = 0):
 		self.recycle = recycle
 		self.n_steps = n_steps
-		self.df = data
+		self.df_prices = data
 		self.hist_buffer = 0
 		self.data_freq = data_freq # 1M = 60
 		
@@ -93,22 +93,22 @@ class real_stock:
 		self.period_index = -1
 		self.reset()
 
-		#self.df[self.data_index] # This will need changing with the format of input
+		#self.df_prices[self.data_index] # This will need changing with the format of input
 
 	def reset(self,training=True):
 		if (not training) and self.partition_training:
-			self.data_index = randint(len(self.df) - self.n_train * self.n_steps,len(self.df) - self.n_steps - 1)
-			#print(self.data_index,len(self.df) - self.n_steps)
+			self.data_index = randint(len(self.df_prices) - self.n_train * self.n_steps,len(self.df_prices) - self.n_steps - 1)
+			#print(self.data_index,len(self.df_prices) - self.n_steps)
 		else:
 			if not self.recycle:
 				self.period_index += 1
 				assert self.period_index <= self.final_period, "Dataset finished"
 				self.data_index = self.period_index * self.n_steps * self.hist_buffer
 			else:
-				self.data_index = randint(self.hist_buffer,len(self.df) - self.n_steps * (1 + self.n_train))
+				self.data_index = randint(self.hist_buffer,len(self.df_prices) - self.n_steps * (1 + self.n_train))
 		self.in_period_index = 0
 		
-		self.initial = self.df[self.data_index]
+		self.initial = self.df_prices[self.data_index]
 		self.price = 1
 
 	def generate_price(self,dt):
@@ -119,7 +119,7 @@ class real_stock:
 		self.data_index += index_update
 		self.in_period_index += index_update
 
-		self.price = self.df[self.data_index] / self.initial
+		self.price = self.df_prices[self.data_index] / self.initial
 		#print("period_index",self.period_index,"data_index",self.data_index)
 		assert self.in_period_index <= self.n_steps, "Stock price requested outside of period"
 		
@@ -135,8 +135,19 @@ class real_stock:
 		dt_adj = int(dt_adj)
 		res = []
 		for i in range(n):
-			res.append(self.df[self.data_index + (- n + i + 1 ) * dt_adj])
+			res.append(self.df_prices[self.data_index + (- n + i + 1 ) * dt_adj])
 		return np.array(res) / self.initial
+
+class real_stock_lob(real_stock):
+
+	def __init__(self,data,n_steps, data_freq,recycle,n_train):
+		
+		super(real_stock_lob,self).__init__(data["price"],n_steps, data_freq,recycle,n_train)
+
+
+	def reset(self,training = True):
+		super(real_stock_lob,self).reset(training)
+
 
 
 # Need to rework to record n previous prices...
@@ -144,7 +155,8 @@ class market:
 	'''Basic market model, base class for more complex models'''
 
 	def __init__(self,stock_,n_hist_prices = 0):
-		self.k = 0.001
+		self.k = 0.01
+		self.b = 0.0005
 		self.stock = stock_
 		self.stock.hist_buffer = n_hist_prices
 		self.spread = 0
@@ -161,7 +173,7 @@ class market:
 		return ret
 
 	def g(self,v):
-		return v * 0.0005
+		return v * self.b
     
 	def exp_g(self,v):
 		return np.exp(-self.g(v))
@@ -193,3 +205,87 @@ class market:
 	def state(self):
 		return self.hist_prices
 
+class lob_market(market):
+
+	def __init__(self,stock_,n_hist_prices):
+		self.reset_lo()
+		super(lob_market,self).__init__(stock_,n_hist_prices)
+		self.b = 0 # No permenant market impact
+		# For now LOs can be made but not cancelled
+
+	def place_limit_order(self,size):
+		capped_size = min(self.lo_cap - self.lo_total_pos,size,0)
+		if not capped_size == 0:
+			self.lo_size.append(capped_size)
+			self.lo_position.append(#Stock lo size)
+									)
+			self.lo_total_pos += capped_size
+			self.lo_adjust += capped_size
+	
+	def reset_lo(self):
+		# Cancel all limit orders
+		self.lo_position = []
+		self.lo_total_pos = 0
+		self.lo_size = []
+		self.lo_adjust = 0
+		self.lo_price = self.stock.ask # TODO: Implement
+		self.warn_solo_price = False
+
+	def exectute_lob(self):
+		# Stock market orders in considered time window
+		# NOTE: We are assuming that lo_position is monotonically increasing
+		assert _monotonic_increasing(self.lo_position), "Order positons should be increasing"
+		# Diagram letters in comments
+		self.lo_position -= self.stock.market_orders
+		pos_plus_size = self.lo_position + self.lo_size #E
+		pos_lt_zero = (self.lo_position < 0) #D
+		fulfilled_sizes = (self.lo_size - np.max(pos_plus_size,0)) * pos_lt_zero #F
+		fulfilled_total = np.sum(fulfilled_sizes)
+		self.lo_total_pos -= fulfilled_total
+
+		# Now update lo_size and lo_position to reflect changes
+
+		# First check that the top of book ask hasn't changed
+		if self.lo_price >< self.stock.ask:
+			
+			if self.lo_price < self.stock.ask:
+				# Price has become more competitive
+				self.reset_lo()
+			else:
+				# Price less competitive
+				if self.lo_total_pos > 0:
+					self.warn_solo_price = True
+				else:
+					self.warn_solo_price = False
+					self.reset_lo()
+
+
+		self.lo_size = self.lo_size * (1 - pos_lt_zero) + np.max(pos_plus_size,0) * pos_lt_zero
+		# Remove orders where size = 0
+		self.lo_size = np.where(self.lo_size > 0)
+		self.lo_position = np.max(self.lo_position,0)
+		self.lo_position = self.lo_position[len(self.lo_position) - len(self.lo_size):]
+
+	# Override state method
+	# TODO: add in other market data
+	def state(self):
+		return self.hist_prices
+
+	@staticmethod
+	def _monotonic_increasing(x):
+		dx = np.diff(x)
+		return np.all(dx >= 0)
+
+
+
+		 
+
+
+
+
+
+
+
+
+
+# End

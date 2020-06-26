@@ -146,4 +146,4 @@ Still seems to be considerable bias towards the first popular action
 	single agent with UCBc = 100
 	Investigate why action values are still overestimated at the start...
 
-
+select time, bid1, ask1 from orderBook where date=2019.06.04, (bid1 <> prev bid1) or (ask1 <> prev ask1)

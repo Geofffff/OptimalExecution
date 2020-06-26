@@ -23,14 +23,18 @@ else:
 # Not required if not running on the cluster
 # Instead replace with 
 # from keras.losses import huber_loss
-def huber_loss(y_true, y_pred, clip_delta=1.0):
-  error = y_true - y_pred
-  cond  = K.abs(error) < clip_delta
+local = True
+if not local:
+	def huber_loss(y_true, y_pred, clip_delta=1.0):
+	  error = y_true - y_pred
+	  cond  = K.abs(error) < clip_delta
 
-  squared_loss = 0.5 * K.square(error)
-  linear_loss  = clip_delta * (K.abs(error) - 0.5 * clip_delta)
+	  squared_loss = 0.5 * K.square(error)
+	  linear_loss  = clip_delta * (K.abs(error) - 0.5 * clip_delta)
 
-  return K.tf.where(cond, squared_loss, linear_loss)
+	  return K.tf.where(cond, squared_loss, linear_loss)
+else:
+	from keras.losses import huber_loss
 
 class distAgent(learningAgent):
 	def __init__(self, state_size, action_values, agent_name,C, alternative_target,UCB=False,UCBc = 1,tree_horizon = 3,market_data_size=0):
@@ -40,6 +44,7 @@ class distAgent(learningAgent):
 		self.UCB = UCB
 		self.c = UCBc
 		self.geometric_decay = True
+		self.action_as_input = True
 
 		# Transformations
 		self.trans_a = 2 / (np.amax(self.action_values) - np.amin(self.action_values))
@@ -96,7 +101,7 @@ class distAgent(learningAgent):
 		if self.market_data_size > 0:
 			# market_state[0] since *market_state collects all in list
 			#print(market_state)
-			market_state = np.reshape(market_state, [1, len(market_state),1])
+			#market_state = np.reshape(market_state, [1, len(market_state),1])
 			#print(local_state_action,market_state)
 			return [local_state_action, market_state]
 
@@ -332,7 +337,7 @@ class CosineBasisLayer(Layer):
 # Temporarily swtiched to QRAgent
 class QRAgent(distAgent):
 	def __init__(self,state_size, action_values, agent_name,C, alternative_target = False,UCB=False,UCBc = 1,tree_horizon = 3,market_data_size=0):
-		self.N = 80
+		self.N = 31
 		self.N_p = 8
 		self.embedding_dim = 3
 		self.state_model_size_out = 8

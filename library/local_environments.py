@@ -22,7 +22,7 @@ class agent_environment:
         self.reset()
         
         # Possible amounts to sell: 0 - 10% of the total position
-        self.action_values = np.array(action_values_pct) * position 
+        self.action_values = np.array(action_values_pct) * position / n_trades
         self.num_actions = len(self.action_values)
         #self.reward_scaling = self.initial / (num_steps)
 
@@ -42,9 +42,12 @@ class agent_environment:
         return self.state()
 
     def state(self,full = False):
-        res = [[2 * self.position/self.initial_position - 1,self.time]]
+        res = [2 * self.position/self.initial_position - 1,self.time]
+        res = np.reshape(res,(1,len(res)))
         if self.market_data:
-            return res, self.m.state()
+            market_state = self.m.state()
+            market_state = np.reshape(market_state,(1,len(market_state),1)) - 1
+            return [res, market_state]
         
         return res
     
@@ -70,4 +73,7 @@ class agent_environment:
 
     def scale_rewards(self,rewards,amount):
         return (rewards) / (self.initial_position ) # /* self.m.stock.initial
+
+class orderbook_environment(agent_environment):
+    pass
 

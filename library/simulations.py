@@ -65,7 +65,8 @@ class simulator:
 			 	 "tree_horizon": agent.tree_n,
 			 	 "buffer_size": agent.replay_buffer_size,
 			 	 "learning_rate": agent.learning_rate,
-			 	 "reward_scaling": agent.reward_scaling
+			 	 "reward_scaling": agent.reward_scaling,
+			 	 "action_input" : agent.action_as_input
 			 	})
 				
 			if agent.agent_type == "dist":
@@ -254,8 +255,9 @@ class simulator:
 				action_tracker = []
 				for i, agent in enumerate(self.agents):
 					for j in range(len(self.possible_actions)):
-						self.wandb_agents[i].log({'episode': self.episode_n, ('act_val' + str(j)): agent.predict(state)[0][j]})
-			self.train_actions = np.concatenate((self.train_actions,[self.episode_actions]))
+						predicts = agent.predict(state)[0]
+						self.wandb_agents[i].log({'episode': self.episode_n, ('act_val' + str(j)): predicts[j]})
+			#self.train_actions = np.concatenate((self.train_actions,[self.episode_actions]))
 					
 		done = False # Has the episode finished
 		inactive = False # Agents which are still trading

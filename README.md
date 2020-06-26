@@ -65,6 +65,26 @@ Saturday
 	- decide how we operate (by the second or tick or n seconds?)
 		- requires extra layer on real_stock to process
 		- talk to Paul about it
+	- make sure that period doesnt cross EOD or EOW etc.
+
+Saturday 20th:
+- Trading can take place over multiple days currently
+- Once I've spoken to Paul need a proper data management system
+	- Offload data processing to a seperate class
+	- Introduce additional metrics like tick freqeuncy
+	- Customisable trading frequency
+	- No trading between sessions
+	- Possible add correlated currency pairs ?
+	- More robust testing system
+	- Multiple months?
+- Clear up wandb and start adding baselines / choose new standard for evaluation
+- Proper statistical evaluation of agents 
+- Action values adapt to number of trades [DONE]
+- Increase the size of market data
+
+### General Todo
+- Sweep over action space
+- 
 
 ### Agents
 - The build model function should probably be broken out of the learning agents
