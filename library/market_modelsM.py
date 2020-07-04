@@ -142,14 +142,16 @@ class real_stock:
 
 class real_stock_lob(real_stock):
 
-	def __init__(self,data,n_steps, data_freq,recycle,n_train):
-
-		super(real_stock_lob,self).__init__(data["price"],n_steps, data_freq,recycle,n_train)
+	def __init__(self,data,n_steps = 60, data_freq = 6,recycle = True,n_train = 100):
+		self.data = data
+		assert list(self.data.columns) == ["bid","bidSize","ask","askSize","buyMO"], "input data must be of the form [bid,bidSize,ask,askSize,buyMO]"
+		print(type(self))
+		super(real_stock_lob,self).__init__(data["bid"],n_steps, data_freq,recycle,n_train)
 
 
 	def reset(self,training = True):
 		super(real_stock_lob,self).reset(training)
-		generate_price(first = True)
+		self.generate_price(first = True)
 
 	def generate_price(self,dt = None,first = False):
 		if not first:
@@ -167,6 +169,7 @@ class real_stock_lob(real_stock):
 		# TODO: how do we scale these?
 		self.bidSize = self.data["bidSize"][self.data_index] 
 		self.askSize = self.data["askSize"][self.data_index]
+		self.market_orders = self.data["buyMO"][self.data_index]
 		if not first:
 			# Can this be depreciated?
 			return self.price
@@ -230,20 +233,23 @@ class market:
 class lob_market(market):
 
 	def __init__(self,stock_,n_hist_prices):
-		self.reset_lo()
+		#self.stock = stock_
 		super(lob_market,self).__init__(stock_,n_hist_prices)
+		self.reset_lo()
 		self.b = 0 # No permenant market impact
+		self.lo_cap = 10 
+		print("LOs capped at 10")
 		# For now LOs can be made but not cancelled
 
 	def place_limit_order(self,size):
-		capped_size = min(self.lo_cap - self.lo_total_pos,size,0)
+		capped_size = max(min(self.lo_cap - self.lo_total_pos,size),0)
 		if not capped_size == 0:
 			self.lo_size.append(capped_size)
-			self.lo_position.append(#Stock lo size)
-									)
+			self.lo_position.append(self.stock.askSize)
 			self.lo_total_pos += capped_size
 			self.lo_adjust += capped_size
-	
+			print(self.lo_position)
+
 	def reset_lo(self):
 		# Cancel all limit orders
 		self.lo_position = []
@@ -260,22 +266,30 @@ class lob_market(market):
 		self.initial = self.df_prices[self.data_index]
 		self.generate_price(first = False)
 
-	def exectute_lob(self):
+	def execute_lob(self):
 		# Stock market orders in considered time window
 		# NOTE: We are assuming that lo_position is monotonically increasing
-		assert _monotonic_increasing(self.lo_position), "Order positons should be increasing"
+		assert self._monotonic_increasing(self.lo_position), "Order positons should be increasing"
+		#print("lo positions",self.lo_position)
 		# Diagram letters in comments
 		self.lo_position -= self.stock.market_orders
+		#print("market orders",self.stock.market_orders)
+		#print("new lo positions",self.lo_position)
+		#print("lo size",self.lo_size)
 		pos_plus_size = self.lo_position + self.lo_size #E
+		#print("pos plus size",pos_plus_size)
 		pos_lt_zero = (self.lo_position < 0) #D
-		fulfilled_sizes = (self.lo_size - np.max(pos_plus_size,0)) * pos_lt_zero #F
+		#print("pos lt zero",pos_lt_zero)
+		fulfilled_sizes = (self.lo_size - np.maximum(pos_plus_size,0)) * pos_lt_zero #F
+		#print("fulfilled_sizes",fulfilled_sizes)
 		fulfilled_total = np.sum(fulfilled_sizes)
 		self.lo_total_pos -= fulfilled_total
+		#print("fulfilled total",fulfilled_total)
 
 		# Now update lo_size and lo_position to reflect changes
 
 		# First check that the top of book ask hasn't changed
-		if self.lo_price >< self.stock.ask:
+		if self.lo_price != self.stock.ask:
 			
 			if self.lo_price < self.stock.ask:
 				# Price has become more competitive
@@ -289,11 +303,16 @@ class lob_market(market):
 					self.reset_lo()
 
 
-		self.lo_size = self.lo_size * (1 - pos_lt_zero) + np.max(pos_plus_size,0) * pos_lt_zero
+		self.lo_size = self.lo_size * (1 - pos_lt_zero) + np.maximum(pos_plus_size,0) * pos_lt_zero
 		# Remove orders where size = 0
-		self.lo_size = np.where(self.lo_size > 0)
-		self.lo_position = np.max(self.lo_position,0)
+		self.lo_size = self.lo_size[self.lo_size > 0]
+		self.lo_position = np.maximum(self.lo_position,0)
 		self.lo_position = self.lo_position[len(self.lo_position) - len(self.lo_size):]
+		#print("new positions",self.lo_position)
+		#print("new sizes",self.lo_size)
+		
+		# Return the volume * the ask price
+		return fulfilled_total * self.stock.ask
 
 	# Override state method
 	# TODO: add in other market data
@@ -307,9 +326,6 @@ class lob_market(market):
 
 
 
-		 
-if __name__ == "__main__":
-	
 
 
 

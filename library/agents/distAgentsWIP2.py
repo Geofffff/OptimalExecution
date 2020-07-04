@@ -45,6 +45,7 @@ class distAgent(learningAgent):
 		self.c = UCBc
 		self.geometric_decay = True
 		self.action_as_input = True
+		self.action_space_size = 1
 
 		# Transformations
 		self.trans_a = 2 / (np.amax(self.action_values) - np.amin(self.action_values))
@@ -357,7 +358,7 @@ class QRAgent(distAgent):
 		self.kappa = 1
 		self.optimisticUCB = False
 		super(QRAgent,self).__init__(state_size, action_values, agent_name,C, alternative_target,UCB,UCBc,tree_horizon,market_data_size)
-			
+		
 	# https://stackoverflow.com/questions/55445712/custom-loss-function-in-keras-based-on-the-input-data
 	@staticmethod
 	def huber_loss_quantile(tau,kappa):
@@ -375,7 +376,7 @@ class QRAgent(distAgent):
 	def _build_model(self):
 		# Using Keras functional API
 		
-		state_in = Input(shape=(self.state_size + 1,))
+		state_in = Input(shape=(self.state_size + self.action_space_size,))
 		state_hidden1 = Dense(32, activation='relu')(state_in)
 		state_hidden2 = Dense(32, activation='relu')(state_hidden1)
 		#hidden3 = Dense(30, activation='relu')(hidden2)

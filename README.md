@@ -82,6 +82,10 @@ Saturday 20th:
 - Action values adapt to number of trades [DONE]
 - Increase the size of market data
 
+Saturday 4th:
+- Limit total LOs to position
+- cancel all limit orders when position executed
+
 ### General Todo
 - Sweep over action space
 - 
