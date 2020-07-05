@@ -1,7 +1,7 @@
 import numpy as np
 
 class agent_environment:
-    '''Local Environment for a trading agent'''
+    '''Local Environment for a trading agent using market orders'''
     def __init__(self, 
         market, 
         position, # Position to exit
@@ -75,5 +75,49 @@ class agent_environment:
         return (rewards) / (self.initial_position ) # /* self.m.stock.initial
 
 class orderbook_environment(agent_environment):
-    pass
+    '''Local Environment for a trading agent using both limit orders and market orders'''
+    def __init__(self, 
+        market, 
+        position, # Position to exit
+        n_trades, # Number of trades
+        mo_action_values_pct, # market order actions corresponding to the percentage of stock to sell
+        lo_action_values_pct 
+        ):
+        # Parameters
+        super(orderbook_environment,self).__init__(market,position,n_trades,mo_action_values_pct)
+        self.state_size = 7 # position, time, bid, ask, bidSize, askSize, loPos
+        self.lo_action_values = np.array(lo_action_values_pct) * position / n_trades
+
+
+    def place_limit_order(self,size):
+        # WARNING order capping must take place at agent level
+        returns = self.m.place_limit_order(size)
+        self.cash -= returns
+        return returns
+
+    def state(self):
+        '''Returns the current state of the agent as a tuple with the following values:
+        position (scaled), time (scaled), bid (scaled by market), ask (scaled by market),
+        askSize, bidSize, total value of agents limit orders'''
+
+        # How should bidSize and askSize be scaled?
+        # We need to scale them in this function, not at market level as they have a
+        # directly interpretable value there.
+        res = [2 * self.position/self.initial_position - 1,
+                self.time,
+                self.m.stock.bid, 
+                self.m.stock.ask, 
+                self.m.stock.bidSize, 
+                self.m.stock.askSize,
+                self.m.lo_total_pos]
+        res = np.reshape(res,(1,len(res)))
+        if self.market_data:
+            market_state = self.m.state()
+            market_state = np.reshape(market_state,(1,len(market_state),1)) - 1
+            return [res, market_state]
+        
+        return res
+
+
+    
 

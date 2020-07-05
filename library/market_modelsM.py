@@ -151,6 +151,8 @@ class real_stock_lob(real_stock):
 
 	def reset(self,training = True):
 		super(real_stock_lob,self).reset(training)
+		# Override the initial price with the mid price
+		self.initial = self.df_prices[self.data_index]
 		self.generate_price(first = True)
 
 	def generate_price(self,dt = None,first = False):
@@ -217,6 +219,7 @@ class market:
 	def reset(self,dt,training = True):
 		self.stock.reset(training)
 		self.price_adjust = 1
+
 		for i in range(self.n_hist_prices):
 			self.hist_prices = self.stock.hist_price(self.n_hist_prices,dt)
 		#return self.hist_prices
@@ -240,15 +243,19 @@ class lob_market(market):
 		self.lo_cap = 10 
 		print("LOs capped at 10")
 		# For now LOs can be made but not cancelled
+		self.perc_fee = 0 # Fee charged for all LOs upon posting
 
 	def place_limit_order(self,size):
 		capped_size = max(min(self.lo_cap - self.lo_total_pos,size),0)
+		fee = 0
 		if not capped_size == 0:
 			self.lo_size.append(capped_size)
 			self.lo_position.append(self.stock.askSize)
 			self.lo_total_pos += capped_size
 			self.lo_adjust += capped_size
 			print(self.lo_position)
+			fee = size * self.perc_fee
+		return fee
 
 	def reset_lo(self):
 		# Cancel all limit orders
@@ -257,14 +264,7 @@ class lob_market(market):
 		self.lo_size = []
 		self.lo_adjust = 0
 		self.lo_price = self.stock.ask # TODO: Implement
-		self.warn_solo_price = False
-
-	def reset(self,training = True):
-		super(lob_market,self).reset(training)
-
-		# Override the initial price with the mid price
-		self.initial = self.df_prices[self.data_index]
-		self.generate_price(first = False)
+		self.warn_solo_price = False		
 
 	def execute_lob(self):
 		# Stock market orders in considered time window
@@ -310,7 +310,7 @@ class lob_market(market):
 		self.lo_position = self.lo_position[len(self.lo_position) - len(self.lo_size):]
 		#print("new positions",self.lo_position)
 		#print("new sizes",self.lo_size)
-		
+
 		# Return the volume * the ask price
 		return fulfilled_total * self.stock.ask
 

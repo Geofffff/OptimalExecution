@@ -37,7 +37,7 @@ else:
 	from keras.losses import huber_loss
 
 class distAgent(learningAgent):
-	def __init__(self, state_size, action_values, agent_name,C, alternative_target,UCB=False,UCBc = 1,tree_horizon = 3,market_data_size=0):
+	def __init__(self, state_size, action_values, agent_name,C, alternative_target,UCB=False,UCBc = 1,tree_horizon = 3,market_data_size=0,lob_agent = False):
 		self.action_size = len(action_values)
 		self.action_values = action_values
 		super(distAgent,self).__init__(state_size, self.action_size, agent_name,C, alternative_target,"dist",tree_horizon,market_data_size=market_data_size)
@@ -45,7 +45,10 @@ class distAgent(learningAgent):
 		self.c = UCBc
 		self.geometric_decay = True
 		self.action_as_input = True
-		self.action_space_size = 1
+		if lob_agent:
+			self.action_space_size = 2
+		else:
+			self.action_space_size = 1
 
 		# Transformations
 		self.trans_a = 2 / (np.amax(self.action_values) - np.amin(self.action_values))
