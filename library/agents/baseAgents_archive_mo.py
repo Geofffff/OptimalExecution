@@ -100,8 +100,7 @@ class learningAgent:
 		alternative_target=False,
 		agent_type="Undefined",
 		tree_horizon=1,
-		market_data_size=0,
-		orderbook=False):
+		market_data_size=0):
 		
 		# Agent identification
 		self._agent_type = agent_type
@@ -110,11 +109,7 @@ class learningAgent:
 		# Input sizes
 		self.state_size = state_size
 		self.action_size = action_size
-		if orderbook:
-			self.action_space_size = 7
-		else:
-			self.action_space_size = 1
-		
+		# TODO: Expand for market data
 
 		# Replay buffer
 		self.replay_buffer_size = 3000
@@ -156,10 +151,6 @@ class learningAgent:
 			if alternative_target:
 				self.prior_weights = self.model.get_weights()
 
-	# TODO: This could be expanded
-	def __str__(self):
-		return agent_type + f", {self.action_space_size} primary inputs, {self.market_data_size} price inputs"
-
 	@property
 	def agent_name(self):
 		return self._agent_name
@@ -179,6 +170,8 @@ class learningAgent:
 		model = Model(inputs=inputs,outputs=res)
 		return model
 		
+
+
 	def remember(self, state, action, reward, next_state, done):
 		'''Record the current environment for later replay'''
 		#print(len(state),len(next_state))
@@ -195,7 +188,7 @@ class learningAgent:
 
 	def act(self, state):
 		'''Choose action based on state'''
-		# Note this applies only to epsilon greedy algorithms (function overridden for UCB)
+		# Note this applies only to epsilon greedy algorithms
 
 		# Epsilon case
 		if np.random.rand() <= self.epsilon and not self.evaluate:

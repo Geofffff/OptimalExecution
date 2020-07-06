@@ -37,18 +37,14 @@ else:
 	from keras.losses import huber_loss
 
 class distAgent(learningAgent):
-	def __init__(self, state_size, action_values, agent_name,C, alternative_target,UCB=False,UCBc = 1,tree_horizon = 3,market_data_size=0,lob_agent = False):
+	def __init__(self, state_size, action_values, agent_name,C, alternative_target,UCB=False,UCBc = 1,tree_horizon = 3,market_data_size=0,orderbook = False):
 		self.action_size = len(action_values)
 		self.action_values = action_values
-		super(distAgent,self).__init__(state_size, self.action_size, agent_name,C, alternative_target,"dist",tree_horizon,market_data_size=market_data_size)
+		super(distAgent,self).__init__(state_size, self.action_size, agent_name,C, alternative_target,"dist",tree_horizon,market_data_size=market_data_size,orderbook=orderbook)
 		self.UCB = UCB
 		self.c = UCBc
 		self.geometric_decay = True
 		self.action_as_input = True
-		if lob_agent:
-			self.action_space_size = 2
-		else:
-			self.action_space_size = 1
 
 		# Transformations
 		self.trans_a = 2 / (np.amax(self.action_values) - np.amin(self.action_values))
@@ -91,8 +87,6 @@ class distAgent(learningAgent):
 				
 		return np.argmax(act_values[0])
 
-	# THIS FUNCTION HAS REPLACED TRASNFORM ACTION - NEEDS PROPIGATING AND TESTING
-	# PROBABLY ALSO NEED TO RESHAPE NEW MARKET STATE
 	def _process_state_action(self,state,action_index):
 		#print("state",state)
 		if self.market_data_size > 0:
@@ -100,13 +94,14 @@ class distAgent(learningAgent):
 		else:
 			local_state = state
 
-		action = self.action_values[action_index] * self.trans_a + self.trans_b
-		local_state_action = np.reshape(np.append(local_state,action), [1, len(local_state[0]) + 1])
+		if self.action_space_size == 1:
+			action = self.action_values[action_index] * self.trans_a + self.trans_b
+		else:
+			action = np.array(self.action_values[action_index]) * self.trans_a + self.trans_b
+		print(action)
+		print(np.append(local_state,action),axis = 0)
+		local_state_action = np.reshape(np.append(local_state,action), [1, len(local_state[0]) + self.action_space_size])
 		if self.market_data_size > 0:
-			# market_state[0] since *market_state collects all in list
-			#print(market_state)
-			#market_state = np.reshape(market_state, [1, len(market_state),1])
-			#print(local_state_action,market_state)
 			return [local_state_action, market_state]
 
 		return local_state_action
@@ -340,7 +335,7 @@ class CosineBasisLayer(Layer):
 '''
 # Temporarily swtiched to QRAgent
 class QRAgent(distAgent):
-	def __init__(self,state_size, action_values, agent_name,C, alternative_target = False,UCB=False,UCBc = 1,tree_horizon = 3,market_data_size=0):
+	def __init__(self,state_size, action_values, agent_name,C, alternative_target = False,UCB=False,UCBc = 1,tree_horizon = 3,market_data_size=0,orderbook=False):
 		self.N = 31
 		self.N_p = 8
 		self.embedding_dim = 3
@@ -360,7 +355,7 @@ class QRAgent(distAgent):
 		#self.embedded_quantiles.shape = (1,self.embedding_dim,self.N)
 		self.kappa = 1
 		self.optimisticUCB = False
-		super(QRAgent,self).__init__(state_size, action_values, agent_name,C, alternative_target,UCB,UCBc,tree_horizon,market_data_size)
+		super(QRAgent,self).__init__(state_size, action_values, agent_name,C, alternative_target,UCB,UCBc,tree_horizon,market_data_size,orderbook=orderbook)
 		
 	# https://stackoverflow.com/questions/55445712/custom-loss-function-in-keras-based-on-the-input-data
 	@staticmethod

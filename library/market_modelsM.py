@@ -148,7 +148,6 @@ class real_stock_lob(real_stock):
 		print(type(self))
 		super(real_stock_lob,self).__init__(data["bid"],n_steps, data_freq,recycle,n_train)
 
-
 	def reset(self,training = True):
 		super(real_stock_lob,self).reset(training)
 		# Override the initial price with the mid price
@@ -182,8 +181,8 @@ class market:
 	'''Basic market model, base class for more complex models'''
 
 	def __init__(self,stock_,n_hist_prices = 0):
-		self.k = 0.01
-		self.b = 0.0005
+		self.k = 0.000001 # I've scaled these to represent the fact that the position is now 100000 not 10
+		self.b = 0.00000005
 		self.stock = stock_
 		self.stock.hist_buffer = n_hist_prices
 		self.spread = 0
@@ -312,7 +311,7 @@ class lob_market(market):
 		#print("new sizes",self.lo_size)
 
 		# Return the volume * the ask price
-		return fulfilled_total * self.stock.ask
+		return fulfilled_total, fulfilled_total * self.stock.ask
 
 	# Override state method
 	# TODO: add in other market data

@@ -86,6 +86,10 @@ Saturday 4th:
 - Limit total LOs to position
 - cancel all limit orders when position executed
 
+Monday 6th:
+- For now we "remember" the action the agent chooses but not the actual action taken...
+	- THIS SHOULD BE CHANGED
+
 ### General Todo
 - Sweep over action space
 - 
