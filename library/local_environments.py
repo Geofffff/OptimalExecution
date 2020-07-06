@@ -80,12 +80,11 @@ class orderbook_environment(agent_environment):
         market, 
         position, # Position to exit
         n_trades, # Number of trades
-        mo_action_values_pct, # market order actions corresponding to the percentage of stock to sell
-        lo_action_values_pct 
+        mo_action_values_pct # market order actions corresponding to the percentage of stock to sell
         ):
         super(orderbook_environment,self).__init__(market,position,n_trades,mo_action_values_pct)
         self.state_size = 7 # position, time, bid, ask, bidSize, askSize, loPos
-        self.lo_action_values = np.array(lo_action_values_pct) * position / n_trades
+        #self.lo_action_values = np.array(lo_action_values_pct) * position / n_trades
 
 
     def place_limit_order(self,size):

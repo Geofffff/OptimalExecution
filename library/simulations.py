@@ -1,12 +1,12 @@
 import time
-from library.local_environments import agent_environment
+from library.local_environments import agent_environment, orderbook_environment
 import numpy as np
 #from matplotlib import pyplot as plt
 import random
 import wandb
 class simulator:
 
-	def __init__(self,market_,agents, params = None, test_name = 'undefined'):
+	def __init__(self,market_,agents, params = None, test_name = 'undefined',orderbook = False):
 		
 		# Default params
 		if params is None:
@@ -21,7 +21,15 @@ class simulator:
 
 		self.m = market_
 		self.possible_actions = params["action_values"]#[0,0.02,0.04,0.06,0.08,0.1,0.12,0.14,0.16,0.18,0.2]
-		self.env = agent_environment(self.m,
+		if not orderbook:
+			self.env = agent_environment(self.m,
+									 params["position"],
+									 params["num_trades"],
+									 self.possible_actions
+									)
+		else:
+			print("Using orderbook environment")
+			self.env = orderbook_environment(self.m,
 									 params["position"],
 									 params["num_trades"],
 									 self.possible_actions
