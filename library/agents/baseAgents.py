@@ -111,7 +111,7 @@ class learningAgent:
 		self.state_size = state_size
 		self.action_size = action_size
 		if orderbook:
-			self.action_space_size = 7
+			self.action_space_size = 2
 		else:
 			self.action_space_size = 1
 		

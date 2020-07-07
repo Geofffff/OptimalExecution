@@ -98,10 +98,8 @@ class distAgent(learningAgent):
 			action = self.action_values[action_index] * self.trans_a + self.trans_b
 		else:
 			action = np.array(self.action_values[action_index]) * self.trans_a + self.trans_b
-		print((action))
-		print((np.array(local_state[0])))
-		print(np.concatenate((np.array(local_state[0]),action),axis=None))
-		local_state_action = np.reshape(np.append(local_state,action), [1, len(local_state[0]) + self.action_space_size])
+		
+		local_state_action = np.reshape(np.concatenate((np.array(local_state[0]),action),axis=None), [1, len(local_state[0]) + self.action_space_size])
 		if self.market_data_size > 0:
 			return [local_state_action, market_state]
 

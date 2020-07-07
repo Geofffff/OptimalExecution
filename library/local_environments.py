@@ -76,13 +76,9 @@ class agent_environment:
 
 class orderbook_environment(agent_environment):
     '''Local Environment for a trading agent using both limit orders and market orders'''
-    def __init__(self, 
-        market, 
-        position, # Position to exit
-        n_trades, # Number of trades
-        mo_action_values_pct # market order actions corresponding to the percentage of stock to sell
-        ):
-        super(orderbook_environment,self).__init__(market,position,n_trades,mo_action_values_pct)
+    def __init__(self, market, position, n_trades, action_values_pct):
+        
+        super(orderbook_environment,self).__init__(market,position,n_trades,action_values_pct)
         self.state_size = 7 # position, time, bid, ask, bidSize, askSize, loPos
         #self.lo_action_values = np.array(lo_action_values_pct) * position / n_trades
 
@@ -119,15 +115,15 @@ class orderbook_environment(agent_environment):
     def sell(self,volume):
         # For the orderbook agent volume is a 2 tuple containing MO and LO volume
         # First update LOB...
-        delta_position, returns = self.market.exectute_lob()
+        delta_position, returns = self.m.exectute_lob()
         self.position -= delta_position
         # ... then execute any market orders ...
         capped_mo_volume = np.minimum(volume[0],self.position)
         self.position -= capped_mo_volume
         returns += self.m.sell(capped_mo_volume,self.step_size) 
         # ... then add limit orders up to remaining position - currently standing LOs
-        capped_lo_volume = np.max(np.minimum(volume[1],self.position - self.market.lo_total_pos),0)
-        self.market.place_limit_order(capped_lo_volume)
+        capped_lo_volume = np.max(np.minimum(volume[1],self.position - self.m.lo_total_pos),0)
+        self.m.place_limit_order(capped_lo_volume)
         self.cash += returns
 
         # To avoid agents "remembering" order sizes wrongly we must adjust volume within act
