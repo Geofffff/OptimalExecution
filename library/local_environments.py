@@ -58,9 +58,9 @@ class agent_environment:
         time_out = (round(self.time,7) >= 1)
         
         if time_out:
-            rewards, amount = self.sell(self.position)
+            rewards, amount, _  = self.sell(self.position)
         else:
-            rewards, amount = self.sell(self.action_values[action])
+            rewards, amount, _ = self.sell(self.action_values[action])
         
         done = (self.position <= 0) + time_out
         if self.position < 0:
@@ -82,7 +82,7 @@ class orderbook_environment(agent_environment):
         self.state_size = 7 # position, time, bid, ask, bidSize, askSize, loPos
         #self.lo_action_values = np.array(lo_action_values_pct) * position / n_trades
 
-
+    # Depreciated?
     def place_limit_order(self,size):
         # WARNING order capping must take place at agent level
         returns = self.m.place_limit_order(size)
@@ -115,7 +115,7 @@ class orderbook_environment(agent_environment):
     def sell(self,volume):
         # For the orderbook agent volume is a 2 tuple containing MO and LO volume
         # First update LOB...
-        delta_position, returns = self.m.exectute_lob()
+        delta_position, returns = self.m.execute_lob()
         self.position -= delta_position
         # ... then execute any market orders ...
         capped_mo_volume = np.minimum(volume[0],self.position)

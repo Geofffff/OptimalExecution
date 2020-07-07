@@ -248,11 +248,11 @@ class lob_market(market):
 		capped_size = max(min(self.lo_cap - self.lo_total_pos,size),0)
 		fee = 0
 		if not capped_size == 0:
-			self.lo_size.append(capped_size)
-			self.lo_position.append(self.stock.askSize)
+			self.lo_size = np.append(self.lo_size,capped_size)
+			self.lo_position = np.append(self.lo_position,self.stock.askSize + self.lo_adjust)
 			self.lo_total_pos += capped_size
 			self.lo_adjust += capped_size
-			print(self.lo_position)
+			print(self.lo_position,self.stock.askSize + self.lo_adjust)
 			fee = size * self.perc_fee
 		return fee
 
@@ -269,12 +269,20 @@ class lob_market(market):
 		# Stock market orders in considered time window
 		# NOTE: We are assuming that lo_position is monotonically increasing
 		assert self._monotonic_increasing(self.lo_position), "Order positons should be increasing"
-		#print("lo positions",self.lo_position)
 		# Diagram letters in comments
-		self.lo_position -= self.stock.market_orders
-		#print("market orders",self.stock.market_orders)
-		#print("new lo positions",self.lo_position)
-		#print("lo size",self.lo_size)
+
+		# Note that the pos of the agents first limit order must be at minimum the current askSize - agents total LOs
+		if len(self.lo_position) > 0:
+			order_delta = self.lo_position[0] - self.stock.askSize
+			# If the agents first limit order is now at the back then we can 
+			# consolidate all LOs to one LO (equivalent)
+			if self.stock.market_orders < order_delta:
+				self.lo_position = [self.stock.askSize]
+				self.lo_size = [self.lo_total_pos]
+		else:
+			order_delta = 0
+		self.lo_position -= max(self.stock.market_orders,order_delta,0)
+
 		pos_plus_size = self.lo_position + self.lo_size #E
 		#print("pos plus size",pos_plus_size)
 		pos_lt_zero = (self.lo_position < 0) #D
@@ -303,6 +311,7 @@ class lob_market(market):
 
 
 		self.lo_size = self.lo_size * (1 - pos_lt_zero) + np.maximum(pos_plus_size,0) * pos_lt_zero
+		print("size",self.lo_size,"pos_lt",pos_lt_zero,"pos",self.lo_position)
 		# Remove orders where size = 0
 		self.lo_size = self.lo_size[self.lo_size > 0]
 		self.lo_position = np.maximum(self.lo_position,0)

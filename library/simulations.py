@@ -4,6 +4,8 @@ import numpy as np
 #from matplotlib import pyplot as plt
 import random
 import wandb
+
+
 class simulator:
 
 	def __init__(self,market_,agents, params = None, test_name = 'undefined',orderbook = False):
