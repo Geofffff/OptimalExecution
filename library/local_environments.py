@@ -58,7 +58,10 @@ class agent_environment:
         time_out = (round(self.time,7) >= 1)
         
         if time_out:
-            rewards, amount, _  = self.sell(self.position)
+            if self.state_size == 2:
+                rewards, amount  = self.sell(self.position)
+            else:
+                rewards, amount, _  = self.sell([self.position,0])
         else:
             rewards, amount, _ = self.sell(self.action_values[action])
         
@@ -119,7 +122,7 @@ class orderbook_environment(agent_environment):
         delta_position, returns = self.m.execute_lob()
         self.position -= delta_position
         # ... then execute any market orders ...
-        print("volume",volume)
+        #print("volume",volume)
         capped_mo_volume = np.minimum(volume[0],self.position)
         self.position -= capped_mo_volume
         returns += self.m.sell(capped_mo_volume,self.step_size) 

@@ -3,7 +3,7 @@ from collections import deque
 import numpy as np
 np.random.seed(84)
 DEBUG = False
-RARE_DEBUG = True # Print messages for rare events
+RARE_DEBUG = False # Print messages for rare events
 
 class bs_stock:
 
@@ -127,7 +127,7 @@ class real_stock:
 		self.data_index += index_update
 		self.in_period_index += index_update
 		assert self.in_period_index <= self.n_steps, "Stock price requested outside of period"
-		print("data index",self.data_index)
+		#print("data index",self.data_index)
 
 	def generate_price(self,dt):
 		self._update_data_index(dt)
@@ -154,7 +154,6 @@ class real_stock_lob(real_stock):
 	def __init__(self,data,n_steps = 60, data_freq = 6,recycle = True,n_train = 100):
 		self.data = data
 		assert list(self.data.columns) == ["bid","bidSize","ask","askSize","buyMO"], "input data must be of the form [bid,bidSize,ask,askSize,buyMO]"
-		print(type(self))
 		super(real_stock_lob,self).__init__(data["bid"],n_steps, data_freq,recycle,n_train)
 
 	def reset(self,training = True):
@@ -248,8 +247,8 @@ class lob_market(market):
 		super(lob_market,self).__init__(stock_,n_hist_prices)
 		self.reset_lo()
 		self.b = 0 # No permenant market impact
-		self.lo_cap = 10 
-		print("LOs capped at 10")
+		self.lo_cap = 100000 
+		print("LOs capped at 100000")
 		# For now LOs can be made but not cancelled
 		self.perc_fee = 0 # Fee charged for all LOs upon posting
 
@@ -282,11 +281,16 @@ class lob_market(market):
 
 	def execute_lob(self):
 		# Stock market orders in considered time window
+		if len(self.lo_position) == 0:
+			return 0,0
 		# NOTE: We are assuming that lo_position is monotonically increasing
 		assert self._monotonic_increasing(self.lo_position), f"Order positons, {self.lo_position}, should be increasing"
 		# Diagram letters in comments
 
-		self.lo_position -= self.stock.market_orders
+		try:
+			self.lo_position -= self.stock.market_orders
+		except:
+			assert False, f"something wrong above, pos {self.lo_position}, type {type(self.lo_position)} -= {type(float(self.stock.market_orders))}"
 
 		pos_plus_size = self.lo_position + self.lo_size #E
 		#print("pos plus size",pos_plus_size)
@@ -331,7 +335,8 @@ class lob_market(market):
 		else:
 			# No top of book ask price change
 			self.lo_size = self.lo_size * (1 - pos_lt_zero) + np.maximum(pos_plus_size,0) * pos_lt_zero
-			print("size",self.lo_size,"pos_lt",pos_lt_zero,"pos",self.lo_position)
+			if DEBUG:
+				print("size",self.lo_size,"pos_lt",pos_lt_zero,"pos",self.lo_position)
 			# Remove orders where size = 0
 			self.lo_size = self.lo_size[self.lo_size > 0]
 			self.lo_position = np.maximum(self.lo_position,0)
