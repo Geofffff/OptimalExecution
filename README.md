@@ -90,6 +90,9 @@ Monday 6th:
 - For now we "remember" the action the agent chooses but not the actual action taken...
 	- THIS SHOULD BE CHANGED
 
+Wednesday 8th:
+- Need to check how the env responds to changing prices
+
 ### General Todo
 - Sweep over action space
 - 

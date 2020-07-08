@@ -95,6 +95,13 @@ class real_stock:
 
 		#self.df_prices[self.data_index] # This will need changing with the format of input
 
+	def __str__(self):
+		if self.recycle:
+			recycling = "not"
+		else:
+			recycling = ""
+		return f"Real Stock, using {len(self.df_prices)} data points, {recycling} recycling data points. Sampling over {self.n_steps} steps."
+
 	def reset(self,training=True):
 		if (not training) and self.partition_training:
 			self.data_index = randint(len(self.df_prices) - self.n_train * self.n_steps,len(self.df_prices) - self.n_steps - 1)
@@ -119,6 +126,7 @@ class real_stock:
 		self.data_index += index_update
 		self.in_period_index += index_update
 		assert self.in_period_index <= self.n_steps, "Stock price requested outside of period"
+		print("data index",self.data_index)
 
 	def generate_price(self,dt):
 		self._update_data_index(dt)
@@ -271,17 +279,7 @@ class lob_market(market):
 		assert self._monotonic_increasing(self.lo_position), "Order positons should be increasing"
 		# Diagram letters in comments
 
-		# Note that the pos of the agents first limit order must be at minimum the current askSize - agents total LOs
-		if len(self.lo_position) > 0:
-			order_delta = self.lo_position[0] - self.stock.askSize
-			# If the agents first limit order is now at the back then we can 
-			# consolidate all LOs to one LO (equivalent)
-			if self.stock.market_orders < order_delta:
-				self.lo_position = [self.stock.askSize]
-				self.lo_size = [self.lo_total_pos]
-		else:
-			order_delta = 0
-		self.lo_position -= max(self.stock.market_orders,order_delta,0)
+		self.lo_position -= self.stock.market_orders
 
 		pos_plus_size = self.lo_position + self.lo_size #E
 		#print("pos plus size",pos_plus_size)
@@ -294,32 +292,57 @@ class lob_market(market):
 		#print("fulfilled total",fulfilled_total)
 
 		# Now update lo_size and lo_position to reflect changes
-
+		
 		# First check that the top of book ask hasn't changed
 		if self.lo_price != self.stock.ask:
 			
-			if self.lo_price < self.stock.ask:
-				# Price has become more competitive
+			if self.lo_price > self.stock.ask:
+				# market price has become more competitive
 				self.reset_lo()
+				print("Cancelling all limit orders")
 			else:
-				# Price less competitive
+				# market price less competitive
 				if self.lo_total_pos > 0:
-					self.warn_solo_price = True
+					print("Agent offering is more competitive than the market")
+					# Check overlapping LOs
+					if self.stock.bid >= self.lo_price:
+						fulfilled_total = self.lo_total_pos
+						assert fulfilled_total == np.sum(self.lo_position), "lo_position is not equal to the lo_total_pos"
+						self.reset_lo()
+						print("Crossed Bid ask, fulfilling all LOs")
+					else:
+						self.warn_solo_price = True
+						print("Collapsing agents LOB")
+						self.lo_position = np.array([0])
+						self.lo_size = np.array([self.lo_total_pos])
 				else:
 					self.warn_solo_price = False
 					self.reset_lo()
+		else:
+			# No top of book ask price change
+			self.lo_size = self.lo_size * (1 - pos_lt_zero) + np.maximum(pos_plus_size,0) * pos_lt_zero
+			print("size",self.lo_size,"pos_lt",pos_lt_zero,"pos",self.lo_position)
+			# Remove orders where size = 0
+			self.lo_size = self.lo_size[self.lo_size > 0]
+			self.lo_position = np.maximum(self.lo_position,0)
+			self.lo_position = self.lo_position[len(self.lo_position) - len(self.lo_size):]
+			
 
+		# Now check that all limit orders are at minimum the market askSize
+		if len(self.lo_position) > 0:
+			order_delta = self.lo_position[-1] - self.stock.askSize
+			# If the agents last limit order is now at the back then we can 
+			# consolidate all "stranded" LOs past this point to one LO (equivalent)
+			if self.stock.market_orders < order_delta:
 
-		self.lo_size = self.lo_size * (1 - pos_lt_zero) + np.maximum(pos_plus_size,0) * pos_lt_zero
-		print("size",self.lo_size,"pos_lt",pos_lt_zero,"pos",self.lo_position)
-		# Remove orders where size = 0
-		self.lo_size = self.lo_size[self.lo_size > 0]
-		self.lo_position = np.maximum(self.lo_position,0)
-		self.lo_position = self.lo_position[len(self.lo_position) - len(self.lo_size):]
-		#print("new positions",self.lo_position)
-		#print("new sizes",self.lo_size)
+				not_stranded = self.lo_position < self.stock.askSize
+				self.lo_position = not_stranded.astype(int) * self.lo_position
+				self.lo_position = self.lo_position[self.lo_position > 0]
+				np.append(self.lo_position,)
+				# np.sum(self.lo_size * (1 - not_stranded.astype(int))
+				self.lo_position = np.array([self.stock.askSize])
+				self.lo_size = np.array([self.lo_total_pos])
 
-		# Return the volume * the ask price
 		return fulfilled_total, fulfilled_total * self.stock.ask
 
 	# Override state method

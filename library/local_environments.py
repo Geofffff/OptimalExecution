@@ -84,6 +84,7 @@ class orderbook_environment(agent_environment):
 
     # Depreciated?
     def place_limit_order(self,size):
+        print("WARNING: Using depreciated function (place_limit_order)!")
         # WARNING order capping must take place at agent level
         returns = self.m.place_limit_order(size)
         self.cash -= returns
@@ -118,6 +119,7 @@ class orderbook_environment(agent_environment):
         delta_position, returns = self.m.execute_lob()
         self.position -= delta_position
         # ... then execute any market orders ...
+        print("volume",volume)
         capped_mo_volume = np.minimum(volume[0],self.position)
         self.position -= capped_mo_volume
         returns += self.m.sell(capped_mo_volume,self.step_size) 
