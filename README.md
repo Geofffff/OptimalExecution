@@ -92,6 +92,7 @@ Monday 6th:
 
 Wednesday 8th:
 - Need to check how the env responds to changing prices
+- Adjust offset between trades and LOB data!
 
 ### General Todo
 - Sweep over action space

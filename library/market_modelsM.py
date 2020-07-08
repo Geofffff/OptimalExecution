@@ -2,7 +2,8 @@ from random import gauss, randint, shuffle
 from collections import deque
 import numpy as np
 np.random.seed(84)
-
+DEBUG = False
+RARE_DEBUG = True # Print messages for rare events
 
 class bs_stock:
 
@@ -257,10 +258,16 @@ class lob_market(market):
 		fee = 0
 		if not capped_size == 0:
 			self.lo_size = np.append(self.lo_size,capped_size)
-			self.lo_position = np.append(self.lo_position,self.stock.askSize + self.lo_adjust)
+			if len(self.lo_position) > 0:
+				end_of_queue = max(self.lo_position[-1],float(self.stock.askSize)) + self.lo_adjust
+			else:
+				end_of_queue = self.stock.askSize + self.lo_adjust
+
+			self.lo_position = np.append(self.lo_position,end_of_queue)
 			self.lo_total_pos += capped_size
 			self.lo_adjust += capped_size
-			print(self.lo_position,self.stock.askSize + self.lo_adjust)
+			if DEBUG:
+				print(self.lo_position,self.stock.askSize + self.lo_adjust)
 			fee = size * self.perc_fee
 		return fee
 
@@ -276,7 +283,7 @@ class lob_market(market):
 	def execute_lob(self):
 		# Stock market orders in considered time window
 		# NOTE: We are assuming that lo_position is monotonically increasing
-		assert self._monotonic_increasing(self.lo_position), "Order positons should be increasing"
+		assert self._monotonic_increasing(self.lo_position), f"Order positons, {self.lo_position}, should be increasing"
 		# Diagram letters in comments
 
 		self.lo_position -= self.stock.market_orders
@@ -299,20 +306,23 @@ class lob_market(market):
 			if self.lo_price > self.stock.ask:
 				# market price has become more competitive
 				self.reset_lo()
-				print("Cancelling all limit orders")
+				if RARE_DEBUG:
+					print("Cancelling all limit orders")
 			else:
 				# market price less competitive
 				if self.lo_total_pos > 0:
-					print("Agent offering is more competitive than the market")
+					if RARE_DEBUG:
+						print("Agent offering is more competitive than the market")
 					# Check overlapping LOs
 					if self.stock.bid >= self.lo_price:
 						fulfilled_total = self.lo_total_pos
-						assert fulfilled_total == np.sum(self.lo_position), "lo_position is not equal to the lo_total_pos"
 						self.reset_lo()
-						print("Crossed Bid ask, fulfilling all LOs")
+						if RARE_DEBUG:
+							print("Crossed Bid ask, fulfilling all LOs")
 					else:
 						self.warn_solo_price = True
-						print("Collapsing agents LOB")
+						if RARE_DEBUG:
+							print("Collapsing agents LOB")
 						self.lo_position = np.array([0])
 						self.lo_size = np.array([self.lo_total_pos])
 				else:
@@ -330,18 +340,21 @@ class lob_market(market):
 
 		# Now check that all limit orders are at minimum the market askSize
 		if len(self.lo_position) > 0:
+			# Check the final LO before preceeding
 			order_delta = self.lo_position[-1] - self.stock.askSize
 			# If the agents last limit order is now at the back then we can 
 			# consolidate all "stranded" LOs past this point to one LO (equivalent)
 			if self.stock.market_orders < order_delta:
-
+				assert self.lo_total_pos == np.sum(self.lo_size), f"lo_position, {self.lo_size}, is not equal to the lo_total_pos, {self.lo_total_pos}"
 				not_stranded = self.lo_position < self.stock.askSize
-				self.lo_position = not_stranded.astype(int) * self.lo_position
-				self.lo_position = self.lo_position[self.lo_position > 0]
-				np.append(self.lo_position,)
-				# np.sum(self.lo_size * (1 - not_stranded.astype(int))
-				self.lo_position = np.array([self.stock.askSize])
-				self.lo_size = np.array([self.lo_total_pos])
+				self.lo_position = self.lo_position[not_stranded]
+				if RARE_DEBUG:
+					print("Collapsing some LOs")
+				collapsed_lo_size = np.sum(self.lo_size * (1 - not_stranded.astype(int)))
+				self.lo_position = np.append(self.lo_position,self.stock.askSize + self.lo_total_pos - collapsed_lo_size)
+				self.lo_size = self.lo_size[not_stranded]
+				self.lo_size = np.append(self.lo_size,collapsed_lo_size)
+
 
 		return fulfilled_total, fulfilled_total * self.stock.ask
 
