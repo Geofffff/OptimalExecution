@@ -91,11 +91,24 @@ Monday 6th:
 	- THIS SHOULD BE CHANGED
 
 Wednesday 8th:
-- Need to check how the env responds to changing prices
-- Adjust offset between trades and LOB data!
+- Need to check how the env responds to changing prices [DONE]
+- Adjust offset between trades and LOB data! [DONE]
 - log "rare events" using wandb
 	- can also start tracking other metrics like number of time UCB action chosen
-- Need to recale the size states
+- Need to recale the size states [DONE]
+
+Thursday 9th:
+- Trial eps greedy to start with, UCB seems to be failing
+- More thorough debugging and testing required, eposodic run throughs
+	- Diagnose the issue with inflated action values
+	- Are actions not granular enough?
+- Simulator overhaul:
+	- Clean up event logging
+	- Add more config params
+	- Add eval action counts
+	- Add rare event monitoring
+	- Redo grouping
+	- For eval track avg position over time for each episode?
 
 ### General Todo
 - Sweep over action space

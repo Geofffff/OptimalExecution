@@ -81,12 +81,14 @@ class orderbook_environment(agent_environment):
     '''Local Environment for a trading agent using both limit orders and market orders'''
     def __init__(self, market, position, n_trades, action_values_pct):
         
-        super(orderbook_environment,self).__init__(market,position,n_trades,action_values_pct)
-        self.state_size = 7 # position, time, bid, ask, bidSize, askSize, loPos
-        #self.lo_action_values = np.array(lo_action_values_pct) * position / n_trades
         self.lo_size_scaling = 500000 # How do we decide on this scaling factor?
         self.mo_size_scaling = 1000 # How do we decide on this scaling factor?
         # Probably lose info if this was done dynamically depending on episode
+
+        super(orderbook_environment,self).__init__(market,position,n_trades,action_values_pct)
+        self.state_size = 7 # position, time, bid, ask, bidSize, askSize, loPos
+        #self.lo_action_values = np.array(lo_action_values_pct) * position / n_trades
+        
 
     # Depreciated?
     def place_limit_order(self,size):
@@ -133,7 +135,7 @@ class orderbook_environment(agent_environment):
         capped_lo_volume = np.max(np.minimum(volume[1],self.position - self.m.lo_total_pos),0)
         self.m.place_limit_order(capped_lo_volume)
         self.cash += returns
-
+        assert self.position >= 0, "Position cannot be negative"
         # To avoid agents "remembering" order sizes wrongly we must adjust volume within act
         return returns, capped_mo_volume, capped_lo_volume
 

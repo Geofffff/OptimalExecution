@@ -189,8 +189,8 @@ class market:
 	'''Basic market model, base class for more complex models'''
 
 	def __init__(self,stock_,n_hist_prices = 0):
-		self.k = 0.000001 # I've scaled these to represent the fact that the position is now 100000 not 10
-		self.b = 0.00000005
+		self.k = 0.0000001 # I've scaled these to represent the fact that the position is now 100000 not 10
+		self.b = 0.000000005
 		self.stock = stock_
 		self.stock.hist_buffer = n_hist_prices
 		self.spread = 0

@@ -56,7 +56,7 @@ class stockProcessingNetwork(Model):
 
 class basicAgent:
 	'''Base class for a deterministic agent'''
-	def __init__(self,action, agent_name, action_size = None):
+	def __init__(self,action, agent_name, action_size):
 		self.agent_name = agent_name
 		# Currently this agent must be provided with the correct action
 		self.action = action
