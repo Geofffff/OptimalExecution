@@ -93,6 +93,9 @@ Monday 6th:
 Wednesday 8th:
 - Need to check how the env responds to changing prices
 - Adjust offset between trades and LOB data!
+- log "rare events" using wandb
+	- can also start tracking other metrics like number of time UCB action chosen
+- Need to recale the size states
 
 ### General Todo
 - Sweep over action space

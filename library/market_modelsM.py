@@ -159,7 +159,7 @@ class real_stock_lob(real_stock):
 	def reset(self,training = True):
 		super(real_stock_lob,self).reset(training)
 		# Override the initial price with the mid price
-		self.initial = self.df_prices[self.data_index]
+		self.initial = (self.data["bid"][self.data_index] + self.data["ask"][self.data_index]) / 2
 		self.generate_price(first = True)
 
 	def generate_price(self,dt = None,first = False):
@@ -360,7 +360,8 @@ class lob_market(market):
 				self.lo_size = self.lo_size[not_stranded]
 				self.lo_size = np.append(self.lo_size,collapsed_lo_size)
 
-
+		#print("lob returns", fulfilled_total * self.stock.ask)
+		assert fulfilled_total >= 0, "We can't have negative returns from LOs"
 		return fulfilled_total, fulfilled_total * self.stock.ask
 
 	# Override state method

@@ -84,6 +84,9 @@ class orderbook_environment(agent_environment):
         super(orderbook_environment,self).__init__(market,position,n_trades,action_values_pct)
         self.state_size = 7 # position, time, bid, ask, bidSize, askSize, loPos
         #self.lo_action_values = np.array(lo_action_values_pct) * position / n_trades
+        self.lo_size_scaling = 500000 # How do we decide on this scaling factor?
+        self.mo_size_scaling = 1000 # How do we decide on this scaling factor?
+        # Probably lose info if this was done dynamically depending on episode
 
     # Depreciated?
     def place_limit_order(self,size):
@@ -103,11 +106,11 @@ class orderbook_environment(agent_environment):
         # directly interpretable value there.
         res = [2 * self.position/self.initial_position - 1,
                 self.time,
-                self.m.stock.bid, 
-                self.m.stock.ask, 
-                self.m.stock.bidSize, 
-                self.m.stock.askSize,
-                self.m.lo_total_pos]
+                self.m.stock.bid - 1, 
+                self.m.stock.ask - 1, 
+                self.m.stock.bidSize / self.lo_size_scaling - 1, 
+                self.m.stock.askSize / self.lo_size_scaling - 1,
+                self.m.lo_total_pos / self.initial_position - 1]
         res = np.reshape(res,(1,len(res)))
         if self.market_data:
             market_state = self.m.state()
