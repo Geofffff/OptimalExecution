@@ -277,7 +277,8 @@ class lob_market(market):
 		self.lo_size = []
 		self.lo_adjust = 0
 		self.lo_price = self.stock.ask # TODO: Implement
-		self.warn_solo_price = False		
+		self.warn_solo_price = False
+		self.lo_value = 0 # Purely for summary statistics purposes
 
 	def execute_lob(self):
 		# Stock market orders in considered time window
@@ -362,6 +363,7 @@ class lob_market(market):
 
 		#print("lob returns", fulfilled_total * self.stock.ask)
 		assert fulfilled_total >= 0, "We can't have negative returns from LOs"
+		self.lo_value += fulfilled_total
 		return fulfilled_total, fulfilled_total * self.stock.ask
 
 	# Override state method

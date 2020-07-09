@@ -19,6 +19,7 @@ class simulator:
 		self.num_steps = params["num_trades"]
 		self.batch_size = params["batch_size"]
 		self.agent = agent
+		self.orderbook = orderbook
 
 		self.m = market_
 		self.possible_actions = params["action_values"]
@@ -64,7 +65,7 @@ class simulator:
 		self.eval_window = 25
 		self.episode_n = 0 # Number of training episodes completed
 
-		self.logging_options = set(["count","value","position","event","reward"])
+		self.logging_options = set(["count","value","position","event","reward","lo"])
 		# Try replacing below with logging matplotlib
 		#self.position_granularity = 4
 
@@ -156,7 +157,12 @@ class simulator:
 					self.new_run.log({'episode': self.episode_n, ('act_count' + str(j)): track["count"].count(j)})
 			else:
 				self.episode(evaluate = False)
-			
+			# Train agent
+			if not self.intensive_training:
+				if len(self.agent.memory) > self.batch_size:
+					self.agent.replay(self.batch_size) # train the agent by replaying the experiences of the episode
+					self.agent.step() # Update target network if required
+
 			self.episode_n += 1
 
 
@@ -165,17 +171,24 @@ class simulator:
 		total_count = []
 		total_reward = 0
 		total_position = [0] * self.num_steps
+		total_lo_value = 0
 		for e in range(n_episodes):
-			track = self.episode(evaluate = False,record = ["count","reward","position"])
+			record = ["count","reward","position","lo"]
+			if self.orderbook:
+				record.append("lo")
+			track = self.episode(evaluate = False,record = record)
 			total_count += track["count"]
 			total_reward += track["reward"]
 			#print("position ",total_position,track["position"])
 			total_position = [total_position[i] + (track["position"][i] if i < len(track["position"]) else 0) for i in range(self.num_steps)]
-
+			if self.orderbook:
+				total_lo_value += track["lo"]
 		for j in range(len(self.possible_actions)):
 			self.new_run.log({'episode': self.episode_n, ('eval_act_count' + str(j)): track["count"].count(j) / n_episodes})
 		self.new_run.log({'episode': self.episode_n, 'eval_rewards': total_reward / n_episodes})
-		plt.bar(np.arange(self.num_steps) ,np.array(total_position) / n_episodes)
+		if self.orderbook:
+			self.new_run.log({'episode': self.episode_n, 'lo_value': total_lo_value / n_episodes})
+		plt.plot(np.arange(self.num_steps) ,np.array(total_position) / n_episodes)
 		plt.ylabel("Position")
 		#print(np.arange(self.num_steps) / self.num_steps,np.array(total_position) / n_episodes)
 		self.new_run.log({'episode': self.episode_n, 'position': plt})
@@ -199,6 +212,7 @@ class simulator:
 		while self.episode_n - initial_episode < n_episodes:
 			self._train(self.eval_freq)
 			self._evaluate(self.eval_window)
+
 		
 		# TAG: Depreciated
 		'''
@@ -276,11 +290,13 @@ class simulator:
 					self.new_run.log({'episode': self.episode_n, ('act_val' + str(j)): predicts[j]})
 
 			for stat in record:
-				if not stat == "value" and not stat == "reward":
+				if not stat == "value" and not stat == "reward" and not stat == "lo":
 					track[stat] = []
 				if stat == "reward":
 					track[stat] = 0
-			
+				if stat == "lo":
+					assert self.orderbook, "Limit orders can only be recorded in orderbook environments"
+					track[stat] = 0
 
 
 		# TAG: Depreciate
@@ -354,6 +370,9 @@ class simulator:
 		if not done:
 			print(state)
 			print("We have a problem.")
+
+		if recording and "lo" in record:
+			track["lo"] = self.env.m.lo_value
 		
 		return track
 
