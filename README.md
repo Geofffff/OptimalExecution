@@ -109,6 +109,10 @@ Thursday 9th:
 	- Add rare event monitoring
 	- Redo grouping
 	- For eval track avg position over time for each episode?
+	- Cut depreciated code
+
+- Read up on theoretical LOB optimal execution
+
 
 ### General Todo
 - Sweep over action space
