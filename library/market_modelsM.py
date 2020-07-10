@@ -124,6 +124,8 @@ class real_stock:
 		
 		assert index_update.is_integer(), "Step size must be an integer unit of time"
 		index_update = int(index_update)
+		if type(self).__name__ == "real_stock_lob":
+			assert index_update == 1, "For real orderbook stocks trades must be made every second"
 		self.data_index += index_update
 		self.in_period_index += index_update
 		assert self.in_period_index <= self.n_steps, "Stock price requested outside of period"
@@ -351,7 +353,7 @@ class lob_market(market):
 			# If the agents last limit order is now at the back then we can 
 			# consolidate all "stranded" LOs past this point to one LO (equivalent)
 			if self.stock.market_orders < order_delta:
-				assert self.lo_total_pos == np.sum(self.lo_size), f"lo_position, {self.lo_size}, is not equal to the lo_total_pos, {self.lo_total_pos}"
+				assert abs(self.lo_total_pos - np.sum(self.lo_size)) < 1, f"lo_position, {self.lo_size}, is not equal to the lo_total_pos, {self.lo_total_pos}, difference {abs(self.lo_total_pos - np.sum(self.lo_size))}"
 				not_stranded = self.lo_position < self.stock.askSize
 				self.lo_position = self.lo_position[not_stranded]
 				if RARE_DEBUG:

@@ -26,6 +26,17 @@ class agent_environment:
         self.num_actions = len(self.action_values)
         #self.reward_scaling = self.initial / (num_steps)
 
+        #### Overhaul of the trading system, to enable set below to True ####
+        
+        # Instead trade every second but make decisions every self.trade_frequency seconds
+        self.trade_by_second = True
+        self.n_trades = n_trades
+        self.trade_freq = int(self.m.stock.n_steps / self.n_trades) # in seconds
+
+        self.step_size = 1 / (self.n_trades * self.trade_freq)
+
+        #### End ####
+
 
     def sell(self,volume):
         capped_volume = np.minimum(volume,self.position)
@@ -52,24 +63,56 @@ class agent_environment:
         return res
     
     def step(self,action):
-        self.m.progress(self.step_size)
-        self.time += 2 * self.step_size
+        '''Mechanism by which agent interacts with the environment.
+        Arguments: action'''
 
-        time_out = (round(self.time,7) >= 1)
-        
-        if time_out:
-            if self.state_size == 2:
-                rewards, amount  = self.sell(self.position)
-            else:
-                rewards, amount, _  = self.sell([self.position,0])
+        if self.trade_by_second:
+            # Provides the option for the same action to be taken over the following n seconds
+            total_rewards = 0
+            total_amount = 0
+            for t in range(self.trade_freq):
+                self.m.progress(self.step_size)
+                self.time += 2 * self.step_size
+
+                time_out = (round(self.time,7) >= 1)
+                
+                if time_out:
+                    # Single market order for the entire remaining position
+                    if self.state_size == 2:
+                        rewards, amount  = self.sell(self.position)
+                    else:
+                        rewards, amount, _  = self.sell([self.position,0])
+                else:
+                    rewards, amount, _ = self.sell(self.action_values[action])
+                total_rewards += rewards
+                total_amount += amount
+                done = (self.position <= 0) + time_out
+                if self.position < 0:
+                    print("Warning position is ",self.position)
+                if done:
+                    break
+
+            rewards = self.scale_rewards(total_rewards,total_amount)
+
         else:
-            rewards, amount, _ = self.sell(self.action_values[action])
-        
-        done = (self.position <= 0) + time_out
-        if self.position < 0:
-            print("Warning position is ",self.position)
+            self.m.progress(self.step_size)
+            self.time += 2 * self.step_size
 
-        rewards = self.scale_rewards(rewards,amount)
+            time_out = (round(self.time,7) >= 1)
+            
+            if time_out:
+                if self.state_size == 2:
+                    rewards, amount  = self.sell(self.position)
+                else:
+                    rewards, amount, _  = self.sell([self.position,0])
+            else:
+                rewards, amount, _ = self.sell(self.action_values[action])
+            
+            done = (self.position <= 0) + time_out
+            if self.position < 0:
+                print("Warning position is ",self.position)
+
+            rewards = self.scale_rewards(rewards,amount)
         
         return self.state(), rewards, done
 

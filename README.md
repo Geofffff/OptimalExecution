@@ -103,16 +103,19 @@ Thursday 9th:
 	- Diagnose the issue with inflated action values
 	- Are actions not granular enough?
 - Simulator overhaul:
-	- Clean up event logging
-	- Add more config params
-	- Add eval action counts
-	- Add rare event monitoring
-	- Redo grouping
-	- For eval track avg position over time for each episode?
-	- Cut depreciated code
+	- Clean up event logging [DONE]
+	- Add more config params [DONE]
+	- Add eval action counts [DONE]
+	- Add rare event monitoring 
+	- Redo grouping 
+	- For eval track avg position over time for each episode? [DONE]
+	- Cut depreciated code [DONE]
 
 - Read up on theoretical LOB optimal execution
 
+Friday 10th:
+- Trial return to UCB
+- Add agent that continually posts full amount as LO and TWAP MOs
 
 ### General Todo
 - Sweep over action space

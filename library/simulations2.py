@@ -35,6 +35,9 @@ class simulator:
 								 params["num_trades"],
 								 self.possible_actions
 								)
+		self.trade_freq = self.m.stock.n_steps / self.num_steps
+		# Maybe replace with __str__
+		print(f"{type(agent).__name__} exiting position over period of {self.m.stock.n_steps} seconds, changing trading rate every {self.trade_freq} seconds.")
 		
 		# TAG: Depreciate?
 		self.intensive_training = False
