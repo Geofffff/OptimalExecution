@@ -18,22 +18,24 @@ class agent_environment:
 
         # Local environment
         self.initial_position =  position
-        self.step_size = 1 / n_trades
+        self.step_size = 1 / n_trades # overridden later depreciate
         self.reset()
         
-        # Possible amounts to sell: 0 - 10% of the total position
-        self.action_values = np.array(action_values_pct) * position / n_trades
-        self.num_actions = len(self.action_values)
+       
         #self.reward_scaling = self.initial / (num_steps)
 
         #### Overhaul of the trading system, to enable set below to True ####
         
         # Instead trade every second but make decisions every self.trade_frequency seconds
-        self.trade_by_second = True
+        self.trade_by_second = False
         self.n_trades = n_trades
         self.trade_freq = int(self.m.stock.n_steps / self.n_trades) # in seconds
-
+        print("trade freq",self.trade_freq)
         self.step_size = 1 / (self.n_trades * self.trade_freq)
+
+         # Possible amounts to sell: 0 - 10% of the total position
+        self.action_values = np.array(action_values_pct) * position / (n_trades * self.trade_freq)
+        self.num_actions = len(self.action_values)
 
         #### End ####
 

@@ -36,8 +36,6 @@ class simulator:
 								 self.possible_actions
 								)
 		self.trade_freq = self.m.stock.n_steps / self.num_steps
-		# Maybe replace with __str__
-		print(f"{type(agent).__name__} exiting position over period of {self.m.stock.n_steps} seconds, changing trading rate every {self.trade_freq} seconds.")
 		
 		# TAG: Depreciate?
 		self.intensive_training = False
@@ -68,7 +66,7 @@ class simulator:
 		self.eval_window = 25
 		self.episode_n = 0 # Number of training episodes completed
 
-		self.logging_options = set(["count","value","position","event","reward","lo"])
+		self.logging_options = set(["count","value","position","event","reward","lo","lotime"])
 		# Try replacing below with logging matplotlib
 		#self.position_granularity = 4
 
@@ -108,6 +106,8 @@ class simulator:
 			self.new_run.config.update({"epsilon_min": self.agent.epsilon_min})
 			self.new_run.config.update({"epsilon_decay": self.agent.epsilon_decay})
 
+	def __str__(self):
+		return f"{type(agent).__name__} exiting position {self.env.initial_position} over period of {self.m.stock.n_steps} seconds, changing trading rate every {self.trade_freq} seconds."
 	@staticmethod
 	def _moving_average(a, n=300):
 		ret = np.cumsum(a, dtype=float)
@@ -191,8 +191,8 @@ class simulator:
 		self.new_run.log({'episode': self.episode_n, 'eval_rewards': total_reward / n_episodes})
 		if self.orderbook:
 			self.new_run.log({'episode': self.episode_n, 'lo_value': total_lo_value / n_episodes})
-		plt.plot(np.arange(self.num_steps) ,np.array(total_position) / n_episodes)
-		plt.ylabel("Position")
+		plt.plot(np.arange(self.num_steps) ,np.array(total_position) / (n_episodes * self.env.initial_position))
+		plt.ylabel("Percentage of Position")
 		#print(np.arange(self.num_steps) / self.num_steps,np.array(total_position) / n_episodes)
 		self.new_run.log({'episode': self.episode_n, 'position': plt})
 	
@@ -217,63 +217,7 @@ class simulator:
 			self._evaluate(self.eval_window)
 
 		
-		# TAG: Depreciated
-		'''
-		for e in range(n_episodes): # iterate over new episodes of the game
-			
-			### Record Probabilities 4 times throughout training ###
-			# Currently only record for the first dist agent
-			if e % n_episodes / 5 == 0 and e>0:
-				for agent in self.agents:
-					if agent.agent_type == "dist":
-						self.dist_agent_for_plot = agent
-						init_state = [1,-1] 
-						init_state = np.reshape(init_, [1, 2])
-						agent_reward_dists.append(agent.probs(init_state))
-						break
-			
-			self.episode(evaluate = evaluate)
-			if not self.intensive_training:
-				for i, agent in enumerate(self.agents):
-					if len(agent.memory) > self.batch_size and not evaluate:
-						agent.replay(self.batch_size) # train the agent by replaying the experiences of the episode
-						agent.step() # Update target network if required
-
-
-			if e % self.record_frequency == 0 and e>0:
-				#self.total_training_steps += 100
-				if show_details and not evaluate:
-					current_training_step = len(self.eval_rewards_mean) # CHANGED TO EVAL
-					self.evaluate(self.eval_window,show_stats=False)
-					#ax.clear()
-					#print(self.eval_rewards_mean)
-					
-					for i in range(self.eval_rewards_mean.shape[1]):
-						self.wandb_agents[i].log({'episode': self.eval_rewards_mean.shape[0] * self.record_frequency, 'eval_rewards': self.eval_rewards_mean[-1,i]})
-						#y_vals = self._moving_average(self.eval_rewards_mean[:,i],n=3)
-						#x_vals = np.arange(len(y_vals)) * self.record_frequency
-						#agent_label = self.agents[i].agent_name + "(" + str(round(self.agents[i].epsilon,3)) + ")"
-						#ax.plot(x_vals,y_vals, label  = agent_label )
-					#plt.legend()
-					#plt.ylim(self.plot_y_lim) # Temporary
-					#plt.title(self.plot_title)
-					#plt.grid(b=True, which='major', axis='both')
-					### TEMPORARY ###
-					#twap_stat = 9.849
-					#if len(x_vals) > 0:
-						#plt.plot([0, x_vals[-1]], [twap_stat, twap_stat], 'k--')
-					### TEMPORARY ###
-					#plt.pause(0.0001)
-					#plt.draw()
-		if not evaluate:
-			#self.show_stats(trained_from = current_training_step) 
-			#for i, d in enumerate(agent_reward_dists):
-				#self.show_dist(self.dist_agent_for_plot,d,figure = i + 1)
-			wandb.join()
-		else:
-			self.eval_rewards_mean = np.vstack((self.eval_rewards_mean,self.eval_rewards / self.eval_window))
-			self.eval_rewards = np.zeros((1,self.n_agents))
-		'''
+		
 	def episode(self, verbose = False,evaluate = False, record = None):
 		recording = record is not None and len(record) > 0
 		if recording:	
@@ -300,37 +244,12 @@ class simulator:
 				if stat == "lo":
 					assert self.orderbook, "Limit orders can only be recorded in orderbook environments"
 					track[stat] = 0
-
-
-		# TAG: Depreciate
-		'''
-		if not evaluate:
-			self.episode_n += 1
-			if self.episode_n % self.action_record_frequency == 0:
-				track_action_p = True
-				action_tracker = []
-				for i, agent in enumerate(self.agents):
-					for j in range(len(self.possible_actions)):
-						predicts = agent.predict(state)[0]
-						self.wandb_agents[i].log({'episode': self.episode_n, ('act_val' + str(j)): predicts[j]})
-			#self.train_actions = np.concatenate((self.train_actions,[self.episode_actions]))
-		else:
-		'''
 		
 		done = False # Has the episode finished
-		
-		# TAG: Depreciated
-		#inactive = False # Agents which are still trading
-		
 
 		for t in range(self.num_steps):
 			# Get actions for each agent
-			
-			# Agents action only updated if still active
-			#if not inactive:
 			action = self.agent.act(state)
-			#else:
-			#action = -1 # Could speed up (only need to change once)
 			
 			next_state, reward, done = self.env.step(action)
 
@@ -347,6 +266,7 @@ class simulator:
 
 				if "position" in record:
 					track["position"].append(self.env.position)
+
 
 			if not evaluate:
 				self.agent.remember(state, action, reward, next_state, done)
@@ -410,7 +330,6 @@ class simulator:
 			plt.bar(dist_agent.z,data[a][0],alpha = 0.4,width = 0.25,label = f"action {bar_act}")
 		plt.legend()
 		
-	#def test_convergence(self,)
 
 	def execute(self,agent):
 		# Currently just one strat

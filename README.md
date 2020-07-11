@@ -114,8 +114,10 @@ Thursday 9th:
 - Read up on theoretical LOB optimal execution
 
 Friday 10th:
-- Trial return to UCB
+- Trial return to UCB 
 - Add agent that continually posts full amount as LO and TWAP MOs
+- If agent is trading every X timestep then MOs dont add up [DONE]
+- Get the cluster running
 
 ### General Todo
 - Sweep over action space
