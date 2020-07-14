@@ -353,7 +353,7 @@ class QRAgent(distAgent):
 		#self.embedded_quantiles = np.cos(np.dot(self.embedded_range, self.quantiles) * np.pi)
 		#self.embedded_quantiles.shape = (1,self.embedding_dim,self.N)
 		self.kappa = 1
-		self.optimisticUCB = False
+		self.optimisticUCB = True
 		super(QRAgent,self).__init__(state_size, action_values, agent_name,C, alternative_target,UCB,UCBc,tree_horizon,market_data_size,orderbook=orderbook)
 		
 	# https://stackoverflow.com/questions/55445712/custom-loss-function-in-keras-based-on-the-input-data
@@ -425,7 +425,7 @@ class QRAgent(distAgent):
 		#predict = self.model.predict(state_action)[0]
 		if above_med:
 			predict = predict[0][int(len(predict)/2):]
-			np.reshape(predict,[1,len(predict)])
+			predict = np.reshape(predict,[1,len(predict)])
 			#return np.add.reduce(self.qi * predict,1)
 		return np.add.reduce(self.qi * predict,1)
 
@@ -515,8 +515,7 @@ class QRAgent(distAgent):
 		state_action = self._process_state_action(state,action_index)
 		predict = self.predict_quantiles(state_action)[0]
 		if self.optimisticUCB:
-			predict = predict[int(len(predict) / 2):]
-		#print("action_var",np.add.reduce(self.qi * predict * predict))
+			predict = predict[int(len(predict) / 2):] # High quantiles are at the start
 		return np.add.reduce(self.qi * predict * predict)
 
 	def variance(self,state):

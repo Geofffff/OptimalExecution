@@ -42,25 +42,6 @@ class simulator:
 
 		self.test_name = test_name
 
-		# TAG: Depreciate?
-		# Stats
-		'''
-		self.train_rewards = np.zeros((0,self.n_agents))
-		self.eval_rewards = np.zeros((1,self.n_agents)) 
-		self.eval_rewards_mean = np.zeros((0,self.n_agents)) 
-		self.plot_title = "Unlabelled Performance Test"
-		'''
-		# TAG: Partially Depreciate?
-		# Record actions
-		'''
-		self.train_actions = np.zeros((0,len(self.possible_actions),self.n_agents))
-		self.episode_actions = np.zeros((len(self.possible_actions),self.n_agents))
-		self.record_frequency = 500
-		self.action_record_frequency = 100
-		self.plot_y_lim = (0.96,0.99)
-		self.episode_n = 0
-		'''
-
 		self.eval_freq = 500
 		self.train_stat_freq = 100
 		self.eval_window = 25
@@ -97,6 +78,7 @@ class simulator:
 				self.new_run.config.update({"support_range": self.agent.V_max - self.agent.V_min})
 			if type(agent).__name__ == "QRAgent":
 				self.new_run.config.update({"n_quantiles": self.agent.N})
+				self.new_run.config.update({"UCB_optimistic": self.agent.optimisticUCB})
 			if self.agent.UCB:
 				self.new_run.config.update({"UCBc": self.agent.c})
 			else:
