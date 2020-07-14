@@ -353,7 +353,7 @@ class QRAgent(distAgent):
 		#self.embedded_quantiles = np.cos(np.dot(self.embedded_range, self.quantiles) * np.pi)
 		#self.embedded_quantiles.shape = (1,self.embedding_dim,self.N)
 		self.kappa = 1
-		self.optimisticUCB = True
+		self.optimisticUCB = False
 		super(QRAgent,self).__init__(state_size, action_values, agent_name,C, alternative_target,UCB,UCBc,tree_horizon,market_data_size,orderbook=orderbook)
 		
 	# https://stackoverflow.com/questions/55445712/custom-loss-function-in-keras-based-on-the-input-data

@@ -18,7 +18,7 @@ params = {
                        [0,3],[1,3]]
 }
 state_size = 7
-harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], "CX Harry11 U 10p10",C=100, alternative_target = True,UCB=True,UCBc = 50,tree_horizon = 15,orderbook =True)#,market_data_size=n_hist_prices)
+harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], "CX Harry11 U 30p30",C=100, alternative_target = True,UCB=True,UCBc = 100,tree_horizon = 15,orderbook =True)#,market_data_size=n_hist_prices)
 #tim = library.agents.baseAgents.TWAPAgent(1,"TWAP",9)
 agent = harry
 
@@ -27,5 +27,5 @@ stock = library.market_modelsM.real_stock_lob(merged,n_steps=30,n_train=300)
 market = library.market_modelsM.lob_market(stock,0)
 market.k *= 10
 
-my_simulator = library.simulations2.simulator(market,agent,params,test_name = "LOB 10s Testing",orderbook = True)
+my_simulator = library.simulations2.simulator(market,agent,params,test_name = "LOB 30s Testing",orderbook = True)
 my_simulator.train(80000,epsilon_decay =0.9999)
