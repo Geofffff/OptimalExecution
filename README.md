@@ -120,6 +120,7 @@ Friday 10th:
 - Get the cluster running [LATER]
 - Optimistic UCB
 - remove duplicates!
+- Add
 
 ### General Todo
 - Sweep over action space

@@ -52,6 +52,7 @@ class simulator:
 		#self.position_granularity = 4
 
 		# Wandb initialise and congigure
+		self.plot_position = False
 		self.new_run = wandb.init(project="OptEx",name = self.agent.agent_name,group = self.test_name,reinit=True)
 		self.new_run.config.update({"num_trades": self.num_steps,
 		 "batch_size": self.batch_size,
@@ -173,10 +174,11 @@ class simulator:
 		self.new_run.log({'episode': self.episode_n, 'eval_rewards': total_reward / n_episodes})
 		if self.orderbook:
 			self.new_run.log({'episode': self.episode_n, 'lo_value': total_lo_value / n_episodes})
-		plt.plot(np.arange(self.num_steps) ,np.array(total_position) / (n_episodes * self.env.initial_position))
-		plt.ylabel("Percentage of Position")
-		#print(np.arange(self.num_steps) / self.num_steps,np.array(total_position) / n_episodes)
-		self.new_run.log({'episode': self.episode_n, 'position': plt})
+		if self.plot_position:
+			plt.plot(np.arange(self.num_steps) ,np.array(total_position) / (n_episodes * self.env.initial_position))
+			plt.ylabel("Percentage of Position")
+			#print(np.arange(self.num_steps) / self.num_steps,np.array(total_position) / n_episodes)
+			self.new_run.log({'episode': self.episode_n, 'position': plt})
 	
 	def train(self,n_episodes = 10000, epsilon = None, epsilon_decay = None,show_details = True, evaluate = False):
 		
