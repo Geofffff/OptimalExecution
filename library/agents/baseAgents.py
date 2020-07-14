@@ -123,7 +123,7 @@ class learningAgent:
 		# Epsilon Greedy
 		self.epsilon_greedy = True # Can be overridden by the subclass
 		self.geometric_decay = True
-		self.epsilon_min = 0.01
+		self.epsilon_min = 0.02
 		self.epsilon_decay = 0.9992
 		self.epsilon = 1
 
