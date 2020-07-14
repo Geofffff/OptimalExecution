@@ -4,7 +4,7 @@ import library.market_modelsM
 import library.agents.distAgentsWIP2, library.simulations2, library.agents.baseAgents
 
 
-merged = pd.read_csv("cluster_data/cluster_BTX_19.csv",low_memory = False)
+merged = pd.read_csv("cluster_data/cluster_BTX_19.csv",index_col = "time",low_memory = False)
 
 
 params = {
