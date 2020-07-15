@@ -9,7 +9,7 @@ merged = pd.read_csv("cluster_data/cluster_BTX_19.csv",index_col = "time",low_me
 
 params = {
     "terminal" : 1,
-    "num_trades" : 30,
+    "num_trades" : 10,
     "position" : 10000,
     "batch_size" : 32,
     "action_values" : [[0.5,0],[1,0],[2,0],
