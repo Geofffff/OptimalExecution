@@ -122,6 +122,14 @@ Friday 10th:
 - remove duplicates!
 - Add parameters to running a file
 
+Thursday 16th:
+- Consider where and how we should scale the state space 
+	- (in dataset to save processing?)
+	- in stock?
+	- in agent environment
+	- currently have a mixture
+- Add more convolutional inputs
+
 ### General Todo
 - Sweep over action space
 - 

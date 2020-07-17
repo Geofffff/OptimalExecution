@@ -142,20 +142,27 @@ class real_stock:
 
 		return self.price
 
-	def hist_price(self,n,dt):
+	def get_hist(self,n,dt,col):
 		dt_adj = dt * self.n_steps
 		assert dt_adj.is_integer(), "Time step must be an integer"
 		dt_adj = int(dt_adj)
 		res = []
 		for i in range(n):
-			res.append(self.df_prices[self.data_index + (- n + i + 1 ) * dt_adj])
-		return np.array(res) / self.initial
+			res.append(self._scale[col,self.data_index + (- n + i + 1 ) * dt_adj])
+		return np.array(res)
+
+	def _scale(self,col,index):
+		# Allows for columns to be scaled in a unique way
+		if col == "bid" or col == "ask":
+			return self.data[col][index] / self.initial 
+		else:
+			raise "Unknown column"
 
 class real_stock_lob(real_stock):
 
 	def __init__(self,data,n_steps = 60, data_freq = 6,recycle = True,n_train = 100):
 		self.data = data
-		assert list(self.data.columns) == ["bid","bidSize","ask","askSize","buyMO"], "input data must be of the form [bid,bidSize,ask,askSize,buyMO]"
+		assert set(self.data.columns).issubset({"bid","bidSize","ask","askSize","buyMO","sellMO","buySellImb","orderImb","spread"}), f'input columns {self.data.columns} must be a subset of ("bid","bidSize","ask","askSize","buyMO","sellMO","buySellImb","orderImb")'
 		super(real_stock_lob,self).__init__(data["bid"],n_steps, data_freq,recycle,n_train)
 
 	def reset(self,training = True):
@@ -174,17 +181,38 @@ class real_stock_lob(real_stock):
 		# WARNING: For now we return a scaled price (scaled by initial price at the start of every episode)
 		error = np.isnan(self.price)
 		assert not error, "Price must be a finite real number"
-
-		self.bid = self.data["bid"][self.data_index] / self.initial
-		self.ask = self.data["ask"][self.data_index] / self.initial
+		# Extract and rescale core data
+		self.bid = self._scale("bid",self.data_index)
+		self.ask = self._scale("ask",self.data_index)
 		# TODO: how do we scale these?
-		self.bidSize = self.data["bidSize"][self.data_index] 
-		self.askSize = self.data["askSize"][self.data_index]
-		self.market_orders = self.data["buyMO"][self.data_index]
+		self.bidSize = self._scale("bidSize",self.data_index)
+		self.askSize = self._scale("askSize",self.data_index)
+		self.market_orders = self._scale("buyMO",self.data_index)
+
+		# Extract and scale alt data (using buySellImb as proxy for presence of all alt data)
+		
+		if "buySellImb" in self.data.columns:
+			self.buySellImb = self._scale("buySellImb",self.data_index)
+			self.orderImb = self._scale("orderImb",self.data_index)
+
 		if not first:
 			# Can this be depreciated?
 			return self.price
 
+	def _scale(self,col,index):
+		# Allows for columns to be scaled in a unique way
+		if col == "bid" or col == "ask":
+			return self.data[col][index] / self.initial 
+		elif col == "askSize" or col == "bidSize" or col == "buyMO":
+			return self.data[col][index] # TBC
+		elif col ==  "buySellImb":
+			res = self.data[col][index]
+			return res /= max(self.data["buyMO"][index],self.data["sellMO"][index])
+		elif col == "orderImb":
+			res = self.data[col][index]
+			return res /= max(self.data["bidSize"][index],self.data["askSize"][index])
+		else:
+			raise "Unknown column"
 
 # Need to rework to record n previous prices...
 class market:
@@ -198,6 +226,10 @@ class market:
 		self.spread = 0
 		self.price_adjust = 1
 		self.n_hist_prices = n_hist_prices
+		if n_hist_prices > 0:
+			self.hist = {
+				"bid" : []
+			}
 
 	def sell(self,volume,dt):
 		'''sell *volume* of stock over time window dt, volume is np array'''
@@ -228,19 +260,18 @@ class market:
 	def reset(self,dt,training = True):
 		self.stock.reset(training)
 		self.price_adjust = 1
-
-		for i in range(self.n_hist_prices):
-			self.hist_prices = self.stock.hist_price(self.n_hist_prices,dt)
-		#return self.hist_prices
+		if n_hist_prices > 0:
+			for col in self.hist:
+				self.hist[col] = self.stock.get_hist(self.n_hist_prices,dt,col = col)
 
 	def progress(self,dt):
 		self.stock.generate_price(dt)
-		# MULTIPLE STRATS NOT SUPPORTED HERE
 		if self.n_hist_prices > 0:
-			self.hist_prices[:-1] = self.hist_prices[1:]; self.hist_prices[-1] = self._adjusted_price()
+			for col in hist:
+				self.hist[col][:-1] = self.hist[col][1:]; self.hist[col][-1] = self._adjusted_price()
 
 	def state(self):
-		return self.hist_prices
+		return tuple(hist.items())
 
 class lob_market(market):
 
@@ -371,7 +402,7 @@ class lob_market(market):
 	# Override state method
 	# TODO: add in other market data
 	def state(self):
-		return self.hist_prices
+		return self.hist_prices, self.hist_buySellImb, self.hist_orderImb, self.hist_spread
 
 	@staticmethod
 	def _monotonic_increasing(x):

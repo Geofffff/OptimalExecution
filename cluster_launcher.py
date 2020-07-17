@@ -7,7 +7,7 @@ import library.agents.distAgentsWIP2, library.simulations2, library.agents.baseA
 merged = pd.read_csv("cluster_data/cluster_BTX_15s_19.csv",index_col = "time",low_memory = False)
 
 num_trades = 10
-period = 10
+period = 10	
 params = {
     "terminal" : 1,
     "num_trades" : num_trades,
