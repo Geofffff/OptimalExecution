@@ -153,17 +153,15 @@ class orderbook_environment(agent_environment):
         # directly interpretable value there.
         res = [2 * self.position/self.initial_position - 1,
                 self.time,
-                self.m.stock.bid - 1, 
-                self.m.stock.ask - 1,  
-                self.m.stock.askSize / self.lo_size_scaling - 1,
                 self.m.lo_total_pos / self.initial_position - 0.5]
         res = np.reshape(res,(1,len(res)))
         if self.market_data:
             market_state = self.m.state()
-            market_state = np.reshape(market_state,(1,len(market_state),1)) - 1
-            full_res = np.concetenate((np.array(res),market_state))
-            assert False, "unfinished"
-            return [res, market_state]
+            full_res = [res]
+            for hist_data in market_state:
+                full_res.append(np.reshape(hist_data,(1,len(hist_data),1)))
+            #print(full_res)
+            return full_res
         
         return res
 

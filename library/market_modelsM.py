@@ -148,7 +148,7 @@ class real_stock:
 		dt_adj = int(dt_adj)
 		res = []
 		for i in range(n):
-			res.append(self._scale[col,self.data_index + (- n + i + 1 ) * dt_adj])
+			res.append(self._scale(col,self.data_index + (- n + i + 1 ) * dt_adj))
 		return np.array(res)
 
 	def _scale(self,col,index):
@@ -169,6 +169,7 @@ class real_stock_lob(real_stock):
 		super(real_stock_lob,self).reset(training)
 		# Override the initial price with the mid price
 		self.initial = (self.data["bid"][self.data_index] + self.data["ask"][self.data_index]) / 2
+		self.initial_spread = self.data["spread"]
 		self.generate_price(first = True)
 
 	def generate_price(self,dt = None,first = False):
@@ -199,18 +200,20 @@ class real_stock_lob(real_stock):
 			# Can this be depreciated?
 			return self.price
 
-	def _scale(self,col,index):
+	def _scale(self,col,index,center = False):
 		# Allows for columns to be scaled in a unique way
 		if col == "bid" or col == "ask":
-			return self.data[col][index] / self.initial 
+			return self.data[col][index] / self.initial - int(center)
 		elif col == "askSize" or col == "bidSize" or col == "buyMO":
-			return self.data[col][index] # TBC
+			return self.data[col][index] - int(center)
 		elif col ==  "buySellImb":
-			res = self.data[col][index]
-			return res /= max(self.data["buyMO"][index],self.data["sellMO"][index])
+			res = self.data[col][index] 
+			return res / max(self.data["buyMO"][index],self.data["sellMO"][index]) - 0.5 * int(center)
 		elif col == "orderImb":
 			res = self.data[col][index]
-			return res /= max(self.data["bidSize"][index],self.data["askSize"][index])
+			return res / max(self.data["bidSize"][index],self.data["askSize"][index]) - 0.5 * int(center)
+		elif col == "spread":
+			return self.data[col][index] / self.initial_spread - int(center)
 		else:
 			raise "Unknown column"
 
@@ -260,7 +263,7 @@ class market:
 	def reset(self,dt,training = True):
 		self.stock.reset(training)
 		self.price_adjust = 1
-		if n_hist_prices > 0:
+		if self.n_hist_prices > 0:
 			for col in self.hist:
 				self.hist[col] = self.stock.get_hist(self.n_hist_prices,dt,col = col)
 
@@ -271,7 +274,8 @@ class market:
 				self.hist[col][:-1] = self.hist[col][1:]; self.hist[col][-1] = self._adjusted_price()
 
 	def state(self):
-		return tuple(hist.items())
+		print(tuple(self.hist.values()))
+		return tuple(self.hist.values())
 
 class lob_market(market):
 
@@ -281,9 +285,17 @@ class lob_market(market):
 		self.reset_lo()
 		self.b = 0 # No permenant market impact
 		self.lo_cap = 100000 
-		print("LOs capped at 100000")
+		print(f"LOs capped at {self.lo_cap}")
 		# For now LOs can be made but not cancelled
 		self.perc_fee = 0 # Fee charged for all LOs upon posting
+		self.hist = {
+			"bid" : [],
+			"ask" : [],
+			"askSize" : [],
+			"bidSize" : [],
+			"buySellImb" : [],
+			"orderImb" : []
+		}
 
 	def place_limit_order(self,size):
 		capped_size = max(min(self.lo_cap - self.lo_total_pos,size),0)
@@ -399,10 +411,6 @@ class lob_market(market):
 		self.lo_value += fulfilled_total
 		return fulfilled_total, fulfilled_total * self.stock.ask
 
-	# Override state method
-	# TODO: add in other market data
-	def state(self):
-		return self.hist_prices, self.hist_buySellImb, self.hist_orderImb, self.hist_spread
 
 	@staticmethod
 	def _monotonic_increasing(x):

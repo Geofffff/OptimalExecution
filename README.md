@@ -129,6 +129,8 @@ Thursday 16th:
 	- in agent environment
 	- currently have a mixture
 - Add more convolutional inputs
+	- This has required a major rework
+	- Need to rework the original non lob market slightly...
 
 ### General Todo
 - Sweep over action space

@@ -100,7 +100,8 @@ class learningAgent:
 		alternative_target=False,
 		agent_type="Undefined",
 		tree_horizon=1,
-		market_data_size=0,
+		n_hist_data=0,
+		n_hist_inputs = 0,
 		orderbook=False):
 		
 		# Agent identification
@@ -139,9 +140,11 @@ class learningAgent:
 		self.action_as_input = False
 
 		# Market data (currently only prices)
-		self.market_data_size = market_data_size
-		if self.market_data_size > 0:
-			self.stock_model = self._build_stock_model(market_data_size)
+		self.n_hist_data = n_hist_data
+		if self.n_hist_data > 0:
+			self.hist_model = []
+			for i in len(n_hist_inputs):
+				self.hist_model.append(self._build_hist_model(n_hist_data))
 
 		# Switch for agent evaluation mode
 		self.evaluate = False ### TODO!!!!!
@@ -168,7 +171,7 @@ class learningAgent:
 	def agent_type(self):
 		return self._agent_type
 	
-	def _build_stock_model(self,input_dim,units=16,depth=2):
+	def _build_hist_model(self,input_dim,units=16,depth=2):
 		assert depth > 0 and units > 0, "Invalid inputs"
 		inputs = Input(shape=(input_dim,1,))
 		res = Conv1D(units,4,activation = 'relu')(inputs)
