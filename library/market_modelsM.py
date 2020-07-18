@@ -169,7 +169,7 @@ class real_stock_lob(real_stock):
 		super(real_stock_lob,self).reset(training)
 		# Override the initial price with the mid price
 		self.initial = (self.data["bid"][self.data_index] + self.data["ask"][self.data_index]) / 2
-		self.initial_spread = self.data["spread"]
+		self.initial_spread = self.data["spread"][self.data_index]
 		self.generate_price(first = True)
 
 	def generate_price(self,dt = None,first = False):
@@ -265,16 +265,18 @@ class market:
 		self.price_adjust = 1
 		if self.n_hist_prices > 0:
 			for col in self.hist:
+				print(col)
 				self.hist[col] = self.stock.get_hist(self.n_hist_prices,dt,col = col)
-
+		print(self.hist)
+			
 	def progress(self,dt):
 		self.stock.generate_price(dt)
 		if self.n_hist_prices > 0:
-			for col in hist:
+			for col in self.hist:
 				self.hist[col][:-1] = self.hist[col][1:]; self.hist[col][-1] = self._adjusted_price()
 
 	def state(self):
-		print(tuple(self.hist.values()))
+		#print(tuple(self.hist.values()))
 		return tuple(self.hist.values())
 
 class lob_market(market):
@@ -294,7 +296,8 @@ class lob_market(market):
 			"askSize" : [],
 			"bidSize" : [],
 			"buySellImb" : [],
-			"orderImb" : []
+			"orderImb" : [],
+			"spread" : []
 		}
 
 	def place_limit_order(self,size):

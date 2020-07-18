@@ -23,7 +23,7 @@ else:
 # Not required if not running on the cluster
 # Instead replace with 
 # from keras.losses import huber_loss
-local = False
+local = True
 if not local:
 	def huber_loss(y_true, y_pred, clip_delta=1.0):
 	  error = y_true - y_pred
@@ -37,10 +37,10 @@ else:
 	from keras.losses import huber_loss
 
 class distAgent(learningAgent):
-	def __init__(self, state_size, action_values, agent_name,C, alternative_target,UCB=False,UCBc = 1,tree_horizon = 3,market_data_size=0,orderbook = False):
+	def __init__(self, state_size, action_values, agent_name,C, alternative_target,UCB=False,UCBc = 1,tree_horizon = 3,n_hist_data=0,n_hist_inputs=0,orderbook = False):
 		self.action_size = len(action_values)
 		self.action_values = action_values
-		super(distAgent,self).__init__(state_size, self.action_size, agent_name,C, alternative_target,"dist",tree_horizon,market_data_size=market_data_size,orderbook=orderbook)
+		super(distAgent,self).__init__(state_size, self.action_size, agent_name,C, alternative_target,"dist",tree_horizon,n_hist_data=n_hist_data,n_hist_inputs=n_hist_inputs,orderbook=orderbook)
 		self.UCB = UCB
 		self.c = UCBc
 		self.geometric_decay = True
@@ -89,29 +89,33 @@ class distAgent(learningAgent):
 
 	def _process_state_action(self,state,action_index):
 		#print("state",state)
-		if self.market_data_size > 0:
+		'''
+		if self.n_hist_data > 0:
 			local_state, market_state = state
 		else:
 			local_state = state
-
+		'''
 		if self.action_space_size == 1:
 			action = self.action_values[action_index] * self.trans_a + self.trans_b
 		else:
 			action = np.array(self.action_values[action_index]) * self.trans_a + self.trans_b
-		
-		local_state_action = np.reshape(np.concatenate((np.array(local_state[0]),action),axis=None), [1, len(local_state[0]) + self.action_space_size])
-		if self.market_data_size > 0:
+		if self.n_hist_data > 0:
+			state[0] = np.reshape(np.concatenate((np.array(state[0][0]),action),axis=None), [1, len(state[0][0]) + self.action_space_size])
+		else:
+			state = np.reshape(np.concatenate((np.array(state[0]),action),axis=None), [1, len(state[0]) + self.action_space_size])
+		'''
+		if self.n_hist_data > 0:
 			return [local_state_action, market_state]
-
-		return local_state_action
+		'''
+		return state
 
 	# 'Virtual' Function
 	def variance(self,state):
-		assert False, "Variance must be overwritten by child"
+		raise "Variance must be overwritten by child"
 
 class C51Agent(distAgent):
 
-	def __init__(self,state_size, action_values, agent_name,N=51,C = 0,alternative_target = False,UCB = False,UCBc = 1,tree_horizon = 3,market_data_size=0):
+	def __init__(self,state_size, action_values, agent_name,N=51,C = 0,alternative_target = False,UCB = False,UCBc = 1,tree_horizon = 3,n_hist_data=0,n_hist_inputs=0):
 		self.V_max = 0.05
 		self.V_min = -0.1
 
@@ -122,7 +126,7 @@ class C51Agent(distAgent):
 		self.dz = (self.V_max - self.V_min) / (self.N - 1) # (2 * self.V_max)
 		self.z = np.array(range(self.N)) * (self.V_max - self.V_min) / (self.N - 1) + self.V_min
 		
-		distAgent.__init__(self,state_size, action_values, agent_name,C, alternative_target,UCB,UCBc,tree_horizon,market_data_size=market_data_size)
+		distAgent.__init__(self,state_size, action_values, agent_name,C, alternative_target,UCB,UCBc,tree_horizon,n_hist_data=n_hist_data,n_hist_inputs=n_hist_inputs)
 
 	def return_mapping(self,state,ret,inverse = False):
 		if inverse:
@@ -204,7 +208,7 @@ class C51Agent(distAgent):
 		state_in = Input(shape=(self.state_size + 1,))
 		
 		# If using market data
-		if self.market_data_size > 0:
+		if self.n_hist_data > 0:
 			input_layer = concatenate([state_in,self.stock_model.output])
 		else:
 			input_layer = state_in
@@ -215,7 +219,7 @@ class C51Agent(distAgent):
 		skip_layer = Add()([hidden1, hidden2])
 		#hidden3 = Dense(5, activation='relu')(hidden2)
 		outputs = Dense(self.N, activation='softmax')(skip_layer)
-		if self.market_data_size > 0:
+		if self.n_hist_data > 0:
 			model = Model(inputs=[state_in,self.stock_model.input], outputs=outputs)
 		else:
 			model = Model(inputs=state_in, outputs=outputs)
@@ -332,9 +336,9 @@ class CosineBasisLayer(Layer):
 		res = K.sum(res, axis = 1) + self.b
 		return ReLU()(res)
 '''
-# Temporarily swtiched to QRAgent
+
 class QRAgent(distAgent):
-	def __init__(self,state_size, action_values, agent_name,C, alternative_target = False,UCB=False,UCBc = 1,tree_horizon = 3,market_data_size=0,orderbook=False):
+	def __init__(self,state_size, action_values, agent_name,C, alternative_target = False,UCB=False,UCBc = 1,tree_horizon = 3,n_hist_data=0,n_hist_inputs=0,orderbook=False):
 		self.N = 31
 		self.N_p = 8
 		self.embedding_dim = 3
@@ -354,7 +358,7 @@ class QRAgent(distAgent):
 		#self.embedded_quantiles.shape = (1,self.embedding_dim,self.N)
 		self.kappa = 1
 		self.optimisticUCB = False
-		super(QRAgent,self).__init__(state_size, action_values, agent_name,C, alternative_target,UCB,UCBc,tree_horizon,market_data_size,orderbook=orderbook)
+		super(QRAgent,self).__init__(state_size, action_values, agent_name,C, alternative_target,UCB,UCBc,tree_horizon,n_hist_data=n_hist_data,n_hist_inputs=n_hist_inputs,orderbook=orderbook)
 		
 	# https://stackoverflow.com/questions/55445712/custom-loss-function-in-keras-based-on-the-input-data
 	@staticmethod
@@ -393,10 +397,15 @@ class QRAgent(distAgent):
 		outputs = Dense(self.N, activation='linear')(main_hidden2)
 		#main_model = Model(inputs=state_in, outputs=outputs)
 
-		if self.market_data_size > 0:
-			model = Model(inputs=[state_in,self.stock_model.input], outputs=outputs)
+		if self.n_hist_data > 0:
+			all_inputs = [state_in]
+			for hist_input in self.hist_model:
+				all_inputs.append(hist_input.input)
 		else:
-			model = Model(inputs=state_in, outputs=outputs)
+			all_inputs = state_in
+		
+		model = Model(inputs=all_inputs, outputs=outputs)
+		
 
 		model.compile(loss = self.huber_loss_quantile(self.quantiles,self.kappa),
 						optimizer=Adam(lr=self.learning_rate))
@@ -432,11 +441,11 @@ class QRAgent(distAgent):
 	def _reward_scaling(self,state_action):
 		if self.reward_scaling:
 			if self.twap_scaling:
-				assert self.market_data_size > 0, "TWAP Scaling only available with market data"
+				assert self.n_hist_data > 0, "TWAP Scaling only available with market data"
 				# Inventory * initial_price - 0.001 * time
 				return state_action[0][0][0] - 0.001 * state_action[0][0][1]
 			else:
-				if self.market_data_size > 0:
+				if self.n_hist_data > 0:
 					return state_action[0][0][0] / 2 + 0.5
 				else:
 					return state_action[0][0] / 2 + 0.5
@@ -539,7 +548,7 @@ if __name__ == "__main__":
 	next_state = np.reshape(state, [1, 2])
 	myAgent.epsilon_min = 0.01
 	
-	myAgent = QRAgent(2,[0.1,0.5,1.0],"TonyTester",C=0,market_data_size = 16)
+	myAgent = QRAgent(2,[0.1,0.5,1.0],"TonyTester",C=0,n_hist_data = 16)
 	state = [-1,1] 
 	state = np.reshape(state, [1, 2])
 	myAgent

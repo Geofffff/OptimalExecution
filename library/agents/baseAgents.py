@@ -143,7 +143,7 @@ class learningAgent:
 		self.n_hist_data = n_hist_data
 		if self.n_hist_data > 0:
 			self.hist_model = []
-			for i in len(n_hist_inputs):
+			for i in range(n_hist_inputs):
 				self.hist_model.append(self._build_hist_model(n_hist_data))
 
 		# Switch for agent evaluation mode
@@ -172,7 +172,7 @@ class learningAgent:
 		return self._agent_type
 	
 	def _build_hist_model(self,input_dim,units=16,depth=2):
-		assert depth > 0 and units > 0, "Invalid inputs"
+		assert depth > 0 and units > 0 and input_dim > 0, "Invalid inputs"
 		inputs = Input(shape=(input_dim,1,))
 		res = Conv1D(units,4,activation = 'relu')(inputs)
 		for i in range(depth - 1):

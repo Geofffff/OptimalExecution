@@ -131,7 +131,7 @@ class orderbook_environment(agent_environment):
         # Probably lose info if this was done dynamically depending on episode
 
         super(orderbook_environment,self).__init__(market,position,n_trades,action_values_pct)
-        self.state_size = 7 # position, time, bid, ask, bidSize, askSize, loPos
+        self.state_size = 3 # position, time, bid, ask, bidSize, askSize, loPos
         #self.lo_action_values = np.array(lo_action_values_pct) * position / n_trades
         
 
@@ -158,6 +158,7 @@ class orderbook_environment(agent_environment):
         if self.market_data:
             market_state = self.m.state()
             full_res = [res]
+            print("market state",market_state)
             for hist_data in market_state:
                 full_res.append(np.reshape(hist_data,(1,len(hist_data),1)))
             #print(full_res)
