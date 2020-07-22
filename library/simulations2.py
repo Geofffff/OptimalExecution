@@ -109,6 +109,7 @@ class simulator:
 
 	# TAG: overhaul
 	def pretrain(self,n_samples = 2000,n_iterations = 500):
+		raise "This function has not been updated for version 2"
 		pretain_position = True
 		pretrain_time = False
 		for i in range(n_samples):
@@ -159,7 +160,7 @@ class simulator:
 		total_position = [0] * self.num_steps
 		total_lo_value = 0
 		for e in range(n_episodes):
-			record = ["count","reward","position","lo"]
+			record = ["count","reward","position"]
 			if self.orderbook:
 				record.append("lo")
 			track = self.episode(evaluate = False,record = record)
@@ -217,6 +218,7 @@ class simulator:
 			# Log action values at t=0
 			if "value" in record:
 				for j in range(len(self.possible_actions)):
+					#print("state (sim)",state)
 					predicts = self.agent.predict(state)[0]
 					self.new_run.log({'episode': self.episode_n, ('act_val' + str(j)): predicts[j]})
 
@@ -284,7 +286,7 @@ class simulator:
 		return track
 
 	def evaluate(self,n_episodes = 200,show_stats = True):
-		assert False, "This function has not been updated to version 2"
+		raise "This function has not been updated to version 2"
 		self.train(n_episodes = n_episodes, show_details = False,evaluate = True)
 		# Return agent epsilons to their original values:
 		for i, agent in enumerate(self.agents):
@@ -317,6 +319,7 @@ class simulator:
 
 	def execute(self,agent):
 		# Currently just one strat
+		raise "Depreciated function"
 		position = []
 		cash = []
 		states = self.env.reset() # reset state at start of each new episode of the game

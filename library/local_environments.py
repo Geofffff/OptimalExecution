@@ -85,7 +85,10 @@ class agent_environment:
                     else:
                         rewards, amount, _  = self.sell([self.position,0])
                 else:
-                    rewards, amount, _ = self.sell(self.action_values[action])
+                    if self.state_size == 2:
+                        rewards, amount = self.sell(self.action_values[action])
+                    else:
+                        rewards, amount, _ = self.sell(self.action_values[action])
                 total_rewards += rewards
                 total_amount += amount
                 done = (self.position <= 0) + time_out
@@ -158,7 +161,7 @@ class orderbook_environment(agent_environment):
         if self.market_data:
             market_state = self.m.state()
             full_res = [res]
-            print("market state",market_state)
+            #print("market state",market_state)
             for hist_data in market_state:
                 full_res.append(np.reshape(hist_data,(1,len(hist_data),1)))
             #print(full_res)

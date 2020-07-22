@@ -11,6 +11,7 @@ from keras.optimizers import Adam
 from collections import deque
 import random
 import keras.backend as K
+import copy
 
 if __name__ == "__main__":
 	from baseAgents import learningAgent, replayMemory
@@ -95,19 +96,20 @@ class distAgent(learningAgent):
 		else:
 			local_state = state
 		'''
+		res = copy.deepcopy(state)
 		if self.action_space_size == 1:
 			action = self.action_values[action_index] * self.trans_a + self.trans_b
 		else:
 			action = np.array(self.action_values[action_index]) * self.trans_a + self.trans_b
 		if self.n_hist_data > 0:
-			state[0] = np.reshape(np.concatenate((np.array(state[0][0]),action),axis=None), [1, len(state[0][0]) + self.action_space_size])
+			res[0] = np.reshape(np.concatenate((np.array(state[0][0]),action),axis=None), [1, len(state[0][0]) + self.action_space_size])
 		else:
-			state = np.reshape(np.concatenate((np.array(state[0]),action),axis=None), [1, len(state[0]) + self.action_space_size])
+			res = np.reshape(np.concatenate((np.array(state[0]),action),axis=None), [1, len(state[0]) + self.action_space_size])
 		'''
 		if self.n_hist_data > 0:
 			return [local_state_action, market_state]
 		'''
-		return state
+		return res
 
 	# 'Virtual' Function
 	def variance(self,state):
@@ -147,8 +149,8 @@ class C51Agent(distAgent):
 		return res
 
 	def predict(self,state,target = False):
-		#print("predict state",state)
-		res = self.vpredict(state,range(len(self.action_values)),target = target)
+		# Could maybe improve efficiency here rather than deepcopying and editing
+		res = self.vpredict(copy.deepcopy(state),range(len(self.action_values)),target = target)
 		return np.reshape(res, [1, len(res)])
 
 	def predict_act(self,state,action_index,target = False):

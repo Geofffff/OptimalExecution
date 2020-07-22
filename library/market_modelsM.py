@@ -7,11 +7,12 @@ RARE_DEBUG = False # Print messages for rare events
 
 class bs_stock:
 
-	def __init__(self, initial, drift, vol, terminal = 1):
+	def __init__(self, initial, drift, vol, terminal = 1,n_steps=10):
 		self.initial = initial
 		self.drift = drift
 		self.vol = vol
 		self.terminal = terminal
+		self.n_steps = n_steps
 		self.reset()
 
 	def generate_price(self,dt,St = None):
@@ -222,7 +223,7 @@ class market:
 	'''Basic market model, base class for more complex models'''
 
 	def __init__(self,stock_,n_hist_prices = 0):
-		self.k = 0.0000001 # I've scaled these to represent the fact that the position is now 100000 not 10
+		self.k = 0.0000000186 # I've scaled these to represent the fact that the position is now 100000 not 10
 		self.b = 0.000000005
 		self.stock = stock_
 		self.stock.hist_buffer = n_hist_prices
@@ -265,9 +266,9 @@ class market:
 		self.price_adjust = 1
 		if self.n_hist_prices > 0:
 			for col in self.hist:
-				print(col)
+				#print(col)
 				self.hist[col] = self.stock.get_hist(self.n_hist_prices,dt,col = col)
-		print(self.hist)
+		#print(self.hist)
 			
 	def progress(self,dt):
 		self.stock.generate_price(dt)
