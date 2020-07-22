@@ -18,7 +18,7 @@ agent = harry
 
 simple_stock = library.market_modelsM.bs_stock(1,0,0.0005,n_steps = 240) # No drift, 0.0005 vol
 simple_market = library.market_modelsM.market(simple_stock)
-simple_market.k *= 100000
+simple_market.k *= 1000000
 
 my_simulator = library.simulations2.simulator(simple_market,agent,params,test_name = "Simulted Results",orderbook = False)
 my_simulator.train(20000,epsilon_decay =0.9999)
