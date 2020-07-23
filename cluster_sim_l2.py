@@ -6,11 +6,11 @@ params = {
     "num_trades" : 10,
     "position" : 1,
     "batch_size" : 32,
-    "action_values" : [0.2,0.4,0.5,0.6,0.7,0.8,0.9,1,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8]
+    "action_values" : [0.5,0.6,0.7,0.8,0.9,1,1.1,1.2,1.3,1.4,1.5]
                         # [0.001,0.005,0.01,0.015,0.02,0.03,0.05,0.075,0.1,0.15,0.2,0.25,0.3,0.35]
 }
 state_size = 2
-harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], "Sim QRDQN",C=50, alternative_target = False,UCB=True,UCBc = 30,tree_horizon = 3,n_hist_data=0,n_hist_inputs=0,orderbook =False)#,market_data_size=n_hist_prices)
+harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], "Sim QRDQN",C=20, alternative_target = False,UCB=True,UCBc = 100,tree_horizon = 3,n_hist_data=0,n_hist_inputs=0,orderbook =False)#,market_data_size=n_hist_prices)
 tim = library.agents.baseAgents.TWAPAgent(10,"TWAP",21)
 agent = harry
 
