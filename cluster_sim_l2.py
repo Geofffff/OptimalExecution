@@ -10,7 +10,7 @@ params = {
                         # [0.001,0.005,0.01,0.015,0.02,0.03,0.05,0.075,0.1,0.15,0.2,0.25,0.3,0.35]
 }
 state_size = 2
-harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], "Sim QRDQN",C=100, alternative_target = True,UCB=True,UCBc = 100,tree_horizon = 3,n_hist_data=0,n_hist_inputs=0,orderbook =False)#,market_data_size=n_hist_prices)
+harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], "Sim QRDQN",C=50, alternative_target = True,UCB=True,UCBc = 30,tree_horizon = 3,n_hist_data=0,n_hist_inputs=0,orderbook =False)#,market_data_size=n_hist_prices)
 tim = library.agents.baseAgents.TWAPAgent(10,"TWAP",21)
 agent = harry
 
@@ -18,7 +18,7 @@ agent = harry
 
 simple_stock = library.market_modelsM.bs_stock(1,0,0.0005,n_steps = 240) # No drift, 0.0005 vol
 simple_market = library.market_modelsM.market(simple_stock)
-simple_market.k *= 1000000
+simple_market.k *= 100000
 
 my_simulator = library.simulations2.simulator(simple_market,agent,params,test_name = "Simulted Results",orderbook = False)
 my_simulator.train(20000,epsilon_decay =0.9999)
