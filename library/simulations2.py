@@ -258,11 +258,11 @@ class simulator:
 				self.agent.remember(state, action, reward, next_state, done)
 
 			if verbose:
-				print("Predict", self.agents[0].predict(state))
+				print("Predict", self.agent.predict(state))
 				print("State: ",state, "Actions: ", action, "Rewards: ", reward, "Next_states: ", next_state, "Done: ", done)
 				# For final step print the predicted rewards for 0 position
 				if t == self.num_steps - 1:
-					print("Next predict", self.agents[0].predict(next_state))
+					print("Next predict", self.agent.predict(next_state))
 			
 			state = next_state
 				

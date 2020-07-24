@@ -20,6 +20,9 @@ class agent_environment:
         self.initial_position =  position
         self.step_size = 1 / n_trades # overridden later depreciate
         self.reset()
+
+        ### TEMP
+        self.debug = False
         
        
         #self.reward_scaling = self.initial / (num_steps)
@@ -84,11 +87,17 @@ class agent_environment:
                         rewards, amount  = self.sell(self.position)
                     else:
                         rewards, amount, _  = self.sell([self.position,0])
+
+                    if self.debug:
+                        print("Selling final",self.position,"for",rewards)
                 else:
                     if self.state_size == 2:
                         rewards, amount = self.sell(self.action_values[action])
                     else:
                         rewards, amount, _ = self.sell(self.action_values[action])
+
+                    if self.debug:
+                        print("Selling",self.action_values[action],"for",rewards)
                 total_rewards += rewards
                 total_amount += amount
                 done = (self.position <= 0) + time_out
@@ -118,7 +127,8 @@ class agent_environment:
                 print("Warning position is ",self.position)
 
             rewards = self.scale_rewards(rewards,amount)
-        
+        if self.debug:
+            print("total rewards", rewards)
         return self.state(), rewards, done
 
 

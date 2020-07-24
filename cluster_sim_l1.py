@@ -1,6 +1,6 @@
 import library.agents.distAgentsWIP2, library.simulations2, library.agents.baseAgents, library.market_modelsM
 
-lr = 0.00025
+lr = 0.0001
 ucbc = 80
 th = 4
 tl = 50
