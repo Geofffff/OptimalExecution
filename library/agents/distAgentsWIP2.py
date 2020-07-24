@@ -340,8 +340,8 @@ class CosineBasisLayer(Layer):
 '''
 
 class QRAgent(distAgent):
-	def __init__(self,state_size, action_values, agent_name,C, alternative_target = False,UCB=False,UCBc = 1,tree_horizon = 3,n_hist_data=0,n_hist_inputs=0,orderbook=False):
-		self.N = 31
+	def __init__(self,state_size, action_values, agent_name,C,N=31, alternative_target = False,UCB=False,UCBc = 1,tree_horizon = 3,n_hist_data=0,n_hist_inputs=0,orderbook=False):
+		self.N = N
 		self.N_p = 8
 		self.embedding_dim = 3
 		self.state_model_size_out = 8
