@@ -75,37 +75,39 @@ class agent_environment:
             # Provides the option for the same action to be taken over the following n seconds
             total_rewards = 0
             total_amount = 0
+            # We need to check whether in the next set of trade_freq trades we will
+            # have reached the end of the trading period
+            time_out = (round(self.time + self.trade_freq * 2 * self.step_size,7) >= 1)
+            if time_out:
+                trade_size = self.position / self.trade_freq
+            else:
+                trade_size = self.action_values[action]
+
             for t in range(self.trade_freq):
                 self.m.progress(self.step_size)
                 self.time += 2 * self.step_size
 
-                time_out = (round(self.time,7) >= 1)
                 
-                if time_out:
-                    # Single market order for the entire remaining position
-                    if self.state_size == 2:
-                        rewards, amount  = self.sell(self.position)
-                    else:
-                        rewards, amount, _  = self.sell([self.position,0])
-
-                    if self.debug:
-                        print("Selling final",self.position,"for",rewards)
+                # If we are in the final trading window we must trade position/trade_freq at each trade
+                
+                if self.state_size == 2:
+                    rewards, amount  = self.sell(trade_size)
                 else:
-                    if self.state_size == 2:
-                        rewards, amount = self.sell(self.action_values[action])
-                    else:
-                        rewards, amount, _ = self.sell(self.action_values[action])
-
-                    if self.debug:
-                        print("Selling",self.action_values[action],"for",rewards)
+                    # Here we haven't considered the possibility that we may be able to execute LOs
+                    # in this intra agent action window
+                    rewards, amount, _  = self.sell([trade_size,0])
+                if self.debug:
+                    print("Selling",trade_size,"for",rewards)
+                
                 total_rewards += rewards
                 total_amount += amount
-                done = (self.position <= 0) + time_out
+                done = (self.position <= 0)
                 if self.position < 0:
                     print("Warning position is ",self.position)
                 if done:
                     break
 
+            done = (self.position <= 0) + time_out
             rewards = self.scale_rewards(total_rewards,total_amount)
 
         else:
