@@ -171,7 +171,7 @@ class simulator:
 			if self.orderbook:
 				total_lo_value += track["lo"]
 		for j in range(len(self.possible_actions)):
-			self.new_run.log({'episode': self.episode_n, ('eval_act_count' + str(j)): track["count"].count(j) / n_episodes})
+			self.new_run.log({'episode': self.episode_n, ('eval_act_count' + str(j)): total_count.count(j) / n_episodes})
 		self.new_run.log({'episode': self.episode_n, 'eval_rewards': total_reward / n_episodes})
 		if self.orderbook:
 			self.new_run.log({'episode': self.episode_n, 'lo_value': total_lo_value / n_episodes})
@@ -180,6 +180,8 @@ class simulator:
 			plt.ylabel("Percentage of Position")
 			#print(np.arange(self.num_steps) / self.num_steps,np.array(total_position) / n_episodes)
 			self.new_run.log({'episode': self.episode_n, 'position': plt})
+		else:
+			self.new_run.log({'episode': self.episode_n, 'position': np.array(total_position) / (n_episodes * self.env.initial_position)})
 	
 	def train(self,n_episodes = 10000, epsilon = None, epsilon_decay = None,show_details = True, evaluate = False):
 		
