@@ -18,7 +18,7 @@ state_size = 2
 harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], f"10s lr {lr} UCBc {ucbc} tl {tl} th {th} N{N}",C=tl,N=N, alternative_target = True,UCB=True,UCBc = ucbc,tree_horizon = th,n_hist_data=0,n_hist_inputs=0,orderbook =False)#,market_data_size=n_hist_prices)
 tim = library.agents.baseAgents.TWAPAgent(5,"TWAP",21)
 agent = harry
-#agent.learning_rate = lr
+agent.learning_rate = lr
 
 
 simple_stock = library.market_modelsM.bs_stock(1,0,0.0005,n_steps = 10) # No drift, 0.0005 vol
