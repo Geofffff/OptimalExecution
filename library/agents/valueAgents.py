@@ -2,7 +2,7 @@
 #from tensorflow.random import set_seed
 #set_seed(84)
 import numpy as np
-np.random.seed(84)
+#np.random.seed(84)
 
 from collections import deque
 from keras.models import Sequential
@@ -13,7 +13,7 @@ from keras.optimizers import Adam
 from keras import Input
 from keras import Model
 import random
-random.seed(84)
+#random.seed(84)
 
 if __name__ == "__main__":
 	from baseAgents import learningAgent, replayMemory
@@ -22,8 +22,8 @@ else:
 
 class DQNAgent(learningAgent):
 	'''Standard Deep Q Agent, network dimensions pre specified'''
-	def __init__(self, state_size, action_size, agent_name, C = 0,alternative_target = False):
-		learningAgent.__init__(self,state_size,action_size,agent_name,agent_type = "DQN")
+	def __init__(self, state_size, action_size, agent_name, C = 0,alternative_target = False,tree_horizon = 1):
+		learningAgent.__init__(self,state_size,action_size,agent_name,agent_type = "DQN",tree_horizon = tree_horizon)
 		self.model = self._build_model() # private method 
 		self.C = C
 		self.alternative_target = alternative_target
@@ -34,7 +34,7 @@ class DQNAgent(learningAgent):
 				self.prior_weights = deque(maxlen = C)
 	
 	def _build_model(self):
-		set_seed(84)
+		#set_seed(84)
 		# neural net to approximate Q-value function:
 		model = Sequential()
 		model.add(Dense(5, input_dim=self.state_size, activation='relu')) # 1st hidden layer; states as input
