@@ -181,7 +181,9 @@ class simulator:
 			#print(np.arange(self.num_steps) / self.num_steps,np.array(total_position) / n_episodes)
 			self.new_run.log({'episode': self.episode_n, 'position': plt})
 		else:
-			self.new_run.log({'episode': self.episode_n, 'position': np.array(total_position) / (n_episodes * self.env.initial_position)})
+			for j in range(len(total_position)):
+				self.new_run.log({'episode': self.episode_n, ('position' + str(j)): total_position[j] / n_episodes})
+			
 	
 	def train(self,n_episodes = 10000, epsilon = None, epsilon_decay = None,show_details = True, evaluate = False):
 		
