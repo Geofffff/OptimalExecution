@@ -1,6 +1,6 @@
 import library.agents.distAgentsWIP2, library.simulations2, library.agents.baseAgents, library.market_modelsM
 
-lr = 0.0002
+lr = 0.00015
 ucbc = 80
 th = 4
 tl = 50
@@ -23,7 +23,7 @@ agent.learning_rate = lr
 
 simple_stock = library.market_modelsM.bs_stock(1,0,0.0005,n_steps = 10) # No drift, 0.0005 vol
 simple_market = library.market_modelsM.market(simple_stock)
-simple_market.k = 0.0025
+simple_market.k = 0.003
 
 my_simulator = library.simulations2.simulator(simple_market,agent,params,test_name = "Test3",orderbook = False)
 my_simulator.train(20000,epsilon_decay =0.9999)
