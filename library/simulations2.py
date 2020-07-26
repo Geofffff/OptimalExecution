@@ -63,6 +63,8 @@ class simulator:
 		 "stock": type(self.env.m.stock).__name__,
 		 "orderbook": orderbook
 		 })
+		if type(self.env.m.stock).__name__ == "bs_stock":
+			self.new_run.config.update({"stock_vol": self.env.m.stock.vol})
 		if self.agent.agent_type != "basic":
 			self.new_run.config.update({"target_lag": self.agent.C,
 			 "alt_target": self.agent.alternative_target,
