@@ -346,6 +346,9 @@ class QRAgent(distAgent):
 		self.embedding_dim = 3
 		self.state_model_size_out = 8
 		self.twap_scaling = False 
+		self.smart_scaling = True
+		self.expected_range = 0.06
+		self.expected_mean = 0.94
 		#self.kappa = 2 # What should this be? Moved to loss fun
 		#self.selected_qs = None
 		#self.embedded_range = np.arange(self.embedding_dim) + 1 # Note Chainer and dopamine implementation
@@ -445,27 +448,33 @@ class QRAgent(distAgent):
 			if self.twap_scaling:
 				assert self.n_hist_data > 0, "TWAP Scaling only available with market data"
 				# Inventory * initial_price - 0.001 * time
-				return state_action[0][0][0] - 0.001 * state_action[0][0][1]
+				return state_action[0][0][0] - 0.001 * state_action[0][0][1],1
+			elif self.smart_scaling:
+				if self.n_hist_data > 0:
+					pos = state_action[0][0][0] / 2 + 0.5
+				else:
+					pos = state_action[0][0] / 2 + 0.5
+				return pos * self.expected_mean, self.expected_range
 			else:
 				if self.n_hist_data > 0:
-					return state_action[0][0][0] / 2 + 0.5
+					return state_action[0][0][0] / 2 + 0.5,1
 				else:
-					return state_action[0][0] / 2 + 0.5
+					return state_action[0][0] / 2 + 0.5,1
 
-	
-		return 0
+		return 0,1
 
 	# This function needs to be rolled into predict_action
 	def predict_quantiles(self,state_action,target = False):
 		#state_action = self._process_state_action(state,action_index)
-		result_scaling_factor = self._reward_scaling(state_action)
+		result_scaling_mean, result_scaling_range = self._reward_scaling(state_action)
 		
 		if DEBUG:
 			print("predict state action", state_action)
 		#state_action.shape = (1,len(state_action))
 		if self.C > 0 and target:
-			return self.target_model.predict(state_action) + result_scaling_factor
-		return self.model.predict(state_action) + result_scaling_factor
+			return self.target_model.predict(state_action) * result_scaling_range + result_scaling_mean
+		#print(self.target_model.predict(state_action))
+		return self.model.predict(state_action) * result_scaling_range + result_scaling_mean
 
 
 	# predict function could be moved to distAgent and transitioned to np
@@ -503,8 +512,8 @@ class QRAgent(distAgent):
 			print("State Action",state_action)
 		# For Double Deep
 		#print("predictions",self.predict(next_state,quantiles_selected = quantiles_selected))
-
-		target = self.project(reward,next_state,done,self.tree_n,mem_index) - self._reward_scaling(state_action)
+		result_scaling_mean, result_scaling_range = self._reward_scaling(state_action)
+		target = (self.project(reward,next_state,done,self.tree_n,mem_index) - result_scaling_mean) / result_scaling_range
 		#print(target)
 
 			

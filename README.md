@@ -132,6 +132,26 @@ Thursday 16th:
 	- This has required a major rework
 	- Need to rework the original non lob market slightly...
 
+Sunday 26th:
+- Try long run with lower learning rate (0.00005)
+- Try comparison run with high k (to compare agents)
+
+
+
+### Writeup
+- Intro
+- Chapter 1
+	- LOB Markets
+		- Read through and pad out
+	- Market Models
+		- Maybe expand, probably not
+- Chapter 2: First draft done
+- Chapter 3: Lots of work needed
+	- DQN: Todo
+
+- Chapter 4
+- Conclusion
+
 ### General Todo
 - Sweep over action space
 - 
