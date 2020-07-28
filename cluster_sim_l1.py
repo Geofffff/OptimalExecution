@@ -1,8 +1,8 @@
 import library.agents.distAgentsWIP2, library.simulations2, library.agents.baseAgents, library.market_modelsM, library.agents.valueAgents
 
-lr = 0.00015
+lr = 0.001
 ucbc = 80
-th = 4
+th = 1
 tl = 50
 N = 51
 
@@ -11,7 +11,7 @@ params = {
     "num_trades" : 10,
     "position" : 1,
     "batch_size" : 32,
-    "action_values" : [0.5,0.6,0.7,0.8,0.9,1,1.1,1.2,1.3,1.4,1.5]
+    "action_values" : [0.5,0.75,1,1.25,1.5,2]
                         # [0.001,0.005,0.01,0.015,0.02,0.03,0.05,0.075,0.1,0.15,0.2,0.25,0.3,0.35]
 }
 state_size = 2
