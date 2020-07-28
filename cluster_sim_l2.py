@@ -4,7 +4,7 @@ lr = 0.00005
 ucbc = 100
 th = 4
 tl = 50
-N = 51
+N = 200
 
 params = {
     "terminal" : 1,

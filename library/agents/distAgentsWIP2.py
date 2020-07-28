@@ -347,8 +347,8 @@ class QRAgent(distAgent):
 		self.state_model_size_out = 8
 		self.twap_scaling = False 
 		self.smart_scaling = True
-		self.expected_range = 0.06
-		self.expected_mean = 0.94
+		self.expected_range = 0.03
+		self.expected_mean = 0.97
 		#self.kappa = 2 # What should this be? Moved to loss fun
 		#self.selected_qs = None
 		#self.embedded_range = np.arange(self.embedding_dim) + 1 # Note Chainer and dopamine implementation
