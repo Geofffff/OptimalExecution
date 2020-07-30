@@ -23,15 +23,9 @@ else:
 class DQNAgent(learningAgent):
 	'''Standard Deep Q Agent, network dimensions pre specified'''
 	def __init__(self, state_size, action_size, agent_name, C = 0,alternative_target = False,tree_horizon = 1):
-		learningAgent.__init__(self,state_size,action_size,agent_name,agent_type = "DQN",tree_horizon = tree_horizon)
-		self.model = self._build_model() # private method 
-		self.C = C
-		self.alternative_target = alternative_target
-		if self.C > 0:
-			self.target_model = clone_model(self.model)
+		learningAgent.__init__(self,state_size,action_size,agent_name,C,alternative_target,agent_type = "DQN",tree_horizon = tree_horizon)
 
-			if alternative_target:
-				self.prior_weights = deque(maxlen = C)
+		
 	
 	def _build_model(self):
 		#set_seed(84)
@@ -44,25 +38,6 @@ class DQNAgent(learningAgent):
 						optimizer=Adam(lr=self.learning_rate))
 		return model
 
-	def step(self):
-		# Implementation described in Google Paper
-		if not self.alternative_target:
-			if self.C > 0:
-				self.n_since_updated += 1
-				if self.n_since_updated >= self.C: # Update the target network if C steps have passed
-					if self.n_since_updated > self.C:
-						print("target network not updated on time")
-					#print("Debug: target network updated")
-					self.n_since_updated = 0
-					#self.target_model = clone_model(self.model)
-					self.target_model.set_weights(self.model.get_weights())
-		# Alternative Implementation with permenant lag
-		else:
-			if self.C > 0:
-				if len(self.prior_weights) >= self.C: # Update the target network if at least C weights in memory
-					self.target_model.set_weights(self.prior_weights.pop())
-					#print("DEBUG: prior weights: ",self.prior_weights)
-				self.prior_weights.appendleft(self.model.get_weights())
 
 	# Override predict and fit functions
 	def predict(self,state,target = False):
@@ -71,8 +46,10 @@ class DQNAgent(learningAgent):
 		else:
 			scaling_factor = 0
 
+		#print(self.model.predict(state) + scaling_factor)
 		if self.C > 0 and target:
 			return self.target_model.predict(state) + scaling_factor
+
 
 		return self.model.predict(state) + scaling_factor
  
@@ -87,7 +64,7 @@ class DQNAgent(learningAgent):
 		target_f = self.predict(state,target = True) # predicted returns for all actions
 		target_f[0][action] = target 
 		if self.reward_scaling:
-			target_f -= state[0][0]/2 + 0.5
+			target_f -= (state[0][0]/2 + 0.5)
 		# Change the action taken to the reward + predicted max of next states
 		self.model.fit(state, target_f,epochs=1, verbose=0) # Single epoch?
 
@@ -116,6 +93,7 @@ class DDQNAgent(DQNAgent):
 		target_f = self.predict(state,target = True) # predicted returns for all actions
 		target_f[0][action] = target 
 		if self.reward_scaling:
-			target_f -= state[0][0]/2 + 0.5
+			target_f -= (state[0][0]/2 + 0.5)
 		# Change the action taken to the reward + predicted max of next states
+		#print("state",state,"target_f",target_f)
 		self.model.fit(state, target_f,epochs=1, verbose=0) # Single epoch?	

@@ -136,6 +136,12 @@ Sunday 26th:
 - Try long run with lower learning rate (0.00005)
 - Try comparison run with high k (to compare agents)
 
+Thurs 30th:
+- Maybe we don't need to final action? Could just remove it.
+	- certainly doesn't need to be recorded
+- Fix DDQN problem
+- Target network for conv layers?
+	- Also combine conv layers
 
 
 ### Writeup

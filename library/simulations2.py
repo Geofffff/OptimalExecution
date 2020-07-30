@@ -246,7 +246,8 @@ class simulator:
 			next_state, reward, done = self.env.step(action)
 
 			if recording:
-				if "count" in record:
+				if "count" in record and t < (self.num_steps - 1):
+					# The final action doesn't matter
 					track["count"].append(action)
 				
 				if "reward" in record:

@@ -75,9 +75,6 @@ class distAgent(learningAgent):
 				act = random.randrange(self.action_size)
 			else:
 				self.ct = self.c * np.sqrt(np.log(self.t) / self.t)
-				#act_values = self.predict(state)
-				#print("var",self.variance(state))
-				#print("act_values",act_values)
 				act = np.argmax(act_values[0] + self.ct * np.sqrt(self.variance(state)))
 				#print("Act",act)
 			return act
