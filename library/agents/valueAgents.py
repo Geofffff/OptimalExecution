@@ -23,8 +23,8 @@ else:
 class DQNAgent(learningAgent):
 	'''Standard Deep Q Agent, network dimensions pre specified'''
 	def __init__(self, state_size, action_size, agent_name, C = 0,alternative_target = False,tree_horizon = 1):
-		self.model_layers = np.random.randint(2,10) # Temp
-		self.model_units = np.random.randint(5,30) #Temp
+		self.model_layers = random.randint(2,10) # Temp
+		self.model_units = random.randint(5,30) #Temp
 
 		learningAgent.__init__(self,state_size,action_size,agent_name,C,alternative_target,agent_type = "DQN",tree_horizon = tree_horizon)
 		self.expected_range = 0.03
@@ -49,15 +49,17 @@ class DQNAgent(learningAgent):
 	def predict(self,state,target = False):
 		if self.reward_scaling:
 			scaling_factor = (state[0][0]/2 + 0.5) * self.expected_mean
+			scaling_mult = self.expected_range
 		else:
 			scaling_factor = 0
+			scaling_mult = 0
 
 		#print(self.model.predict(state) + scaling_factor)
 		if self.C > 0 and target:
-			return self.target_model.predict(state) * self.expected_range + scaling_factor
+			return self.target_model.predict(state) * scaling_mult + scaling_factor
 
 
-		return self.model.predict(state) * self.expected_range + scaling_factor
+		return self.model.predict(state) * scaling_mult + scaling_factor
  
 	def fit(self,state, action, reward, next_state, done):
 		
@@ -100,7 +102,7 @@ class DDQNAgent(DQNAgent):
 		target_f = self.predict(state,target = True) # predicted returns for all actions
 		target_f[0][action] = target 
 		if self.reward_scaling:
-			target_f -= (state[0][0]/2 + 0.5)
+			target_f -= (state[0][0]/2 + 0.5) * self.expected_mean
 			target_f /= self.expected_range
 		# Change the action taken to the reward + predicted max of next states
 		#print("state",state,"target_f",target_f)
