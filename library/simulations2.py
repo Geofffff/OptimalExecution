@@ -91,6 +91,11 @@ class simulator:
 			self.new_run.config.update({"epsilon_min": self.agent.epsilon_min})
 			self.new_run.config.update({"epsilon_decay": self.agent.epsilon_decay})
 
+		if self.agent.agent_type == "DQN":
+			self.new_run.config.update({"model_layers": self.agent.model_layers,
+										"model_units": self.agent.model_units
+									})
+
 	def __str__(self):
 		return f"{type(agent).__name__} exiting position {self.env.initial_position} over period of {self.m.stock.n_steps} seconds, changing trading rate every {self.trade_freq} seconds."
 	@staticmethod

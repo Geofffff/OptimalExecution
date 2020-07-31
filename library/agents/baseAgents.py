@@ -147,7 +147,7 @@ class learningAgent:
 				self.hist_model.append(self._build_hist_model(n_hist_data))
 
 		# Switch for agent evaluation mode
-		self.evaluate = False ### TODO!!!!!
+		self.evaluate = False
 		
 		self.model = self._build_model()
 

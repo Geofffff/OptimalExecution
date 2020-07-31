@@ -524,10 +524,6 @@ class QRAgent(distAgent):
 		self.model.fit(state_action, target_f,epochs=1, verbose=0)
 
 
-	def process_quantiles(self,quantiles_selected):
-		# Move to class init (why reinitialise?)
-		assert False
-
 	def action_variance(self,state,action_index):
 		state_action = self._process_state_action(state,action_index)
 		predict = self.predict_quantiles(state_action)[0]
