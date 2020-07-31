@@ -93,7 +93,7 @@ class simulator:
 
 		if self.agent.agent_type == "DQN":
 			print("DQN Agent")
-			self.new_run.config.update({"model_layers": self.agent.model_layers,
+		self.new_run.config.update({"model_layers": self.agent.model_layers,
 										"model_units": self.agent.model_units
 									})
 
