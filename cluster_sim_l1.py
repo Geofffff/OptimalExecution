@@ -1,5 +1,5 @@
 import library.agents.distAgentsWIP2, library.simulations2, library.agents.baseAgents, library.market_modelsM, library.agents.valueAgents
-lr = 0.0001
+lr = 0.0005
 ucbc = 150
 th = 4
 tl = 50
@@ -18,7 +18,7 @@ harry1 = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values
 alice = library.agents.valueAgents.DDQNAgent(state_size, len(params["action_values"]), "Sim DDQN Mod2",C=tl, alternative_target = True,tree_horizon=th)
 tim = library.agents.baseAgents.TWAPAgent(2,"TWAP Test",21)
 agent = alice
-#agent.learning_rate = lr
+agent.learning_rate = lr
 
 
 simple_stock = library.market_modelsM.bs_stock(1,0,0.0017,n_steps = 10) # No drift, 0.0005 vol

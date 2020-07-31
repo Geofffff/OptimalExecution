@@ -346,6 +346,9 @@ class QRAgent(distAgent):
 		self.smart_scaling = True
 		self.expected_range = 0.03
 		self.expected_mean = 0.97
+
+		self.model_layers = random.randint(2,16) # Temp
+		self.model_units = random.randint(8,35) #Temp
 		#self.kappa = 2 # What should this be? Moved to loss fun
 		#self.selected_qs = None
 		#self.embedded_range = np.arange(self.embedding_dim) + 1 # Note Chainer and dopamine implementation
@@ -380,8 +383,10 @@ class QRAgent(distAgent):
 		# Using Keras functional API
 		
 		state_in = Input(shape=(self.state_size + self.action_space_size,))
-		state_hidden1 = Dense(32, activation='relu')(state_in)
-		state_hidden2 = Dense(32, activation='relu')(state_hidden1)
+		layer = Dense(self.model_units, activation='relu')(state_in)
+		for i in range(self.model_layers-1):
+			layer = Dense(self.model_units, activation='relu')(layer)
+		#state_hidden2 = Dense(32, activation='relu')(state_hidden1)
 		#hidden3 = Dense(30, activation='relu')(hidden2)
 		
 
@@ -395,8 +400,8 @@ class QRAgent(distAgent):
 		
 		# Full Model
 		#main_hidden1 = Multiply()([cosine_layer, state_hidden2])
-		main_hidden2 = Dense(32, activation='relu')(state_hidden2) #main_hidden1
-		outputs = Dense(self.N, activation='linear')(main_hidden2)
+		#main_hidden2 = Dense(32, activation='relu')(layer) #main_hidden1
+		outputs = Dense(self.N, activation='linear')(layer)
 		#main_model = Model(inputs=state_in, outputs=outputs)
 
 		if self.n_hist_data > 0:
