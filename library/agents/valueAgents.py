@@ -23,8 +23,8 @@ else:
 class DQNAgent(learningAgent):
 	'''Standard Deep Q Agent, network dimensions pre specified'''
 	def __init__(self, state_size, action_size, agent_name, C = 0,alternative_target = False,tree_horizon = 1):
-		self.model_layers = np.randint(2,10) # Temp
-		self.model_units = np.randint(5,30) #Temp
+		self.model_layers = np.random.randint(2,10) # Temp
+		self.model_units = np.random.randint(5,30) #Temp
 
 		learningAgent.__init__(self,state_size,action_size,agent_name,C,alternative_target,agent_type = "DQN",tree_horizon = tree_horizon)
 		self.expected_range = 0.03
@@ -36,7 +36,7 @@ class DQNAgent(learningAgent):
 		#set_seed(84)
 		model = Sequential()
 		model.add(Dense(self.model_units, input_dim=self.state_size, activation='relu'))
-		for i in range(model_layers-1): 
+		for i in range(self.model_layers-1): 
 			model.add(Dense(self.model_units, activation='relu'))
 
 		model.add(Dense(self.action_size, activation='linear')) 
