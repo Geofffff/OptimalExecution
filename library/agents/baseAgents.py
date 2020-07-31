@@ -2,7 +2,7 @@
 #from tensorflow.random import set_seed
 #set_seed(84)
 import numpy as np
-np.random.seed(84)
+#np.random.seed(84)
 
 from collections import deque
 from keras.models import Sequential
@@ -13,7 +13,7 @@ from keras.optimizers import Adam
 from keras import Input
 from keras import Model
 import random
-random.seed(84)
+#random.seed(84)
 
 class replayMemory:
 	'''Container for recalling an agents interactions with the environment'''

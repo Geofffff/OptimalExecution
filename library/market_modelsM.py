@@ -1,7 +1,7 @@
 from random import gauss, randint, shuffle
 from collections import deque
 import numpy as np
-np.random.seed(84)
+#np.random.seed(84)
 DEBUG = False
 RARE_DEBUG = False # Print messages for rare events
 
