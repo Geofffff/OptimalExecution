@@ -347,8 +347,8 @@ class QRAgent(distAgent):
 		self.expected_range = 0.03
 		self.expected_mean = 0.97
 
-		self.model_layers = random.randint(2,16) # Temp
-		self.model_units = random.randint(8,35) #Temp
+		self.model_layers = 3 #random.randint(2,16) # Temp
+		self.model_units = 28 #random.randint(8,35) #Temp
 		#self.kappa = 2 # What should this be? Moved to loss fun
 		#self.selected_qs = None
 		#self.embedded_range = np.arange(self.embedding_dim) + 1 # Note Chainer and dopamine implementation
@@ -415,7 +415,7 @@ class QRAgent(distAgent):
 		
 
 		model.compile(loss = self.huber_loss_quantile(self.quantiles,self.kappa),
-						optimizer=Adam(lr=self.learning_rate))
+						optimizer=Adam(lr=self.learning_rate,epsilon = 0.01/32))
 		'''
 		main_model = IQNNetwork(self.state_size + 1,self.N,self.state_model_size_out,self.embedding_dim)
 
