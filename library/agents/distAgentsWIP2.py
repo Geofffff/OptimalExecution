@@ -344,8 +344,8 @@ class QRAgent(distAgent):
 		self.state_model_size_out = 8
 		self.twap_scaling = False 
 		self.smart_scaling = True
-		self.expected_range = 0.03
-		self.expected_mean = 0.97
+		self.expected_range = 0.02
+		self.expected_mean = 0.98
 
 		self.model_layers = 3 #random.randint(2,16) # Temp
 		self.model_units = 28 #random.randint(8,35) #Temp
