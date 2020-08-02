@@ -19,7 +19,7 @@ agent = tim
 
 #agent.learning_rate = 0.000025
 
-stock = library.market_modelsM.real_stock_lob(merged,n_steps=200,n_train=20)
+stock = library.market_modelsM.real_stock_lob(merged,n_steps=50,n_train=50)
 market = library.market_modelsM.lob_market(stock,n_hist_data)
 market.k = 0.004
 market.b = 0.00004
