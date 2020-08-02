@@ -79,7 +79,10 @@ class agent_environment:
             # have reached the end of the trading period
             time_out = (round(self.time + self.trade_freq * 2 * self.step_size,7) >= 1)
             if time_out:
-                trade_size = self.position / self.trade_freq
+                if self.state_size == 2:
+                    trade_size = self.position / self.trade_freq
+                else:
+                    trade_size = [self.position / self.trade_freq,0]
             else:
                 trade_size = self.action_values[action]
 
@@ -95,7 +98,7 @@ class agent_environment:
                 else:
                     # Here we haven't considered the possibility that we may be able to execute LOs
                     # in this intra agent action window
-                    rewards, amount, _  = self.sell([trade_size,0])
+                    rewards, amount, _  = self.sell(trade_size)
                 if self.debug:
                     print("Selling",trade_size,"for",rewards)
                 
@@ -172,11 +175,14 @@ class orderbook_environment(agent_environment):
         res = np.reshape(res,(1,len(res)))
         if self.market_data:
             market_state = self.m.state()
-            full_res = [res]
-            #print("market state",market_state)
-            for hist_data in market_state:
-                full_res.append(np.reshape(hist_data,(1,len(hist_data),1)))
-            #print(full_res)
+            new_state = None
+            for mstate in market_state:
+                if new_state is None:
+                    new_state = mstate
+                    continue
+                new_state = np.vstack((new_state,mstate))
+            new_state = np.transpose(new_state)
+            full_res = [res,np.reshape(new_state,(1,new_state.shape[0],new_state.shape[1]))]
             return full_res
         
         return res

@@ -128,20 +128,20 @@ Thursday 16th:
 	- in stock?
 	- in agent environment
 	- currently have a mixture
-- Add more convolutional inputs
+- Add more convolutional inputs [DONE]
 	- This has required a major rework
 	- Need to rework the original non lob market slightly...
 
 Sunday 26th:
-- Try long run with lower learning rate (0.00005)
-- Try comparison run with high k (to compare agents)
+- Try long run with lower learning rate (0.00005) [DONE]
+- Try comparison run with high k (to compare agents) [DONE]
 
 Thurs 30th:
-- Maybe we don't need to final action? Could just remove it.
+- Maybe we don't need to final action? Could just remove it. [DONE]
 	- certainly doesn't need to be recorded
-- Fix DDQN problem
-- Target network for conv layers?
-	- Also combine conv layers
+- Fix DDQN problem [DONE]
+- Target network for conv layers? !!
+	- Also combine conv layers !!
 
 Sat 1st:
 - If same action value then biased towards first - fix
@@ -159,6 +159,14 @@ Sat 1st:
 - Trial using dropout and other neural network optimisations
 - Mention Challenges Paper in Chapter 3
 	- Can talk about resolving each issue eg. Number 4 can limit trade size?
+
+Sun 2nd:
+- Conv Net Rework2
+	- Combine conv inputs
+	- use target lag
+	- Scale hist inputs
+
+- Clean up distAgent (at some point)
 
 ### Writeup
 - Intro

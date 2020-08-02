@@ -141,10 +141,9 @@ class learningAgent:
 
 		# Market data (currently only prices)
 		self.n_hist_data = n_hist_data
+		self.n_hist_inputs = n_hist_inputs
 		if self.n_hist_data > 0:
-			self.hist_model = []
-			for i in range(n_hist_inputs):
-				self.hist_model.append(self._build_hist_model(n_hist_data))
+			self.hist_model = self._build_hist_model(n_hist_data)
 
 		# Switch for agent evaluation mode
 		self.evaluate = False
@@ -171,12 +170,12 @@ class learningAgent:
 	def agent_type(self):
 		return self._agent_type
 	
-	def _build_hist_model(self,input_dim,units=16,depth=2):
+	def _build_hist_model(self,input_dim,units=16,depth=2,kernal_size=4):
 		assert depth > 0 and units > 0 and input_dim > 0, "Invalid inputs"
-		inputs = Input(shape=(input_dim,1,))
-		res = Conv1D(units,4,activation = 'relu')(inputs)
+		inputs = Input(shape=(input_dim,self.n_hist_inputs,))
+		res = Conv1D(units,kernal_size,activation = 'relu')(inputs)
 		for i in range(depth - 1):
-			res = Conv1D(units,4,activation = 'relu')(res)
+			res = Conv1D(units,kernal_size,activation = 'relu')(res)
 		
 		res = Flatten()(res)
 		model = Model(inputs=inputs,outputs=res)

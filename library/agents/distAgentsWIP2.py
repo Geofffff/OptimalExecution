@@ -95,17 +95,18 @@ class distAgent(learningAgent):
 		'''
 		res = copy.deepcopy(state)
 		if self.action_space_size == 1:
+			# Single action input
 			action = self.action_values[action_index] * self.trans_a + self.trans_b
 		else:
+			# Multiple action inputs
 			action = np.array(self.action_values[action_index]) * self.trans_a + self.trans_b
 		if self.n_hist_data > 0:
+			# Two state inputs
 			res[0] = np.reshape(np.concatenate((np.array(state[0][0]),action),axis=None), [1, len(state[0][0]) + self.action_space_size])
 		else:
+			# One state input
 			res = np.reshape(np.concatenate((np.array(state[0]),action),axis=None), [1, len(state[0]) + self.action_space_size])
-		'''
-		if self.n_hist_data > 0:
-			return [local_state_action, market_state]
-		'''
+		
 		return res
 
 	# 'Virtual' Function
@@ -387,17 +388,15 @@ class QRAgent(distAgent):
 		skip_layer = Dense(self.model_units, activation='relu')(state_in)
 		for i in range(self.model_layers-1):
 			layer = Dense(self.model_units, activation='relu')(skip_layer)
-			dropout = Dropout(0.1)(layer)
-			skip_layer = Add()([skip_layer, dropout])
+			#dropout = Dropout(0.1)(layer)
+			skip_layer = Add()([skip_layer, layer])
 
 
 		outputs = Dense(self.N, activation='linear')(skip_layer)
 		#main_model = Model(inputs=state_in, outputs=outputs)
 
 		if self.n_hist_data > 0:
-			all_inputs = [state_in]
-			for hist_input in self.hist_model:
-				all_inputs.append(hist_input.input)
+			all_inputs = [state_in,self.hist_model.input]
 		else:
 			all_inputs = state_in
 		
@@ -406,23 +405,13 @@ class QRAgent(distAgent):
 
 		model.compile(loss = self.huber_loss_quantile(self.quantiles,self.kappa),
 						optimizer=Adam(lr=self.learning_rate,epsilon = 0.01/32))
-		'''
-		main_model = IQNNetwork(self.state_size + 1,self.N,self.state_model_size_out,self.embedding_dim)
 
-		main_model.compile(loss = self.huber_loss_quantile(quantiles_selected,self.kappa),
-						optimizer=Adam(lr=self.learning_rate))
-		'''
 		return model
 
 	def predict_action(self,state,action_index,target = False,above_med = False):
-		#print("quantiles",self.quantiles)
-		#print(np.dot(self.embedded_range, self.quantiles))
-		#print("action index",action_index)
 		state_action = self._process_state_action(state,action_index)
-		#quantile_in = self.process_quantiles(quantiles_selected)
-		#print("state action",state_action,"embedded_quantiles",self.embedded_quantiles)
-		#print(self.model.summary())
 		predict = self.predict_quantiles(state_action,target)
+		
 		#if self.C > 0 and target:
 			#assert not above_med, "Why is variance being used with target?"
 			#return np.add.reduce(self.qi * predict,1)
@@ -462,6 +451,7 @@ class QRAgent(distAgent):
 		
 		if DEBUG:
 			print("predict state action", state_action)
+		#print("predict state action", state_action)
 		#state_action.shape = (1,len(state_action))
 		if self.C > 0 and target:
 			return self.target_model.predict(state_action) * result_scaling_range + result_scaling_mean
