@@ -143,6 +143,22 @@ Thurs 30th:
 - Target network for conv layers?
 	- Also combine conv layers
 
+Sat 1st:
+- If same action value then biased towards first - fix
+- Commentary about the closeness in values of actions is important - why do we care, maybe converging precisely to TWAP is not in itself important
+	- Additionally need to try increasing the batch size!
+- Look at offline RL!!! https://proceedings.icml.cc/static/paper_files/icml/2020/5394-Paper.pdf
+	- Examine the potential to train the agent using an offline dataset
+		- we could even test this hypothesis by using a modified temp impact (concave)
+	- Could be major advantage for using off policy algo
+	- Train DQN agent on data with sqrt temp impact, maybe sim maybe hist
+		- Generate dataset using trained DQN for liquidations w/ eps = 0.05?
+		- Use dataset to train QR-DQN Agent, either pretrained on lin impact, diff vol data or no pretraining and compare performance
+- Mention C51 in into to dist RL
+- Cite and mention Adam?
+- Trial using dropout and other neural network optimisations
+- Mention Challenges Paper in Chapter 3
+	- Can talk about resolving each issue eg. Number 4 can limit trade size?
 
 ### Writeup
 - Intro

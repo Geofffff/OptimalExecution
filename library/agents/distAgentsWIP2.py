@@ -382,26 +382,16 @@ class QRAgent(distAgent):
 	def _build_model(self):
 		# Using Keras functional API
 		
+		# Testing adding skip layers and dropout
 		state_in = Input(shape=(self.state_size + self.action_space_size,))
-		layer = Dense(self.model_units, activation='relu')(state_in)
+		skip_layer = Dense(self.model_units, activation='relu')(state_in)
 		for i in range(self.model_layers-1):
-			layer = Dense(self.model_units, activation='relu')(layer)
-		#state_hidden2 = Dense(32, activation='relu')(state_hidden1)
-		#hidden3 = Dense(30, activation='relu')(hidden2)
-		
+			layer = Dense(self.model_units, activation='relu')(skip_layer)
+			dropout = Dropout(0.1)(layer)
+			skip_layer = Add()([skip_layer, dropout])
 
-		#quantiles_in = []
-		#quantile_in = Input(shape=(self.N,))
-		# This needs fixing - transforming to tf functions etc.
 
-		#cosine_layer = CosineBasisLayer(64,input_dim = self.N)(quantile_in)
-		#Lambda( lambda x: K.sum(x, axis=0), input_shape=(self.embedding_dim,self.N))(quantile_in)
-		#quantile_col = ReLU()(quantile_col)
-		
-		# Full Model
-		#main_hidden1 = Multiply()([cosine_layer, state_hidden2])
-		#main_hidden2 = Dense(32, activation='relu')(layer) #main_hidden1
-		outputs = Dense(self.N, activation='linear')(layer)
+		outputs = Dense(self.N, activation='linear')(skip_layer)
 		#main_model = Model(inputs=state_in, outputs=outputs)
 
 		if self.n_hist_data > 0:
