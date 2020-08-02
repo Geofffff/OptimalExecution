@@ -8,11 +8,11 @@ params = {
     "num_trades" : 10,
     "position" : 1,
     "batch_size" : 64,
-    "action_values" : [[0.5,0],[0.6,0],[0.7,0],[0.8,0],[0.9,0],[1,0],[1.1,0],[1.2,0],[1.3,0],[1.4,0],[1.5,0]]
+    "action_values" : [[0.95,0],[0.96,0],[0.97,0],[0.98,0],[0.99,0],[1,0],[1.01,0],[1.02,0],[1.03,0],[1.04,0],[1.05,0]]
 }
 state_size = 3
-harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], "T QRDQN MD",C=50, alternative_target = True,UCB=True,UCBc = 150,tree_horizon = 4,n_hist_data=32,n_hist_inputs=7,orderbook =True)
-tim = library.agents.baseAgents.TWAPAgent(1,"TWAP",11)
+harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], "T QRDQN MD2",C=50, alternative_target = True,UCB=True,UCBc = 150,tree_horizon = 4,n_hist_data=32,n_hist_inputs=7,orderbook =True)
+tim = library.agents.baseAgents.TWAPAgent(5,"TWAP",11)
 agent = harry
 
 agent.learning_rate = 0.00005

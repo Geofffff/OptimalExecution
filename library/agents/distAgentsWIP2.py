@@ -24,7 +24,7 @@ else:
 # Not required if not running on the cluster
 # Instead replace with 
 # from keras.losses import huber_loss
-local = False
+local = True
 if not local:
 	def huber_loss(y_true, y_pred, clip_delta=1.0):
 	  error = y_true - y_pred
@@ -380,12 +380,22 @@ class QRAgent(distAgent):
 		return loss
 		
 
-	def _build_model(self):
+	def _build_model(self,target = False):
 		# Using Keras functional API
 		
-		# Testing adding skip layers and dropout
 		state_in = Input(shape=(self.state_size + self.action_space_size,))
-		skip_layer = Dense(self.model_units, activation='relu')(state_in)
+		# If using market data
+		if self.n_hist_data > 0:
+			if target:
+				hist_model = self.hist_target_model
+			else:
+				hist_model = self.hist_model
+			input_layer = concatenate([state_in,hist_model.output])
+		else:
+			input_layer = state_in
+
+		# Testing adding skip layers and dropout
+		skip_layer = Dense(self.model_units, activation='relu')(input_layer)
 		for i in range(self.model_layers-1):
 			layer = Dense(self.model_units, activation='relu')(skip_layer)
 			#dropout = Dropout(0.1)(layer)
@@ -396,7 +406,8 @@ class QRAgent(distAgent):
 		#main_model = Model(inputs=state_in, outputs=outputs)
 
 		if self.n_hist_data > 0:
-			all_inputs = [state_in,self.hist_model.input]
+			all_inputs = [state_in,hist_model.input]
+
 		else:
 			all_inputs = state_in
 		

@@ -72,7 +72,9 @@ class simulator:
 		 	 "buffer_size": self.agent.replay_buffer_size,
 		 	 "learning_rate": self.agent.learning_rate,
 		 	 "reward_scaling": self.agent.reward_scaling,
-		 	 "action_input" : self.agent.action_as_input
+		 	 "action_input" : self.agent.action_as_input,
+		 	 "model_layers": self.agent.model_layers,
+			 "model_units": self.agent.model_units
 		 	})
 			
 		if self.agent.agent_type == "dist":
@@ -93,9 +95,7 @@ class simulator:
 
 		if self.agent.agent_type == "DQN":
 			print("DQN Agent")
-		self.new_run.config.update({"model_layers": self.agent.model_layers,
-										"model_units": self.agent.model_units
-									})
+		
 
 	def __str__(self):
 		return f"{type(agent).__name__} exiting position {self.env.initial_position} over period of {self.m.stock.n_steps} seconds, changing trading rate every {self.trade_freq} seconds."

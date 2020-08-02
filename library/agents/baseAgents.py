@@ -145,6 +145,12 @@ class learningAgent:
 		if self.n_hist_data > 0:
 			self.hist_model = self._build_hist_model(n_hist_data)
 
+			if self.C > 0:
+				self.hist_target_model = clone_model(self.hist_model)
+
+			if alternative_target:
+				self.hist_prior_weights = self.hist_model.get_weights()
+
 		# Switch for agent evaluation mode
 		self.evaluate = False
 		
@@ -153,7 +159,7 @@ class learningAgent:
 		# Target network
 		self.n_since_updated = 0
 		if self.C > 0:
-			self.target_model = clone_model(self.model)
+			self.target_model = self._build_model(target = True)
 
 			if alternative_target:
 				self.prior_weights = self.model.get_weights()
