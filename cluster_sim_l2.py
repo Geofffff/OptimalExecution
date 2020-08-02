@@ -1,30 +1,28 @@
-import library.agents.distAgentsWIP2, library.simulations2, library.agents.baseAgents, library.market_modelsM, library.agents.valueAgents
-lr = 0.00005
-ucbc = 150
-th = 4
-tl = 50
-N = 200
+import pandas as pd
+merged = pd.read_csv("cluster_data/cluster_BTX_15s_19.csv",index_col = "time",low_memory = False)
+
+import library.agents.distAgentsWIP2, library.simulations2, library.agents.baseAgents, library.market_modelsM
+
+n_hist_data = 32
 
 params = {
     "terminal" : 1,
     "num_trades" : 10,
     "position" : 1,
-    "batch_size" : 128,
-    "action_values" : [0.5,0.6,0.7,0.8,0.9,1,1.1,1.2,1.3,1.4,1.5]
-                        # [0.001,0.005,0.01,0.015,0.02,0.03,0.05,0.075,0.1,0.15,0.2,0.25,0.3,0.35]
+    "batch_size" : 64,
+    "action_values" : [[0.99,0],[1,0],[1.01,0]]
 }
-state_size = 2
-harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], "T QR B128 BS100k",C=tl,N=N, alternative_target = True,UCB=True,UCBc = ucbc,tree_horizon = th,n_hist_data=0,n_hist_inputs=0,orderbook =False)#,market_data_size=n_hist_prices)
-alice = library.agents.valueAgents.DDQNAgent(state_size, len(params["action_values"]), "Sim DDQN Mod3",C=tl, alternative_target = True,tree_horizon=th)
-tim = library.agents.baseAgents.TWAPAgent(2,"TWAP Test",21)
-agent = harry
-agent.learning_rate = lr
+state_size = 3
+harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], "10T200 QRDQN MD",C=50, N=200,alternative_target = True,UCB=True,UCBc = 150,tree_horizon = 4,n_hist_data=n_hist_data,n_hist_inputs=7,orderbook =True)
+tim = library.agents.baseAgents.TWAPAgent(1,"10T200 TWAP",11)
+agent = tim
 
+#agent.learning_rate = 0.000025
 
-simple_stock = library.market_modelsM.bs_stock(1,0,0.0017,n_steps = 10) # No drift, 0.0005 vol
-simple_market = library.market_modelsM.market(simple_stock)
-simple_market.k = 0.0186 # 0.02
-simple_market.b = 0.0 # 0.01
+stock = library.market_modelsM.real_stock_lob(merged,n_steps=200,n_train=20)
+market = library.market_modelsM.lob_market(stock,n_hist_data)
+market.k = 0.004
+market.b = 0.00004
 
-my_simulator = library.simulations2.simulator(simple_market,agent,params,test_name = "DDQN_Net_Sweep",orderbook = False)
-my_simulator.train(100000,epsilon_decay =0.9999)
+my_simulator = library.simulations2.simulator(market,agent,params,test_name = "MO MD Testing",orderbook = True)
+my_simulator.train(70000,epsilon_decay =0.9999)
