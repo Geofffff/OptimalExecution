@@ -162,9 +162,10 @@ Sat 1st:
 
 Sun 2nd:
 - Conv Net Rework2
-	- Combine conv inputs
-	- use target lag
-	- Scale hist inputs
+	- Combine conv inputs [DONE]
+	- use target lag [DONE]
+	- Scale hist inputs [IMPORTANT!]
+- Try new NN models with smaller lr?
 
 - Clean up distAgent (at some point)
 
