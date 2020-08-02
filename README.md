@@ -166,8 +166,12 @@ Sun 2nd:
 	- use target lag [DONE]
 	- Scale hist inputs [IMPORTANT!]
 - Try new NN models with smaller lr?
+	- Also try with lower UCBc
+
+- Try new MD models with higher n_data, lower impact and more timesteps / more trades per interaction
 
 - Clean up distAgent (at some point)
+	- agent params
 
 ### Writeup
 - Intro
