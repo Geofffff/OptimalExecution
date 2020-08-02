@@ -2,7 +2,7 @@ import numpy as np
 from keras.models import Sequential
 from keras.models import clone_model
 # Sort this out...
-from keras.layers import Dense, Softmax, Multiply, Add, Input, Lambda, Layer, concatenate
+from keras.layers import Dense, Softmax, Multiply, Add, Input, Lambda, Layer, concatenate, Dropout
 from keras.initializers import RandomNormal
 
 #from keras import Input
@@ -24,7 +24,7 @@ else:
 # Not required if not running on the cluster
 # Instead replace with 
 # from keras.losses import huber_loss
-local = False
+local = True
 if not local:
 	def huber_loss(y_true, y_pred, clip_delta=1.0):
 	  error = y_true - y_pred
