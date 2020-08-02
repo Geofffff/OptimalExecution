@@ -165,6 +165,7 @@ class real_stock_lob(real_stock):
 		self.data = data
 		assert set(self.data.columns).issubset({"bid","bidSize","ask","askSize","buyMO","sellMO","buySellImb","orderImb","spread"}), f'input columns {self.data.columns} must be a subset of ("bid","bidSize","ask","askSize","buyMO","sellMO","buySellImb","orderImb")'
 		super(real_stock_lob,self).__init__(data["bid"],n_steps, data_freq,recycle,n_train)
+		print("WARNING: Several market data inputs have been forced to 0 temporarily")
 
 	def reset(self,training = True):
 		super(real_stock_lob,self).reset(training)
@@ -206,7 +207,7 @@ class real_stock_lob(real_stock):
 		if col == "bid" or col == "ask":
 			return self.data[col][index] / self.initial - int(center)
 		elif col == "askSize" or col == "bidSize" or col == "buyMO":
-			return self.data[col][index] - int(center)
+			return 0#self.data[col][index] - int(center)
 		elif col ==  "buySellImb":
 			res = self.data[col][index] 
 			return res / max(self.data["buyMO"][index],self.data["sellMO"][index]) - 0.5 * int(center)

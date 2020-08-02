@@ -24,7 +24,7 @@ else:
 # Not required if not running on the cluster
 # Instead replace with 
 # from keras.losses import huber_loss
-local = False
+local = True
 if not local:
 	def huber_loss(y_true, y_pred, clip_delta=1.0):
 	  error = y_true - y_pred
@@ -465,6 +465,7 @@ class QRAgent(distAgent):
 		#print("predict state action", state_action)
 		#state_action.shape = (1,len(state_action))
 		if self.C > 0 and target:
+			#print("prediction",self.target_model.predict(state_action))
 			return self.target_model.predict(state_action) * result_scaling_range + result_scaling_mean
 		#print(self.target_model.predict(state_action))
 		return self.model.predict(state_action) * result_scaling_range + result_scaling_mean
@@ -507,7 +508,7 @@ class QRAgent(distAgent):
 		#print("predictions",self.predict(next_state,quantiles_selected = quantiles_selected))
 		result_scaling_mean, result_scaling_range = self._reward_scaling(state_action)
 		target = (self.project(reward,next_state,done,self.tree_n,mem_index) - result_scaling_mean) / result_scaling_range
-		#print(target)
+		
 
 			
 		if DEBUG:
