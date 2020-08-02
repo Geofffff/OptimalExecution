@@ -241,8 +241,14 @@ class learningAgent:
 				if self.alternative_target:
 					self.target_model.set_weights(self.prior_weights)
 					self.prior_weights = self.model.get_weights()
+					if self.n_hist_data > 0:
+						self.hist_target_model.set_weights(self.hist_prior_weights)
+						self.hist_prior_weights = self.hist_model.get_weights()
 				else:
 					self.target_model.set_weights(self.model.get_weights())
+					if self.n_hist_data > 0:
+						self.hist_target_model.set_weights(self.hist_model.get_weights())
+
 
 	def load(self, file_name):
 		self.model.load_weights(file_name)
