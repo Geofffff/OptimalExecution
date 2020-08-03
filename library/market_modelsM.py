@@ -160,7 +160,7 @@ class real_stock:
 		# Allows for columns to be scaled in a unique way
 		if col == "bid" or col == "ask":
 			if for_state:
-				return (self.data[col][index] / self.initial-1) * 2000
+				return (self.data[col][index] / self.initial-1) * 4000
 			else:
 				return self.data[col][index] / self.initial
 		else:

@@ -14,10 +14,10 @@ params = {
     "num_trades" : 10,
     "position" : 1,
     "batch_size" : 64,
-    "action_values" : [0.98,0.99,1,1.01,1.02]
+    "action_values" : [0.9,0.96,0.98,0.99,1,1.01,1.02,1.04,1.1]
 }
 state_size = 2
-harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], "10T200 QRDQN FX",C=50, N=200,alternative_target = True,UCB=True,UCBc = 100,tree_horizon = 4,n_hist_data=n_hist_data,n_hist_inputs=1,orderbook =False)
+harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], "10T200 QRDQN FX MA",C=50, N=200,alternative_target = True,UCB=True,UCBc = 100,tree_horizon = 4,n_hist_data=n_hist_data,n_hist_inputs=1,orderbook =False)
 tim = library.agents.baseAgents.TWAPAgent(1,"10T200 TWAP",11)
 agent = harry
 
