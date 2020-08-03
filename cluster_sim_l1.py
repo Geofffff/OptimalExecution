@@ -14,7 +14,7 @@ params = {
     "num_trades" : 10,
     "position" : 1,
     "batch_size" : 64,
-    "action_values" : [0.99,1,1.01]
+    "action_values" : [0.98,0.99,1,1.01,1.02]
 }
 state_size = 2
 harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], "10T200 QRDQN FX",C=50, N=200,alternative_target = True,UCB=True,UCBc = 100,tree_horizon = 4,n_hist_data=n_hist_data,n_hist_inputs=1,orderbook =False)
