@@ -153,10 +153,16 @@ class real_stock:
 			res.append(self._scale(col,self.data_index + (- n + i + 1 ) * dt_adj))
 		return np.array(res)
 
-	def _scale(self,col,index):
+	def get_value(self,col):
+		return self._scale(col,self.data_index,True)
+
+	def _scale(self,col,index,for_state = False):
 		# Allows for columns to be scaled in a unique way
 		if col == "bid" or col == "ask":
-			return self.data[col][index] / self.initial 
+			if for_state:
+				return (self.data[col][index] / self.initial-1) * 100
+			else:
+				return self.data[col][index] / self.initial
 		else:
 			raise "Unknown column"
 
@@ -275,7 +281,7 @@ class market:
 		self.stock.generate_price(dt)
 		if self.n_hist_prices > 0:
 			for col in self.hist:
-				self.hist[col][:-1] = self.hist[col][1:]; self.hist[col][-1] = self._adjusted_price()
+				self.hist[col][:-1] = self.hist[col][1:]; self.hist[col][-1] = self.stock.get_value(col)
 
 	def state(self):
 		#print(tuple(self.hist.values()))

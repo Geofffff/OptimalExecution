@@ -165,8 +165,11 @@ Sun 2nd:
 	- Combine conv inputs [DONE]
 	- use target lag [DONE]
 	- Scale hist inputs [IMPORTANT!]
+	- hist inputs are very broken - test a full run through
 - Try new NN models with smaller lr?
 	- Also try with lower UCBc
+
+- Data: FX data remove weekends and manage discontinuities
 
 - Try new MD models with higher n_data, lower impact and more timesteps / more trades per interaction
 

@@ -24,7 +24,7 @@ else:
 # Not required if not running on the cluster
 # Instead replace with 
 # from keras.losses import huber_loss
-local = False
+local = True
 if not local:
 	def huber_loss(y_true, y_pred, clip_delta=1.0):
 	  error = y_true - y_pred
@@ -526,13 +526,17 @@ class QRAgent(distAgent):
 		predict = self.predict_quantiles(state_action)[0]
 		if self.optimisticUCB:
 			predict = predict[int(len(predict) / 2):] # High quantiles are at the start
-		return np.add.reduce(self.qi * predict * predict)
+		res = np.add.reduce(self.qi * predict * predict)
+		res -= np.power(self.predict_action(state,action_index,above_med = self.optimisticUCB)[0],2)
+		if round(res,7) < 0:
+			print(f"WARNING: Variance {res} below 0")
+		return max(np.add.reduce(self.qi * predict * predict),0)
 
 	def variance(self,state):
 		res = []
 		#print("00",np.power(self.predict_action(state,0,above_med = self.optimisticUCB),2))
 		for i in range(self.action_size):
-			res.append(self.action_variance(state,i) - np.power(self.predict_action(state,i,above_med = self.optimisticUCB)[0],2))
+			res.append(self.action_variance(state,i))
 		return res
 
 # Testing the code
