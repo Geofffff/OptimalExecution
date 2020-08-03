@@ -62,9 +62,15 @@ class agent_environment:
         res = np.reshape(res,(1,len(res)))
         if self.market_data:
             market_state = self.m.state()
-            market_state = np.reshape(market_state,(1,len(market_state),1)) - 1
-            return [res, market_state]
-        
+            new_state = None
+            for mstate in market_state:
+                if new_state is None:
+                    new_state = mstate
+                    continue
+                new_state = np.vstack((new_state,mstate))
+            new_state = np.transpose(new_state)
+            full_res = [res,np.reshape(new_state,(1,new_state.shape[0],len(self.m.hist)))]
+            return full_res
         return res
     
     def step(self,action):

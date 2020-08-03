@@ -78,8 +78,8 @@ class real_stock:
 	def __init__(self,data,n_steps = 60, data_freq = 6,recycle = True,n_train = 0):
 		self.recycle = recycle
 		self.n_steps = n_steps
-		self.df_prices = data
-		self.hist_buffer = 0
+		self.data = data
+		self.hist_buffer = self.n_steps
 		self.data_freq = data_freq # 1M = 60
 		
 		# Partition data into training and testing data
@@ -102,11 +102,12 @@ class real_stock:
 			recycling = "not"
 		else:
 			recycling = ""
-		return f"Real Stock, using {len(self.df_prices)} data points, {recycling} recycling data points. Sampling over {self.n_steps} steps."
+		n_data = len(self.data["bid"])
+		return f"Real Stock, using {n_data} data points, {recycling} recycling data points. Sampling over {self.n_steps} steps."
 
 	def reset(self,training=True):
 		if (not training) and self.partition_training:
-			self.data_index = randint(len(self.df_prices) - self.n_train * self.n_steps,len(self.df_prices) - self.n_steps - 1)
+			self.data_index = randint(len(self.data['bid']) - self.n_train * self.n_steps,len(self.data['bid']) - self.n_steps - 1)
 			#print(self.data_index,len(self.df_prices) - self.n_steps)
 		else:
 			if not self.recycle:
@@ -114,10 +115,10 @@ class real_stock:
 				assert self.period_index <= self.final_period, "Dataset finished"
 				self.data_index = self.period_index * self.n_steps * self.hist_buffer
 			else:
-				self.data_index = randint(self.hist_buffer,len(self.df_prices) - self.n_steps * (1 + self.n_train))
+				self.data_index = randint(self.hist_buffer,len(self.data['bid']) - self.n_steps * (1 + self.n_train))
 		self.in_period_index = 0
 		
-		self.initial = self.df_prices[self.data_index]
+		self.initial = self.data['bid'][self.data_index]
 		self.price = 1
 
 	def _update_data_index(self,dt):
@@ -135,7 +136,7 @@ class real_stock:
 	def generate_price(self,dt):
 		self._update_data_index(dt)
 
-		self.price = self.df_prices[self.data_index] / self.initial
+		self.price = self.data['bid'][self.data_index] / self.initial
 
 		# WARNING: For now we return a scaled price (scaled by initial price at the start of every episode)
 		error = np.isnan(self.price)
@@ -179,7 +180,7 @@ class real_stock_lob(real_stock):
 			assert dt is not None, "dt argument required for non initial price"
 			self._update_data_index(dt)
 
-		self.price = self.df_prices[self.data_index] / self.initial
+		self.price = self.data['bid'][self.data_index] / self.initial
 
 		# WARNING: For now we return a scaled price (scaled by initial price at the start of every episode)
 		error = np.isnan(self.price)
@@ -267,9 +268,8 @@ class market:
 		self.price_adjust = 1
 		if self.n_hist_prices > 0:
 			for col in self.hist:
-				#print(col)
 				self.hist[col] = self.stock.get_hist(self.n_hist_prices,dt,col = col)
-		#print(self.hist)
+		#print(list(self.hist.values()))
 			
 	def progress(self,dt):
 		self.stock.generate_price(dt)
@@ -279,7 +279,8 @@ class market:
 
 	def state(self):
 		#print(tuple(self.hist.values()))
-		return tuple(self.hist.values())
+		#print(tuple(self.hist.values()))
+		return list(self.hist.values())
 
 class lob_market(market):
 
