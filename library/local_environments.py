@@ -1,4 +1,5 @@
 import numpy as np
+import copy
 
 class agent_environment:
     '''Local Environment for a trading agent using market orders'''
@@ -70,8 +71,8 @@ class agent_environment:
                 new_state = np.vstack((new_state,mstate))
             new_state = np.transpose(new_state)
             full_res = [res,np.reshape(new_state,(1,new_state.shape[0],len(self.m.hist)))]
-            return full_res
-        return res
+            return copy.deepcopy(full_res)
+        return copy.deepcopy(res)
     
     def step(self,action):
         '''Mechanism by which agent interacts with the environment.
