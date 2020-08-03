@@ -150,7 +150,7 @@ class real_stock:
 		dt_adj = int(dt_adj)
 		res = []
 		for i in range(n):
-			res.append(self._scale(col,self.data_index + (- n + i + 1 ) * dt_adj))
+			res.append(self._scale(col,self.data_index + (- n + i + 1 ) * dt_adj,for_state=True))
 		return np.array(res)
 
 	def get_value(self,col):
@@ -160,7 +160,7 @@ class real_stock:
 		# Allows for columns to be scaled in a unique way
 		if col == "bid" or col == "ask":
 			if for_state:
-				return (self.data[col][index] / self.initial-1) * 100
+				return (self.data[col][index] / self.initial-1) * 10000
 			else:
 				return self.data[col][index] / self.initial
 		else:
