@@ -4,6 +4,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import random
 import wandb
+import os
 
 
 class simulator:
