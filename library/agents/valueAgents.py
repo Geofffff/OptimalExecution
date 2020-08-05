@@ -32,7 +32,7 @@ class DQNAgent(learningAgent):
 		
 		
 	
-	def _build_model(self):
+	def _build_model(self,target=False):
 		#set_seed(84)
 		model = Sequential()
 		model.add(Dense(self.model_units, input_dim=self.state_size, activation='relu'))
