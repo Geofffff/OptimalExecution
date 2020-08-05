@@ -164,7 +164,7 @@ Sun 2nd:
 - Conv Net Rework2
 	- Combine conv inputs [DONE]
 	- use target lag [DONE]
-	- Scale hist inputs [IMPORTANT!]
+	- Scale hist inputs [IMPORTANT!] [PARTIALLY DONE]
 	- hist inputs are very broken - test a full run through
 - Try new NN models with smaller lr?
 	- Also try with lower UCBc
@@ -175,6 +175,8 @@ Sun 2nd:
 
 - Clean up distAgent (at some point)
 	- agent params
+
+- Produce Sim Results
 
 ### Writeup
 - Intro
