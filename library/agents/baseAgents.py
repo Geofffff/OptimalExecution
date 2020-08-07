@@ -184,7 +184,8 @@ class learningAgent:
 			res = Conv1D(units,kernal_size,activation = 'relu')(res)
 		
 		res = Flatten()(res)
-		model = Model(inputs=inputs,outputs=res)
+		out = Dense(5, activation='relu')(res) # Test shrinking down MD net output
+		model = Model(inputs=inputs,outputs=out)
 		return model
 		
 	def remember(self, state, action, reward, next_state, done):
