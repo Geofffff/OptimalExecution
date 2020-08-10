@@ -13,7 +13,7 @@ params = {
     "terminal" : 1,
     "num_trades" : 50,
     "position" : 1,
-    "batch_size" : 32,
+    "batch_size" : 64,
     "action_values" : [0.98,0.99,1,1.01,1.02]
 }
 state_size = 2
@@ -28,5 +28,5 @@ market = library.market_modelsM.market(stock,n_hist_data)
 market.k = 0.004
 market.b = 0.00004
 
-my_simulator = library.simulations2.simulator(market,agent,params,test_name = "MO FX Testing",orderbook = False)
+my_simulator = library.simulations2.simulator(market,agent,params,test_name = "MOMD2",orderbook = False)
 my_simulator.train(70000,epsilon_decay =0.9999)
