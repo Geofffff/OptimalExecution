@@ -7,7 +7,7 @@ reload(library.agents.distAgentsWIP2)
 reload(library.simulations2)
 reload(library.market_modelsM)
 
-n_hist_data = 32
+n_hist_data = 64
 
 params = {
     "terminal" : 1,
@@ -17,7 +17,7 @@ params = {
     "action_values" : [0.98,0.99,1,1.01,1.02]
 }
 state_size = 2
-harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], "10T10 QRDQN FX2",C=50, N=200,alternative_target = True,UCB=True,UCBc = 100,tree_horizon = 4,n_hist_data=n_hist_data,n_hist_inputs=1,orderbook =False)
+harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], "10T10 QRDQN FX3",C=200, N=200,alternative_target = True,UCB=True,UCBc = 100,tree_horizon = 4,n_hist_data=n_hist_data,n_hist_inputs=1,orderbook =False)
 tim = library.agents.baseAgents.TWAPAgent(1,"50T50 TWAP",11)
 agent = harry
 
