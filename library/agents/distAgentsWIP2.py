@@ -395,14 +395,14 @@ class QRAgent(distAgent):
 			input_layer = state_in
 
 		# Testing adding skip layers and dropout
-		layer = Dense(self.model_units, activation='relu')(input_layer)
+		skip_layer = Dense(self.model_units, activation='relu')(input_layer)
 		for i in range(self.model_layers-1):
-			layer = Dense(self.model_units, activation='relu')(layer)
+			layer = Dense(self.model_units, activation='relu')(skip_layer)
 			#dropout = Dropout(0.1)(layer)
-			#skip_layer = Add()([skip_layer, layer])
+			skip_layer = Add()([skip_layer, layer])
 
 
-		outputs = Dense(self.N, activation='linear')(layer)
+		outputs = Dense(self.N, activation='linear')(skip_layer)
 		#main_model = Model(inputs=state_in, outputs=outputs)
 
 		if self.n_hist_data > 0:
