@@ -13,6 +13,7 @@ else:
 	UCBc = 100
 
 r = random.randint(1,3)
+if r == 1:
 	C = 200
 elif r == 2:
 	C = 100
