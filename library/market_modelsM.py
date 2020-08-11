@@ -121,6 +121,11 @@ class real_stock:
 		self.initial = self.data['bid'][self.data_index]
 		self.price = 1
 
+		if 'ask' in set(self.data.columns):
+			self.initial = (self.data["bid"][self.data_index] + self.data["ask"][self.data_index]) / 2
+		if 'spread' in set(self.data.columns):
+			self.initial_spread = self.data["spread"][self.data_index]
+
 	def _update_data_index(self,dt):
 		index_update = dt * self.n_steps
 		
@@ -255,7 +260,7 @@ class market:
 					self.hist = {
 								col : []
 								}
-				else:
+				elif (col not in ['buyMO','sellMO','askSize','bidSize']):
 					self.hist[col] = []
 
 	def sell(self,volume,dt):
