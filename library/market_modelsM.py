@@ -166,6 +166,26 @@ class real_stock:
 		else:
 			raise "Unknown column"
 
+	def _scale(self,col,index,for_state = False):
+		# Allows for columns to be scaled in a unique way
+		if col == "bid" or col == "ask":
+			if for_state:
+				(self.data[col][index] / self.initial-1) * 4000
+			else:
+				return self.data[col][index] / self.initial
+		elif col == "askSize" or col == "bidSize" or col == "buyMO":
+			return 0#self.data[col][index] - int(center)
+		elif col ==  "buySellImb":
+			res = self.data[col][index] 
+			return res / max(self.data["buyMO"][index],self.data["sellMO"][index]) - 0.5 * int(for_state)
+		elif col == "orderImb":
+			res = self.data[col][index]
+			return res / max(self.data["bidSize"][index],self.data["askSize"][index]) - 0.5 * int(for_state)
+		elif col == "spread":
+			return self.data[col][index] / self.initial_spread - int(for_state)
+		else:
+			raise "Unknown column"
+
 class real_stock_lob(real_stock):
 
 	def __init__(self,data,n_steps = 60, data_freq = 6,recycle = True,n_train = 100):
@@ -239,9 +259,14 @@ class market:
 		self.price_adjust = 1
 		self.n_hist_prices = n_hist_prices
 		if n_hist_prices > 0:
-			self.hist = {
-				"bid" : []
-			}
+			self.hist = None
+			for col in self.stock.data.columns:
+				if self.hist is None:
+					self.hist = {
+								col : []
+								}
+				else:
+					self.hist[col] = []
 
 	def sell(self,volume,dt):
 		'''sell *volume* of stock over time window dt, volume is np array'''
