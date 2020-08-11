@@ -21,6 +21,8 @@ alice = library.agents.valueAgents.DDQNAgent(state_size, len(params["action_valu
 tim = library.agents.baseAgents.TWAPAgent(5,"TWAP Test",21)
 agent = harry
 agent.learning_rate = lr
+agent.expected_range = 0.01
+agent.expected_mean = 0.98
 
 
 simple_stock = library.market_modelsM.bs_stock(1,0,0.0017,n_steps = 10) # No drift, 0.0005 vol

@@ -20,6 +20,8 @@ tim = library.agents.baseAgents.TWAPAgent(1,"50T50 TWAP",11)
 agent = harry
 
 agent.learning_rate = 0.000025
+agent.expected_range = 0.008
+agent.expected_mean = 0.9971
 
 stock = library.market_modelsM.real_stock(merged,n_steps=10,n_train=80)
 market = library.market_modelsM.market(stock,n_hist_data)
