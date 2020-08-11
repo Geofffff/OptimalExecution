@@ -1,11 +1,9 @@
 import pandas as pd
 merged = pd.read_csv("cluster_data/cluster_EURUSD_15s_Feb.csv",index_col = "time",low_memory = False)
 #merged = merged.values
-from imp import reload
+
 import library.agents.distAgentsWIP2, library.simulations2, library.agents.baseAgents, library.market_modelsM
-reload(library.agents.distAgentsWIP2)
-reload(library.simulations2)
-reload(library.market_modelsM)
+
 
 n_hist_data = 64
 
