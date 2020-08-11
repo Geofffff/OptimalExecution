@@ -11,7 +11,7 @@ params = {
     "terminal" : 1,
     "num_trades" : 10,
     "position" : 1,
-    "batch_size" : 64,
+    "batch_size" : 32,
     "action_values" : [0.98,0.99,1,1.01,1.02]
 }
 state_size = 2
