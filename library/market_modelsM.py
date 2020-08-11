@@ -163,16 +163,6 @@ class real_stock:
 				return (self.data[col][index] / self.initial-1) * 4000
 			else:
 				return self.data[col][index] / self.initial
-		else:
-			raise "Unknown column"
-
-	def _scale(self,col,index,for_state = False):
-		# Allows for columns to be scaled in a unique way
-		if col == "bid" or col == "ask":
-			if for_state:
-				(self.data[col][index] / self.initial-1) * 4000
-			else:
-				return self.data[col][index] / self.initial
 		elif col == "askSize" or col == "bidSize" or col == "buyMO":
 			return 0#self.data[col][index] - int(center)
 		elif col ==  "buySellImb":
