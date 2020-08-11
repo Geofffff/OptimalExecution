@@ -143,7 +143,7 @@ class learningAgent:
 		self.n_hist_data = n_hist_data
 		self.n_hist_inputs = n_hist_inputs
 		if self.n_hist_data > 0:
-			self.hist_model = self._build_hist_model(n_hist_data,depth=6,kernal_size=6)
+			self.hist_model = self._build_hist_model(n_hist_data,depth=3,kernal_size=6)
 
 			if self.C > 0:
 				self.hist_target_model = clone_model(self.hist_model)
