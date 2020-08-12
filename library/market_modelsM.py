@@ -165,7 +165,7 @@ class real_stock:
 		# Allows for columns to be scaled in a unique way
 		if col == "bid" or col == "ask":
 			if for_state:
-				return (self.data[col][index] / self.initial-1) * 4000
+				return (self.data[col][index] / self.initial-1) * 400 #4000 if FX
 			else:
 				return self.data[col][index] / self.initial
 		elif col == "askSize" or col == "bidSize" or col == "buyMO":
@@ -260,7 +260,7 @@ class market:
 					self.hist = {
 								col : []
 								}
-				elif (col not in ['buyMO','sellMO','askSize','bidSize']):
+				elif (col not in ['buyMO','sellMO','askSize','bidSize','ask']):
 					self.hist[col] = []
 
 	def sell(self,volume,dt):
