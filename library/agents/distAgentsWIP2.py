@@ -362,7 +362,7 @@ class QRAgent(distAgent):
 		self.quantiles.shape = (1,len(self.quantiles))
 		#self.embedded_quantiles = np.cos(np.dot(self.embedded_range, self.quantiles) * np.pi)
 		#self.embedded_quantiles.shape = (1,self.embedding_dim,self.N)
-		self.kappa = 0.1
+		self.kappa = 1
 		self.optimisticUCB = False
 		super(QRAgent,self).__init__(state_size, action_values, agent_name,C, alternative_target,UCB,UCBc,tree_horizon,n_hist_data=n_hist_data,n_hist_inputs=n_hist_inputs,orderbook=orderbook)
 		

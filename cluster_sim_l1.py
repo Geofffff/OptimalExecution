@@ -41,7 +41,7 @@ params = {
     "action_values" : [0.5,0.75,0.9,0.98,0.99,1,1.01,1.02,1.1,1.5,2]
 }
 state_size = 2
-harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], "10T10 QRDQN BTX6 k01",C=C, N=200,alternative_target = True,UCB=True,UCBc = UCBc,tree_horizon = 4,n_hist_data=n_hist_data,n_hist_inputs=4,orderbook =False)
+harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], "10T10 QRDQN CBTX1",C=C, N=200,alternative_target = True,UCB=True,UCBc = UCBc,tree_horizon = 6,n_hist_data=n_hist_data,n_hist_inputs=4,orderbook =False)
 tim = library.agents.baseAgents.TWAPAgent(3,"BTX TWAP",11)
 agent = harry
 
@@ -50,7 +50,7 @@ agent.learning_rate = lr
 stock = library.market_modelsM.real_stock(merged,n_steps=10,n_train=80)
 market = library.market_modelsM.market(stock,n_hist_data)
 market.k = 0.004
-market.b = 0.00004
+market.b = 0.0
 
 my_simulator = library.simulations2.simulator(market,agent,params,test_name = "MOMD2",orderbook = False)
 my_simulator.train(70000,epsilon_decay =0.9999)
