@@ -143,7 +143,7 @@ class learningAgent:
 		self.n_hist_data = n_hist_data
 		self.n_hist_inputs = n_hist_inputs
 		if self.n_hist_data > 0:
-			self.hist_model = self._build_hist_model(n_hist_data,units = 10,depth=3,kernal_size=6)
+			self.hist_model = self._build_hist_model(n_hist_data,units = 10,depth=3,kernal_size=4)
 
 			if self.C > 0:
 				self.hist_target_model = clone_model(self.hist_model)
@@ -184,7 +184,7 @@ class learningAgent:
 			res = Conv1D(units,kernal_size,activation = 'relu')(res)
 		
 		res = Flatten()(res)
-		out = Dense(1, activation='sigmoid')(res) # Test shrinking down MD net output
+		out = Dense(100, activation='sigmoid')(res) # Test shrinking down MD net output
 		model = Model(inputs=inputs,outputs=out)
 		return model
 		
