@@ -26,7 +26,7 @@ if r == 1:
 else:
 	n_hist_data = 64
 
-r = random.randint(1,2)
+r = 2#random.randint(1,2)
 if r == 1:
 	lr = 0.00005
 else:
@@ -38,10 +38,10 @@ params = {
     "num_trades" : 10,
     "position" : 1,
     "batch_size" : 32,
-    "action_values" : [0.9,0.98,0.99,1,1.01,1.02,1.1]
+    "action_values" : [0.5,0.75,0.9,0.98,0.99,1,1.01,1.02,1.1,1.5,2]
 }
 state_size = 2
-harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], "10T10 QRDQN BTX5",C=C, N=200,alternative_target = True,UCB=True,UCBc = UCBc,tree_horizon = 4,n_hist_data=n_hist_data,n_hist_inputs=4,orderbook =False)
+harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], "10T10 QRDQN BTX6",C=C, N=200,alternative_target = True,UCB=True,UCBc = UCBc,tree_horizon = 4,n_hist_data=n_hist_data,n_hist_inputs=4,orderbook =False)
 tim = library.agents.baseAgents.TWAPAgent(3,"BTX TWAP",11)
 agent = harry
 
