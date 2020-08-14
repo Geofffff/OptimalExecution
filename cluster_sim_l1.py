@@ -47,6 +47,9 @@ agent = harry
 
 agent.learning_rate = lr
 
+agent.expected_range = 0.005
+agent.expected_mean = 0.99
+
 stock = library.market_modelsM.real_stock(merged,n_steps=10,n_train=80)
 market = library.market_modelsM.market(stock,n_hist_data)
 market.k = 0.04
