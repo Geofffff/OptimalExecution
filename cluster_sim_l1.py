@@ -49,7 +49,7 @@ agent.learning_rate = lr
 
 stock = library.market_modelsM.real_stock(merged,n_steps=10,n_train=80)
 market = library.market_modelsM.market(stock,n_hist_data)
-market.k = 0.004
+market.k = 0.04
 market.b = 0.0
 
 my_simulator = library.simulations2.simulator(market,agent,params,test_name = "MOMD2",orderbook = False)
