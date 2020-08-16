@@ -2,7 +2,7 @@ import numpy as np
 from keras.models import Sequential
 from keras.models import clone_model
 # Sort this out...
-from keras.layers import Dense, Softmax, Multiply, Add, Input, Lambda, Layer, concatenate, Dropout
+from keras.layers import Dense, Softmax, Dot, Add, Input, Lambda, Layer, concatenate, Dropout, Reshape, Flatten
 from keras.initializers import RandomNormal
 
 #from keras import Input
@@ -382,15 +382,20 @@ class QRAgent(distAgent):
 
 	def _build_model(self,target = False):
 		# Using Keras functional API
-		
 		state_in = Input(shape=(self.state_size + self.action_space_size,))
 		# If using market data
 		if self.n_hist_data > 0:
+			state_in = Input(shape=(self.state_size + self.action_space_size,))
+			state_in_r = Reshape((self.state_size + self.action_space_size,1,))(state_in)
 			if target:
 				hist_model = self.hist_target_model
 			else:
 				hist_model = self.hist_model
-			input_layer = concatenate([state_in,hist_model.output])
+			#input_layer = concatenate([state_in,hist_model.output])
+			# Trial multiplying rather than concatenating layers to force interation
+			hist_out = hist_model.output
+			input_layer = Dot(axes=(2,2))([state_in_r,hist_out])
+			input_layer = Flatten()(input_layer)
 		else:
 			input_layer = state_in
 

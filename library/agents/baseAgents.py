@@ -8,7 +8,7 @@ from collections import deque
 from keras.models import Sequential
 from keras.models import clone_model
 from keras.layers import Dense
-from keras.layers import Softmax, Conv1D, Flatten
+from keras.layers import Softmax, Conv1D, Flatten, Reshape
 from keras.optimizers import Adam
 from keras import Input
 from keras import Model
@@ -185,6 +185,7 @@ class learningAgent:
 		
 		res = Flatten()(res)
 		out = Dense(5, activation='sigmoid')(res) # Test shrinking down MD net output
+		out = Reshape((5,1,))(out)
 		model = Model(inputs=inputs,outputs=out)
 		return model
 		

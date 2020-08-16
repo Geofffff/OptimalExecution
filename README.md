@@ -178,6 +178,13 @@ Sun 2nd:
 
 - Produce Sim Results
 
+Sun 16th:
+- Sim Results
+	- rerun DDQN
+	- rerun TWAP
+	- copy new plots in
+	- update commentary
+
 ### Writeup
 - Intro
 - Chapter 1

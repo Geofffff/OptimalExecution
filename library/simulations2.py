@@ -62,7 +62,8 @@ class simulator:
 		 "temp_impact": self.env.m.k,
 		 "perm_impact": self.env.m.b,
 		 "stock": type(self.env.m.stock).__name__,
-		 "orderbook": orderbook
+		 "orderbook": orderbook,
+		 "mult_arc": True
 		 })
 		if type(self.env.m.stock).__name__ == "bs_stock":
 			self.new_run.config.update({"stock_vol": self.env.m.stock.vol})
