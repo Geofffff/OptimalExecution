@@ -180,12 +180,12 @@ Sun 2nd:
 
 Sun 16th:
 - Sim Results
-	- rerun DDQN
+	- rerun DDQN [DONE]
 	- rerun TWAP
 	- copy new plots in
 	- update commentary
 - MD Testing
-	- collate the full file for BTX data
+	- collate the full file for BTX data [DONE]
 		- trial the CBTX2 M algo on the full file
 
 ### Writeup
