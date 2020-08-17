@@ -17,9 +17,9 @@ params = {
 }
 state_size = 2
 harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], "Sim QRDQN Res5",C=tl,N=N, alternative_target = True,UCB=True,UCBc = ucbc,tree_horizon = th,n_hist_data=0,n_hist_inputs=0,orderbook =False)#,market_data_size=n_hist_prices)
-alice = library.agents.valueAgents.DDQNAgent(state_size, len(params["action_values"]), "Sim DDQN Mod2",C=tl, alternative_target = True,tree_horizon=th)
+alice = library.agents.valueAgents.DDQNAgent(state_size, len(params["action_values"]), "Sim DDQN Res5",C=tl, alternative_target = True,tree_horizon=th)
 tim = library.agents.baseAgents.TWAPAgent(5,"TWAP Test",21)
-agent = harry
+agent = alice
 agent.learning_rate = lr
 agent.expected_range = 0.01
 agent.expected_mean = 0.98
