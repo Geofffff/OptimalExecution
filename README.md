@@ -187,6 +187,7 @@ Sun 16th:
 - MD Testing
 	- collate the full file for BTX data [DONE]
 		- trial the CBTX2 M algo on the full file
+	- start testing longer period
 
 ### Writeup
 - Intro
