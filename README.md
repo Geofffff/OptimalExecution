@@ -166,8 +166,8 @@ Sun 2nd:
 	- use target lag [DONE]
 	- Scale hist inputs [IMPORTANT!] [PARTIALLY DONE]
 	- hist inputs are very broken - test a full run through
-- Try new NN models with smaller lr?
-	- Also try with lower UCBc
+- Try new NN models with smaller lr? [DONE]
+	- Also try with lower UCBc [DONE]
 
 - Data: FX data remove weekends and manage discontinuities
 
