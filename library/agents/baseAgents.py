@@ -184,8 +184,9 @@ class learningAgent:
 			res = Conv1D(units,kernal_size,activation = 'relu')(res)
 		
 		res = Flatten()(res)
-		out = Dense(1, activation='sigmoid')(res) # Test shrinking down MD net output
-		out = Reshape((5,1,))(out)
+		transition_num = 50
+		out = Dense(transition_num, activation='sigmoid')(res) # Test shrinking down MD net output
+		out = Reshape((transition_num,1,))(out)
 		model = Model(inputs=inputs,outputs=out)
 		return model
 		
