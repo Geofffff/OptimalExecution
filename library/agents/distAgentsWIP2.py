@@ -531,12 +531,12 @@ class QRAgent(distAgent):
 		state_action = self._process_state_action(state,action_index)
 		predict = self.predict_quantiles(state_action)[0]
 		if self.optimisticUCB:
-			predict = predict[int(len(predict) / 2):] # High quantiles are at the start
+			predict = predict[int(len(predict) / 2):] # High quantiles are at the end
 		res = np.add.reduce(self.qi * predict * predict)
 		res -= np.power(self.predict_action(state,action_index,above_med = self.optimisticUCB)[0],2)
 		if round(res,7) < 0:
 			print(f"WARNING: Variance {res} below 0")
-		return max(np.add.reduce(self.qi * predict * predict),0)
+		return max(res,0)
 
 	def variance(self,state):
 		res = []
