@@ -12,13 +12,8 @@ if r == 1:
 else:
 	UCBc = 100
 
-r = random.randint(1,3)
-if r == 1:
-	C = 200
-elif r == 2:
-	C = 100
-else:
-	C = 50
+
+C = 50
 
 r = random.randint(1,2)
 if r == 1:
@@ -37,11 +32,11 @@ params = {
     "terminal" : 1,
     "num_trades" : 10,
     "position" : 1,
-    "batch_size" : 32,
+    "batch_size" : 64,
     "action_values" : [0.5,0.9,0.98,0.99,1,1.01,1.02,1.1,2]
 }
 state_size = 2
-harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], "10T10 QRDQN CBTX4 MF",C=C, N=200,alternative_target = True,UCB=True,UCBc = UCBc,tree_horizon = 6,n_hist_data=n_hist_data,n_hist_inputs=4,orderbook =False)
+harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], "10T10 QRDQN CBTX4 MF",C=C, N=200,alternative_target = True,UCB=True,UCBc = UCBc,tree_horizon = 4,n_hist_data=n_hist_data,n_hist_inputs=4,orderbook =False)
 tim = library.agents.baseAgents.TWAPAgent(5,"BTX TWAP",11)
 agent = harry
 
