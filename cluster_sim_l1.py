@@ -21,7 +21,7 @@ if r == 1:
 else:
 	n_hist_data = 64
 
-r = 2#random.randint(1,2)
+r = 1#random.randint(1,2)
 if r == 1:
 	lr = 0.00005
 else:
@@ -42,7 +42,7 @@ agent = harry
 
 agent.learning_rate = lr
 
-agent.expected_range = 0.005
+agent.expected_range = 0.002
 agent.expected_mean = 0.99
 
 stock = library.market_modelsM.real_stock(merged,n_steps=10,n_train=80)
