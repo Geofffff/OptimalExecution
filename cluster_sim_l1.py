@@ -8,9 +8,9 @@ import library.agents.distAgentsWIP2, library.simulations2, library.agents.baseA
 import random
 r = random.randint(1,2)
 if r == 1:
-	UCBc = 200
+	UCBc = 300
 else:
-	UCBc = 100
+	UCBc = 400
 
 
 C = 50
