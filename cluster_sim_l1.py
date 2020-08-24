@@ -6,11 +6,11 @@ import library.agents.distAgentsWIP2, library.simulations2, library.agents.baseA
 
 # SWEEP
 import random
-r = random.randint(1,2)
+r = 1#random.randint(1,2)
 if r == 1:
-	UCBc = 300
+	UCBc = 100
 else:
-	UCBc = 400
+	UCBc = 200
 
 
 C = 50
@@ -30,13 +30,13 @@ else:
 
 params = {
     "terminal" : 1,
-    "num_trades" : 10,
+    "num_trades" : 1000,
     "position" : 1,
     "batch_size" : 64,
     "action_values" : [0.99,1,1.01]
 }
 state_size = 2
-harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], "10T10 QRDQN CBTX6 MF5",C=C, N=200,alternative_target = True,UCB=True,UCBc = UCBc,tree_horizon = 4,n_hist_data=n_hist_data,n_hist_inputs=4,orderbook =False)
+harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], "1000T1000 QRDQN CBTX6 MF5",C=C, N=200,alternative_target = True,UCB=True,UCBc = UCBc,tree_horizon = 200,n_hist_data=n_hist_data,n_hist_inputs=4,orderbook =False)
 tim = library.agents.baseAgents.TWAPAgent(5,"BTX TWAP",11)
 agent = harry
 
@@ -45,7 +45,7 @@ agent.learning_rate = lr
 agent.expected_range = 0.002
 agent.expected_mean = 0.99
 
-stock = library.market_modelsM.real_stock(merged,n_steps=10,n_train=80)
+stock = library.market_modelsM.real_stock(merged,n_steps=1000,n_train=20)
 market = library.market_modelsM.market(stock,n_hist_data)
 market.k = 0.01
 market.b = 0.0
