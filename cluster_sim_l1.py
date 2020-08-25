@@ -6,7 +6,7 @@ import library.agents.distAgentsWIP2, library.simulations2, library.agents.baseA
 
 # SWEEP
 import random
-r = random.randint(1,2)
+r = 2#random.randint(1,2)
 if r == 1:
 	UCBc = 100
 else:
