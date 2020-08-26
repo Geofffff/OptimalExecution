@@ -31,5 +31,5 @@ simple_market.k = 0.0186 # 0.02
 simple_market.b = 0.0 # 0.01
 
 my_simulator = library.simulations2.simulator(simple_market,agent,params,test_name = "QRDQN RESULTS",orderbook = False)
-my_simulator.train(100000,epsilon_decay =0.9999)
+my_simulator.train(2000,epsilon_decay =0.9999)
 
