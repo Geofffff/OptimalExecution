@@ -25,7 +25,7 @@ else:
 # Instead replace with 
 # from keras.losses import huber_loss
 
-local = True
+local = False
 if not local:
 	def huber_loss(y_true, y_pred, clip_delta=1.0):
 	  error = y_true - y_pred
