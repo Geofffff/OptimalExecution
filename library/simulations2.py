@@ -215,7 +215,7 @@ class simulator:
 			self._train(self.eval_freq)
 			self._evaluate(self.eval_window)
 
-		self.agent.model.save_weights(os.path.join(wandb.run.dir, "qnet_weights"))
+		self.agent.model.save_weights(os.path.join(wandb.run.dir, f"qnet_weights_{n_episodes}"))
 
 		
 		
