@@ -51,4 +51,8 @@ market.k = 0.01
 market.b = 0.0
 
 my_simulator = library.simulations2.simulator(market,agent,params,test_name = "MOMD2",orderbook = False)
-my_simulator.train(70000,epsilon_decay =0.9999)
+my_simulator.train(5000,epsilon_decay =0.9999)
+my_simulator.train(5000,epsilon_decay =0.9999)
+my_simulator.train(10000,epsilon_decay =0.9999)
+my_simulator.train(20000,epsilon_decay =0.9999)
+
