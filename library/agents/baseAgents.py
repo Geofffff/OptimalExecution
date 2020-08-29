@@ -186,7 +186,8 @@ class learningAgent:
 		res = Flatten()(res)
 		transition_num = 5
 		out = Dense(transition_num, activation='sigmoid')(res) # Test shrinking down MD net output
-		out = Reshape((transition_num,1,))(out)
+		# If multiplying the layers then uncomment this
+		#out = Reshape((transition_num,1,))(out)
 		model = Model(inputs=inputs,outputs=out)
 		return model
 		

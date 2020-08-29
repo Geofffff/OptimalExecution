@@ -387,7 +387,7 @@ class QRAgent(distAgent):
 		# If using market data
 		if self.n_hist_data > 0:
 			state_in = Input(shape=(self.state_size + self.action_space_size,))
-			state_in_r = Reshape((self.state_size + self.action_space_size,1,))(state_in)
+			#state_in_r = Reshape((self.state_size + self.action_space_size,1,))(state_in)
 			if target:
 				hist_model = self.hist_target_model
 			else:
