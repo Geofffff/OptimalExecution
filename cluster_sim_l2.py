@@ -1,5 +1,5 @@
 import pandas as pd
-merged = pd.read_csv("cluster_data/cluster_USD_5s_comb.csv",index_col = "time",low_memory = False)
+merged = pd.read_csv("cluster_data/cluster_USD_5s_comb2.csv",index_col = "time",low_memory = False)
 #merged = merged.values
 
 import library.agents.distAgentsWIP2, library.simulations2, library.agents.baseAgents, library.market_modelsM
@@ -38,7 +38,7 @@ params = {
     "action_values" : [0.99,1,1.01]
 }
 state_size = 2
-harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], "1000T1000 QRDQN FX",C=C, N=200,alternative_target = True,UCB=True,UCBc = UCBc,tree_horizon = 200,n_hist_data=n_hist_data,n_hist_inputs=1,orderbook =False)
+harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], "1000T1000 QRDQN FX",C=C, N=200,alternative_target = True,UCB=True,UCBc = UCBc,tree_horizon = 200,n_hist_data=n_hist_data,n_hist_inputs=2,orderbook =False)
 tim = library.agents.baseAgents.TWAPAgent(5,"BTX TWAP",11)
 agent = harry
 

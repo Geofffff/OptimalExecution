@@ -178,6 +178,8 @@ class real_stock:
 			return res / max(self.data["bidSize"].values[index],self.data["askSize"].values[index]) - 0.5 * int(for_state)
 		elif col == "spread":
 			return self.data[col].values[index] / self.initial_spread - int(for_state)
+		elif col == "USDJPY":
+			return (self.data[col].values[index]  - int(for_state) * 108)/4
 		else:
 			raise "Unknown column"
 
