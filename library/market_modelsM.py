@@ -118,13 +118,13 @@ class real_stock:
 				self.data_index = randint(self.hist_buffer,len(self.data['bid']) - self.n_steps * (1 + self.n_train))
 		self.in_period_index = 0
 		
-		self.initial = self.data['bid'][self.data_index]
+		self.initial = self.data['bid'].values[self.data_index]
 		self.price = 1
 
 		if 'ask' in set(self.data.columns):
-			self.initial = (self.data["bid"][self.data_index] + self.data["ask"][self.data_index]) / 2
+			self.initial = (self.data["bid"].values[self.data_index] + self.data["ask"].values[self.data_index]) / 2
 		if 'spread' in set(self.data.columns):
-			self.initial_spread = self.data["spread"][self.data_index]
+			self.initial_spread = self.data["spread"].values[self.data_index]
 
 	def _update_data_index(self,dt):
 		index_update = dt * self.n_steps
@@ -141,7 +141,7 @@ class real_stock:
 	def generate_price(self,dt):
 		self._update_data_index(dt)
 
-		self.price = self.data['bid'][self.data_index] / self.initial
+		self.price = self.data['bid'].values[self.data_index] / self.initial
 
 		# WARNING: For now we return a scaled price (scaled by initial price at the start of every episode)
 		error = np.isnan(self.price)
@@ -165,19 +165,19 @@ class real_stock:
 		# Allows for columns to be scaled in a unique way
 		if col == "bid" or col == "ask":
 			if for_state:
-				return (self.data[col][index] / self.initial-1) * 400 #4000 if FX
+				return (self.data[col].values[index] / self.initial-1) * 400 #4000 if FX
 			else:
-				return self.data[col][index] / self.initial
+				return self.data[col].values[index] / self.initial
 		elif col == "askSize" or col == "bidSize" or col == "buyMO":
 			return 0#self.data[col][index] - int(center)
 		elif col ==  "buySellImb":
-			res = self.data[col][index] 
-			return res / max(self.data["buyMO"][index],self.data["sellMO"][index]) - 0.5 * int(for_state)
+			res = self.data[col].values[index] 
+			return res / max(self.data["buyMO"].values[index],self.data["sellMO"].values[index]) - 0.5 * int(for_state)
 		elif col == "orderImb":
-			res = self.data[col][index]
-			return res / max(self.data["bidSize"][index],self.data["askSize"][index]) - 0.5 * int(for_state)
+			res = self.data[col].values[index]
+			return res / max(self.data["bidSize"].values[index],self.data["askSize"].values[index]) - 0.5 * int(for_state)
 		elif col == "spread":
-			return self.data[col][index] / self.initial_spread - int(for_state)
+			return self.data[col].values[index] / self.initial_spread - int(for_state)
 		else:
 			raise "Unknown column"
 

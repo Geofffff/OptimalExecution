@@ -1,28 +1,60 @@
 import pandas as pd
-merged = pd.read_csv("cluster_data/cluster_BTX_15s_19.csv",index_col = "time",low_memory = False)
+merged = pd.read_csv("cluster_data/cluster_USD_5s_comb.csv",index_col = "time",low_memory = False)
+#merged = merged.values
 
 import library.agents.distAgentsWIP2, library.simulations2, library.agents.baseAgents, library.market_modelsM
 
-n_hist_data = 32
+# SWEEP
+import random
+r = 2#random.randint(1,2)
+if r == 1:
+	UCBc = 100
+else:
+	UCBc = 200
+
+
+C = 50
+
+r = random.randint(1,3)
+if r == 1:
+	n_hist_data = 32
+elif r == 2:
+	n_hist_data = 64
+elif r == 3:
+	n_hist_data = 128
+
+r = 1#random.randint(1,2)
+if r == 1:
+	lr = 0.00005
+else:
+	lr = 0.000025
+
 
 params = {
     "terminal" : 1,
-    "num_trades" : 10,
+    "num_trades" : 1000,
     "position" : 1,
     "batch_size" : 64,
-    "action_values" : [[0.99,0],[1,0],[1.01,0]]
+    "action_values" : [0.99,1,1.01]
 }
-state_size = 3
-harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], "10T50 QRDQN MD2",C=50, N=200,alternative_target = True,UCB=True,UCBc = 150,tree_horizon = 4,n_hist_data=n_hist_data,n_hist_inputs=7,orderbook =True)
-tim = library.agents.baseAgents.TWAPAgent(1,"10T50 TWAP2",11)
+state_size = 2
+harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], "1000T1000 QRDQN FX",C=C, N=200,alternative_target = True,UCB=True,UCBc = UCBc,tree_horizon = 200,n_hist_data=n_hist_data,n_hist_inputs=1,orderbook =False)
+tim = library.agents.baseAgents.TWAPAgent(5,"BTX TWAP",11)
 agent = harry
 
-#agent.learning_rate = 0.000025
+agent.learning_rate = lr
 
-stock = library.market_modelsM.real_stock_lob(merged,n_steps=50,n_train=50)
-market = library.market_modelsM.lob_market(stock,n_hist_data)
-market.k = 0.004
-market.b = 0.00004
+agent.expected_range = 0.002
+agent.expected_mean = 0.99
 
-my_simulator = library.simulations2.simulator(market,agent,params,test_name = "MO MD Testing",orderbook = True)
-my_simulator.train(70000,epsilon_decay =0.9999)
+stock = library.market_modelsM.real_stock(merged,n_steps=1000,n_train=20)
+market = library.market_modelsM.market(stock,n_hist_data)
+market.k = 0.01
+market.b = 0.0
+
+my_simulator = library.simulations2.simulator(market,agent,params,test_name = "MOMD2",orderbook = False)
+my_simulator.train(5000,epsilon_decay =0.9999)
+my_simulator.train(5000,epsilon_decay =0.9999)
+my_simulator.train(10000,epsilon_decay =0.9999)
+my_simulator.train(20000,epsilon_decay =0.9999)
+
