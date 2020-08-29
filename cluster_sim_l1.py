@@ -38,7 +38,7 @@ params = {
 state_size = 2
 harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], "1000T1000 QRDQN CBTX6 MF5",C=C, N=200,alternative_target = True,UCB=True,UCBc = UCBc,tree_horizon = 200,n_hist_data=n_hist_data,n_hist_inputs=4,orderbook =False)
 tim = library.agents.baseAgents.TWAPAgent(1,"BTX TWAP",11)
-agent = tim
+agent = harry
 
 agent.learning_rate = lr
 
