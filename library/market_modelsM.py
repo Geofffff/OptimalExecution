@@ -186,9 +186,8 @@ class real_stock:
 class real_stock_lob(real_stock):
 
 	def __init__(self,data,n_steps = 60, data_freq = 6,recycle = True,n_train = 100):
-		self.data = data
-		assert set(self.data.columns).issubset({"bid","bidSize","ask","askSize","buyMO","sellMO","buySellImb","orderImb","spread"}), f'input columns {self.data.columns} must be a subset of ("bid","bidSize","ask","askSize","buyMO","sellMO","buySellImb","orderImb")'
-		super(real_stock_lob,self).__init__(data["bid"],n_steps, data_freq,recycle,n_train)
+		assert set(data.columns).issubset({"bid","bidSize","ask","askSize","buyMO","sellMO","buySellImb","orderImb","spread"}), f'input columns {self.data.columns} must be a subset of ("bid","bidSize","ask","askSize","buyMO","sellMO","buySellImb","orderImb")'
+		super(real_stock_lob,self).__init__(data,n_steps, data_freq,recycle,n_train)
 		print("WARNING: Several market data inputs have been forced to 0 temporarily")
 
 	def reset(self,training = True):
@@ -225,7 +224,7 @@ class real_stock_lob(real_stock):
 		if not first:
 			# Can this be depreciated?
 			return self.price
-
+	'''
 	def _scale(self,col,index,center = False):
 		# Allows for columns to be scaled in a unique way
 		if col == "bid" or col == "ask":
@@ -242,7 +241,7 @@ class real_stock_lob(real_stock):
 			return self.data[col][index] / self.initial_spread - int(center)
 		else:
 			raise "Unknown column"
-
+	'''
 # Need to rework to record n previous prices...
 class market:
 	'''Basic market model, base class for more complex models'''
