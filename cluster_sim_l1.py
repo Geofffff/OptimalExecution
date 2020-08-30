@@ -36,7 +36,7 @@ params = {
     "action_values" : [0.99,1,1.01]
 }
 state_size = 2
-harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], "1000T1000 QRDQN CBTX6 MF5",C=C, N=200,alternative_target = True,UCB=True,UCBc = UCBc,tree_horizon = 200,n_hist_data=n_hist_data,n_hist_inputs=4,orderbook =False)
+harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], "1000T1000 QRDQN BTX Mp",C=C, N=200,alternative_target = True,UCB=True,UCBc = UCBc,tree_horizon = 200,n_hist_data=n_hist_data,n_hist_inputs=4,orderbook =False)
 tim = library.agents.baseAgents.TWAPAgent(1,"BTX TWAP",11)
 agent = harry
 
@@ -51,9 +51,15 @@ market.k = 0.01
 market.b = 0.005
 
 my_simulator = library.simulations2.simulator(market,agent,params,test_name = "MOMD2",orderbook = False)
+my_simulator.train(500,epsilon_decay =0.9999)
+agent.model.save_weights(os.path.join(wandb.run.dir, f"qnet_weightsO_{500}"))
+my_simulator.train(2000,epsilon_decay =0.9999)
+agent.model.save_weights(os.path.join(wandb.run.dir, f"qnet_weightsO_{2500}"))
 my_simulator.train(2500,epsilon_decay =0.9999)
-my_simulator.train(2500,epsilon_decay =0.9999)
+agent.model.save_weights(os.path.join(wandb.run.dir, f"qnet_weightsO_{5000}"))
 my_simulator.train(5000,epsilon_decay =0.9999)
+agent.model.save_weights(os.path.join(wandb.run.dir, f"qnet_weightsO_{10000}"))
 my_simulator.train(10000,epsilon_decay =0.9999)
-my_simulator.train(20000,epsilon_decay =0.9999)
+agent.model.save_weights(os.path.join(wandb.run.dir, f"qnet_weightsO_{20000}"))
+
 

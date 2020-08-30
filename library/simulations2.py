@@ -45,7 +45,7 @@ class simulator:
 
 		self.eval_freq = 500 #500
 		self.train_stat_freq = 100
-		self.eval_window = 50 #25
+		self.eval_window = 400 #25
 		self.episode_n = 0 # Number of training episodes completed
 
 		self.logging_options = set(["count","value","position","event","reward","lo","lotime"])
