@@ -55,7 +55,7 @@ class simulator:
 		# Wandb initialise and congigure
 		self.plot_position = False
 		self.new_run = wandb.init(project="OptEx",name = self.agent.agent_name,group = self.test_name,reinit=True)
-		wandb.save('latest.pth')
+		#wandb.save('latest.pth')
 		self.new_run.config.update({"num_trades": self.num_steps,
 		 "batch_size": self.batch_size,
 		 "action_size": len(self.possible_actions),
@@ -217,8 +217,9 @@ class simulator:
 			self._train(self.eval_freq)
 			self._evaluate(self.eval_window)
 			self.agent.model.save_weights(os.path.join(wandb.run.dir, f"qnet_weights_{n_episodes}"))
-			#self.new_run.save('*')
-		
+			#print("Saving model")
+			wandb.save(os.path.join(wandb.run.dir, "qnet_weights_*"))
+			print("Model Saved!")
 		
 	def episode(self, verbose = False,evaluate = False, record = None):
 		recording = record is not None and len(record) > 0
