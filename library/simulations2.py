@@ -6,6 +6,11 @@ import random
 import wandb
 import os
 
+from os import path
+local = path.exists("data")
+if local:
+	print("Running locally")
+
 
 class simulator:
 
@@ -43,9 +48,16 @@ class simulator:
 
 		self.test_name = test_name
 
-		self.eval_freq = 500 #500
+		if local:
+			print("Using low eval frequency for testing")
+			self.eval_freq = 5 #500
+			self.eval_window = 4 #400
+		else:
+			self.eval_freq = 500 #500
+			self.eval_window = 400 #400
+
 		self.train_stat_freq = 100
-		self.eval_window = 400 #400
+		
 		self.episode_n = 0 # Number of training episodes completed
 
 		self.logging_options = set(["count","value","position","event","reward","lo","lotime"])
@@ -216,10 +228,10 @@ class simulator:
 		while self.episode_n - initial_episode < n_episodes:
 			self._train(self.eval_freq)
 			self._evaluate(self.eval_window)
-			self.agent.model.save_weights(os.path.join(wandb.run.dir, f"qnet_weights_{self.episode_n}"))
-			#print("Saving model")
-			wandb.save(os.path.join(wandb.run.dir, "qnet_weights_*"))
-			print("Model Saved!")
+			if self.agent.agent_type != 'basic':
+				self.agent.model.save_weights(os.path.join(wandb.run.dir, f"qnet_weights_{self.episode_n}"))
+				wandb.save(os.path.join(wandb.run.dir, "qnet_weights_*"))
+				print("Model Saved!")
 		
 	def episode(self, verbose = False,evaluate = False, record = None):
 		recording = record is not None and len(record) > 0

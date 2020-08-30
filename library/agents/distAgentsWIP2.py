@@ -13,6 +13,7 @@ import random
 import keras.backend as K
 import copy
 
+
 if __name__ == "__main__":
 	from baseAgents import learningAgent, replayMemory
 	DEBUG = True
@@ -24,8 +25,11 @@ else:
 # Not required if not running on the cluster
 # Instead replace with 
 # from keras.losses import huber_loss
+from os import path
+local = path.exists("data")
+if local:
+	print("Running locally")
 
-local = False
 if not local:
 	def huber_loss(y_true, y_pred, clip_delta=1.0):
 	  error = y_true - y_pred

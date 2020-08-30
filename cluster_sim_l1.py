@@ -43,11 +43,11 @@ agent = harry
 agent.learning_rate = lr
 
 agent.expected_range = 0.002
-agent.expected_mean = 0.99
+agent.expected_mean = 0.988
 
 stock = library.market_modelsM.real_stock(merged,n_steps=1000,n_train=20)
 market = library.market_modelsM.market(stock,n_hist_data)
-market.k = 0.01
+market.k = 0.01 / params["position"]**2
 market.b = 0.005
 
 my_simulator = library.simulations2.simulator(market,agent,params,test_name = "MOMD2",orderbook = False)

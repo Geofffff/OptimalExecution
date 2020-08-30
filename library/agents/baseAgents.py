@@ -185,7 +185,7 @@ class learningAgent:
 			res = Conv1D(units,kernal_size,activation = 'relu')(res)
 		
 		res = Flatten()(res)
-		transition_num = 100
+		transition_num = 8
 		out = Dense(transition_num, activation='sigmoid')(res) # Test shrinking down MD net output
 		# If multiplying the layers then uncomment this
 		if self.multiply_layers:

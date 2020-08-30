@@ -46,7 +46,7 @@ params = {
 state_size = 3
 harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], "1000T1000 QRDQN BTX LO",C=C, N=200,alternative_target = True,UCB=True,UCBc = UCBc,tree_horizon = 200,n_hist_data=n_hist_data,n_hist_inputs=7,orderbook =True)
 tim = library.agents.baseAgents.TWAPAgent(1,"TWAP",11)
-agent = harry
+agent = tim
 
 stock = library.market_modelsM.real_stock_lob(merged,n_steps=1000,n_train=20)
 market = library.market_modelsM.lob_market(stock,n_hist_data)
@@ -56,7 +56,7 @@ agent.learning_rate = lr
 agent.expected_range = 0.002
 agent.expected_mean = 0.99
 
-market.k = 0.01 / params["position"]
+market.k = 0.01 / 10000#params["position"]**2
 #market.b = 0.005
 
 my_simulator = library.simulations2.simulator(market,agent,params,test_name = "MOMD2",orderbook = True)
