@@ -392,7 +392,7 @@ class QRAgent(distAgent):
 				hist_model = self.hist_target_model
 			else:
 				hist_model = self.hist_model
-			input_layer = concatenate([state_in,hist_model.output])
+			#input_layer = concatenate([state_in,hist_model.output])
 			# Trial multiplying rather than concatenating layers to force interation
 			hist_out = hist_model.output
 			input_layer = Dot(axes=(2,2))([state_in_r,hist_out])
