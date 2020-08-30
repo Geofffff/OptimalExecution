@@ -387,16 +387,20 @@ class QRAgent(distAgent):
 		# If using market data
 		if self.n_hist_data > 0:
 			state_in = Input(shape=(self.state_size + self.action_space_size,))
-			state_in_r = Reshape((self.state_size + self.action_space_size,1,))(state_in)
+			if self.multiply_layers:
+				state_in_r = Reshape((self.state_size + self.action_space_size,1,))(state_in)
 			if target:
 				hist_model = self.hist_target_model
 			else:
 				hist_model = self.hist_model
-			#input_layer = concatenate([state_in,hist_model.output])
+	
 			# Trial multiplying rather than concatenating layers to force interation
-			hist_out = hist_model.output
-			input_layer = Dot(axes=(2,2))([state_in_r,hist_out])
-			input_layer = Flatten()(input_layer)
+			if self.multiply_layers:
+				hist_out = hist_model.output
+				input_layer = Dot(axes=(2,2))([state_in_r,hist_out])
+				input_layer = Flatten()(input_layer)
+			else:
+				input_layer = concatenate([state_in,hist_model.output])
 		else:
 			input_layer = state_in
 

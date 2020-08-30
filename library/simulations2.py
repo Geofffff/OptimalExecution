@@ -63,8 +63,7 @@ class simulator:
 		 "temp_impact": self.env.m.k,
 		 "perm_impact": self.env.m.b,
 		 "stock": type(self.env.m.stock).__name__,
-		 "orderbook": orderbook,
-		 "mult_arc": True
+		 "orderbook": orderbook
 		 })
 		if type(self.env.m.stock).__name__ == "bs_stock":
 			self.new_run.config.update({"stock_vol": self.env.m.stock.vol})
@@ -78,7 +77,8 @@ class simulator:
 		 	 "action_input" : self.agent.action_as_input,
 		 	 "model_layers": self.agent.model_layers,
 			 "model_units": self.agent.model_units,
-			 "n_hist": self.agent.n_hist_data
+			 "n_hist": self.agent.n_hist_data,
+			 "mult_arc": self.agent.multiply_layers
 		 	})
 			
 		if self.agent.agent_type == "dist":

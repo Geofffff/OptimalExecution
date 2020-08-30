@@ -137,6 +137,7 @@ class learningAgent:
 		self.learning_rate = 0.001
 		self.gamma = 1
 		self.reward_scaling = True
+		self.multiply_layers = False
 		self.action_as_input = False
 
 		# Market data (currently only prices)
@@ -187,7 +188,8 @@ class learningAgent:
 		transition_num = 100
 		out = Dense(transition_num, activation='sigmoid')(res) # Test shrinking down MD net output
 		# If multiplying the layers then uncomment this
-		out = Reshape((transition_num,1,))(out)
+		if self.multiply_layers:
+			out = Reshape((transition_num,1,))(out)
 		model = Model(inputs=inputs,outputs=out)
 		return model
 		
