@@ -1,5 +1,5 @@
 import pandas as pd
-merged = pd.read_csv("cluster_data/cluster_USD_5s_comb2.csv",index_col = "time",low_memory = False)
+merged = pd.read_csv("cluster_data/cluster_BTX_5s_comb.csv",index_col = "time",low_memory = False)
 #merged = merged.values
 
 import library.agents.distAgentsWIP2, library.simulations2, library.agents.baseAgents, library.market_modelsM
@@ -33,28 +33,41 @@ else:
 params = {
     "terminal" : 1,
     "num_trades" : 1000,
-    "position" : 1,
+    "position" : 10000,
     "batch_size" : 64,
-    "action_values" : [0.99,1,1.01]
+    "action_values" : [[0.5,5],[1,0],[2,0],
+                       [0.25,2],[0.5,2],[1,1],
+                       [0,0.5],[0,1],[0,2],
+                       [1,4],[1,3]]
 }
-state_size = 2
-harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], "1000T1000 QRDQN FX",C=C, N=200,alternative_target = True,UCB=True,UCBc = UCBc,tree_horizon = 200,n_hist_data=n_hist_data,n_hist_inputs=2,orderbook =False)
-tim = library.agents.baseAgents.TWAPAgent(5,"BTX TWAP",11)
+
+
+
+state_size = 3
+harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], "1000T1000 QRDQN BTX LO",C=C, N=200,alternative_target = True,UCB=True,UCBc = UCBc,tree_horizon = 200,n_hist_data=n_hist_data,n_hist_inputs=4,orderbook =True)
+tim = library.agents.baseAgents.TWAPAgent(1,"TWAP",11)
 agent = harry
+
+stock = library.market_modelsM.real_stock_lob(merged,n_steps=1000,n_train=20)
+market = library.market_modelsM.lob_market(stock,n_hist_data)
 
 agent.learning_rate = lr
 
 agent.expected_range = 0.002
 agent.expected_mean = 0.99
 
-stock = library.market_modelsM.real_stock(merged,n_steps=1000,n_train=20)
-market = library.market_modelsM.market(stock,n_hist_data)
 market.k = 0.01
-market.b = 0.0
+market.b = 0.005
 
-my_simulator = library.simulations2.simulator(market,agent,params,test_name = "MOMD2",orderbook = False)
+my_simulator = library.simulations2.simulator(market,agent,params,test_name = "MOMD2",orderbook = True)
+my_simulator.train(500,epsilon_decay =0.9999)
+agent.model.save_weights(os.path.join(wandb.run.dir, f"qnet_weightsO_{500}"))
+my_simulator.train(2000,epsilon_decay =0.9999)
+agent.model.save_weights(os.path.join(wandb.run.dir, f"qnet_weightsO_{2500}"))
+my_simulator.train(2500,epsilon_decay =0.9999)
+agent.model.save_weights(os.path.join(wandb.run.dir, f"qnet_weightsO_{5000}"))
 my_simulator.train(5000,epsilon_decay =0.9999)
-my_simulator.train(5000,epsilon_decay =0.9999)
+agent.model.save_weights(os.path.join(wandb.run.dir, f"qnet_weightsO_{10000}"))
 my_simulator.train(10000,epsilon_decay =0.9999)
-my_simulator.train(20000,epsilon_decay =0.9999)
+agent.model.save_weights(os.path.join(wandb.run.dir, f"qnet_weightsO_{20000}"))
 

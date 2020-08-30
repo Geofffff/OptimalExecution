@@ -51,8 +51,8 @@ market.k = 0.01
 market.b = 0.005
 
 my_simulator = library.simulations2.simulator(market,agent,params,test_name = "MOMD2",orderbook = False)
-my_simulator.train(500,epsilon_decay =0.9999)
-agent.model.save_weights(os.path.join(wandb.run.dir, f"qnet_weightsO_{500}"))
+my_simulator.train(20,epsilon_decay =0.9999)
+agent.model.save_weights(os.path.join(wandb.run.dir, f"qnet_weightsO_{20}"))
 my_simulator.train(2000,epsilon_decay =0.9999)
 agent.model.save_weights(os.path.join(wandb.run.dir, f"qnet_weightsO_{2500}"))
 my_simulator.train(2500,epsilon_decay =0.9999)

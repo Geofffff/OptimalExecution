@@ -189,6 +189,13 @@ Sun 16th:
 		- trial the CBTX2 M algo on the full file
 	- start testing longer period
 
+Sunday 30th:
+- Experiments to run:
+	- final(?) BTX hist with perm imp and MF (compare to nMF)
+		- If nMF better then rerun with model saving
+	- could (if time permits) run with 1sec trading interval T=5,000
+	- start LO testing (T=1000)
+
 ### Writeup
 - Intro
 - Chapter 1

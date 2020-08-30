@@ -76,7 +76,8 @@ class simulator:
 		 	 "reward_scaling": self.agent.reward_scaling,
 		 	 "action_input" : self.agent.action_as_input,
 		 	 "model_layers": self.agent.model_layers,
-			 "model_units": self.agent.model_units
+			 "model_units": self.agent.model_units,
+			 "n_hist": self.agent.n_hist_data
 		 	})
 			
 		if self.agent.agent_type == "dist":
