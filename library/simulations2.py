@@ -45,7 +45,7 @@ class simulator:
 
 		self.eval_freq = 500 #500
 		self.train_stat_freq = 100
-		self.eval_window = 400 #25
+		self.eval_window = 400 #400
 		self.episode_n = 0 # Number of training episodes completed
 
 		self.logging_options = set(["count","value","position","event","reward","lo","lotime"])
@@ -55,6 +55,7 @@ class simulator:
 		# Wandb initialise and congigure
 		self.plot_position = False
 		self.new_run = wandb.init(project="OptEx",name = self.agent.agent_name,group = self.test_name,reinit=True)
+		wandb.save('latest.pth')
 		self.new_run.config.update({"num_trades": self.num_steps,
 		 "batch_size": self.batch_size,
 		 "action_size": len(self.possible_actions),
@@ -215,9 +216,8 @@ class simulator:
 		while self.episode_n - initial_episode < n_episodes:
 			self._train(self.eval_freq)
 			self._evaluate(self.eval_window)
-
-		self.agent.model.save_weights(os.path.join(wandb.run.dir, f"qnet_weights_{n_episodes}"))
-
+			self.agent.model.save_weights(os.path.join(wandb.run.dir, f"qnet_weights_{n_episodes}"))
+			#self.new_run.save('*')
 		
 		
 	def episode(self, verbose = False,evaluate = False, record = None):
