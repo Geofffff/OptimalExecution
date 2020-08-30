@@ -56,7 +56,7 @@ agent.learning_rate = lr
 agent.expected_range = 0.002
 agent.expected_mean = 0.99
 
-market.k = 0.01
+market.k = 0.01 / params["position"]
 #market.b = 0.005
 
 my_simulator = library.simulations2.simulator(market,agent,params,test_name = "MOMD2",orderbook = True)
