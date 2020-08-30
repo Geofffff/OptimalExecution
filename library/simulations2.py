@@ -216,7 +216,7 @@ class simulator:
 		while self.episode_n - initial_episode < n_episodes:
 			self._train(self.eval_freq)
 			self._evaluate(self.eval_window)
-			self.agent.model.save_weights(os.path.join(wandb.run.dir, f"qnet_weights_{n_episodes}"))
+			self.agent.model.save_weights(os.path.join(wandb.run.dir, f"qnet_weights_{episode_n}"))
 			#print("Saving model")
 			wandb.save(os.path.join(wandb.run.dir, "qnet_weights_*"))
 			print("Model Saved!")
