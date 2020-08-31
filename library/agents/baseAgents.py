@@ -137,14 +137,14 @@ class learningAgent:
 		self.learning_rate = 0.001
 		self.gamma = 1
 		self.reward_scaling = True
-		self.multiply_layers = False
+		self.multiply_layers = True
 		self.action_as_input = False
 
 		# Market data (currently only prices)
 		self.n_hist_data = n_hist_data
 		self.n_hist_inputs = n_hist_inputs
 		if self.n_hist_data > 0:
-			self.hist_model = self._build_hist_model(n_hist_data,units = 10,depth=3,kernal_size=4)
+			self.hist_model = self._build_hist_model(n_hist_data,units = 20,depth=4,kernal_size=4)
 
 			if self.C > 0:
 				self.hist_target_model = clone_model(self.hist_model)
@@ -185,7 +185,7 @@ class learningAgent:
 			res = Conv1D(units,kernal_size,activation = 'relu')(res)
 		
 		res = Flatten()(res)
-		transition_num = 8
+		transition_num = 150
 		out = Dense(transition_num, activation='sigmoid')(res) # Test shrinking down MD net output
 		# If multiplying the layers then uncomment this
 		if self.multiply_layers:
