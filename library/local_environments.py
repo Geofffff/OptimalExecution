@@ -11,7 +11,7 @@ class agent_environment:
         ):
         
         # Parameters
-        self.state_size = 2 # ???
+        self.state_size = 2 # consolidate this
 
         # Market environment
         self.m = market
@@ -19,15 +19,12 @@ class agent_environment:
 
         # Local environment
         self.initial_position =  position
-        self.step_size = 1 / n_trades # overridden later depreciate
+        self.step_size = 1 / n_trades # depreciated?
         self.reset()
 
         ### TEMP
         self.debug = False
         
-       
-        #self.reward_scaling = self.initial / (num_steps)
-
         #### Overhaul of the trading system, to enable set below to True ####
         
         # Instead trade every second but make decisions every self.trade_frequency seconds
@@ -119,6 +116,7 @@ class agent_environment:
 
             done = (self.position <= 0) + time_out
             rewards = self.scale_rewards(total_rewards,total_amount)
+            #print("rewards",rewards)
 
         else:
             self.m.progress(self.step_size)
@@ -204,6 +202,9 @@ class orderbook_environment(agent_environment):
         capped_mo_volume = np.minimum(volume[0],self.position)
         self.position -= capped_mo_volume
         returns += self.m.sell(capped_mo_volume,self.step_size) 
+        if returns < 0:
+            print("returns",returns,"position",self.position,"capped_mo_volume",capped_mo_volume)
+
         # ... then add limit orders up to remaining position - currently standing LOs
         capped_lo_volume = np.max(np.minimum(volume[1],self.position - self.m.lo_total_pos),0)
         self.m.place_limit_order(capped_lo_volume)

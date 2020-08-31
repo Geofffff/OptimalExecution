@@ -35,10 +35,12 @@ params = {
     "num_trades" : 1000,
     "position" : 10000,
     "batch_size" : 64,
-    "action_values" : [[0.5,5],[1,0],[2,0],
-                       [0.25,2],[0.5,2],[1,1],
-                       [0,0.5],[0,1],[0,2],
-                       [1,4],[1,3]]
+    "action_values" : [[1,0],[2,0],
+                       [0.5,0]]
+                       #[[0.5,5],[1,0],[2,0],
+                       #[0.25,2],[0.5,2],[1,1],
+                       #[0,0.5],[0,1],[0,2],
+                       #[1,4],[1,3]]
 }
 
 
@@ -56,7 +58,7 @@ agent.learning_rate = lr
 agent.expected_range = 0.002
 agent.expected_mean = 0.99
 
-market.k = 0.01 / 10000#params["position"]**2
+market.k = 0.005 / 10000#params["position"]**2
 #market.b = 0.005
 
 my_simulator = library.simulations2.simulator(market,agent,params,test_name = "MOMD2",orderbook = True)

@@ -194,6 +194,7 @@ class real_stock_lob(real_stock):
 		super(real_stock_lob,self).reset(training)
 		# Override the initial price with the mid price
 		self.initial = (self.data["bid"][self.data_index] + self.data["ask"][self.data_index]) / 2
+		#print("initial",self.initial)
 		self.initial_spread = self.data["spread"][self.data_index]
 		self.generate_price(first = True)
 
@@ -270,7 +271,9 @@ class market:
 		self.price_adjust *= self.exp_g(volume)
 		#print("rate ", volume/dt, "price_adjust ",self.price_adjust)        
 		ret = (self._adjusted_price() - self.f(volume/dt) - 0.5 * self.spread) * volume 
-		#print("return",ret)
+		if ret < 0:
+			ret = 0 # Slight quirk of the linear temporary impact is that if we try and sell 5000 in 5 seconds we may get a negative price, not very realistc
+			# maybe impact coefficient is too high...
 		return ret
 
 	def g(self,v):
@@ -280,6 +283,7 @@ class market:
 		return np.exp(-self.g(v))
 
 	def f(self,v):
+
 		return v * self.k#0.00186 # Temporarily adjusting by 10 to account for non unit terminal
 		# What should this be?
 			# - HFT book (position = 1, terminal  = 1, k = 0.01)
