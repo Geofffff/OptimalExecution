@@ -137,7 +137,7 @@ class learningAgent:
 		self.learning_rate = 0.001
 		self.gamma = 1
 		self.reward_scaling = True
-		self.multiply_layers = True
+		self.multiply_layers = False
 		self.action_as_input = False
 
 		# Market data (currently only prices)
