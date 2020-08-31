@@ -46,7 +46,7 @@ params = {
 state_size = 3
 harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], "1000T1000 QRDQN BTX LO",C=C, N=200,alternative_target = True,UCB=True,UCBc = UCBc,tree_horizon = 200,n_hist_data=n_hist_data,n_hist_inputs=7,orderbook =True)
 tim = library.agents.baseAgents.TWAPAgent(1,"TWAP",11)
-agent = tim
+agent = harry
 
 stock = library.market_modelsM.real_stock_lob(merged,n_steps=1000,n_train=20)
 market = library.market_modelsM.lob_market(stock,n_hist_data)
