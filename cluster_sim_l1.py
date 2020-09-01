@@ -1,5 +1,5 @@
 import pandas as pd
-merged = pd.read_csv("cluster_data/cluster_BTX_5s_comb.csv",index_col = "time",low_memory = False)
+merged = pd.read_csv("cluster_data/cluster_BTX_2S_comb.csv",index_col = "time",low_memory = False)
 #merged = merged.values
 
 import library.agents.distAgentsWIP2, library.simulations2, library.agents.baseAgents, library.market_modelsM
@@ -30,7 +30,7 @@ else:
 
 params = {
     "terminal" : 1,
-    "num_trades" : 1000,
+    "num_trades" : 100,
     "position" : 1,
     "batch_size" : 64,
     "action_values" : [0.99,1,1.01]
@@ -45,7 +45,7 @@ agent.learning_rate = lr
 agent.expected_range = 0.002
 agent.expected_mean = 0.99
 
-stock = library.market_modelsM.real_stock(merged,n_steps=1000,n_train=20)
+stock = library.market_modelsM.real_stock(merged,n_steps=1000,n_train=30)
 market = library.market_modelsM.market(stock,n_hist_data)
 market.k = 0.01 / params["position"]**2
 market.b = 0.0#05

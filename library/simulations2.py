@@ -317,16 +317,13 @@ class simulator:
 		
 		return track
 
-	def evaluate(self,n_episodes = 200,show_stats = True):
+	def evaluate(self,n_episodes = 200):
 		raise "This function has not been updated to version 2"
 		self.train(n_episodes = n_episodes, show_details = False,evaluate = True)
 		# Return agent epsilons to their original values:
 		for i, agent in enumerate(self.agents):
 			agent.evaluate = False
 
-		if show_stats:
-			start_iteration = len(self.eval_rewards)
-			self.show_stats(trained_from = start_iteration,training = False)
 
 	def show_stats(self,trained_from = 0,trained_to = None,moving_average = 400,training = True):
 		
