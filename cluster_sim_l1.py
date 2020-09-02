@@ -12,7 +12,7 @@ if r == 1:
 else:
 	UCBc = 200
 
-n_trades = 1000
+n_trades = 100
 C = 50
 
 r = random.randint(1,2)
@@ -36,7 +36,7 @@ params = {
     "action_values" : [0.99,1,1.01]
 }
 state_size = 2
-harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], f"1kT1k QRDQN2 BTX 1kM",C=C, N=200,alternative_target = True,UCB=True,UCBc = UCBc,tree_horizon = 1000,n_hist_data=n_hist_data,n_hist_inputs=4,orderbook =False)
+harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], f"100T100 QRDQN2 BTX 1kM",C=C, N=200,alternative_target = True,UCB=True,UCBc = UCBc,tree_horizon = 100,n_hist_data=n_hist_data,n_hist_inputs=4,orderbook =False)
 tim = library.agents.baseAgents.TWAPAgent(1,"BTX TWAP",11)
 agent = harry
 
@@ -51,7 +51,7 @@ market.k = 0.01 / params["position"]**2
 market.b = 0.0#05
 
 my_simulator = library.simulations2.simulator(market,agent,params,test_name = "MOMD2",orderbook = False)
-my_simulator.train(10000,epsilon_decay =0.9999)
+my_simulator.train(20000,epsilon_decay =0.9999)
 
 
 
