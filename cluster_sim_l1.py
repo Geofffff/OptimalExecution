@@ -12,7 +12,7 @@ if r == 1:
 else:
 	UCBc = 200
 
-n_trades = 1000
+n_trades = 800
 C = 50
 
 r = random.randint(1,2)
