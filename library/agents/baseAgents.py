@@ -186,7 +186,7 @@ class learningAgent:
 		
 		res = Flatten()(res)
 		transition_num = 150
-		out = Dense(transition_num, activation='sigmoid')(res) # Test shrinking down MD net output
+		out = Dense(transition_num, activation='relu')(res) # Test shrinking down MD net output
 		# If multiplying the layers then uncomment this
 		if self.multiply_layers:
 			out = Reshape((transition_num,1,))(out)
