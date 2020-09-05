@@ -118,7 +118,7 @@ class learningAgent:
 		
 
 		# Replay buffer
-		self.replay_buffer_size = 3000
+		self.replay_buffer_size = 8000
 		self.memory = replayMemory(max_size=self.replay_buffer_size)
 
 		# Epsilon Greedy
