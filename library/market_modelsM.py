@@ -203,7 +203,8 @@ class real_stock_lob(real_stock):
 			assert dt is not None, "dt argument required for non initial price"
 			self._update_data_index(dt)
 
-		self.price = self.data['bid'][self.data_index] / self.initial
+		self.price = self.data['bid'].values[self.data_index] / self.initial
+		#print("price",self.price,self.data['bid'].values[self.data_index] / self.initial,self.data['ask'].values[self.data_index] / self.initial)
 
 		# WARNING: For now we return a scaled price (scaled by initial price at the start of every episode)
 		error = np.isnan(self.price)
