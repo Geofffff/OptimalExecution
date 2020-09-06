@@ -35,7 +35,7 @@ params = {
     "num_trades" : n_steps,
     "position" : 10000,
     "batch_size" : 64,
-    "action_values" : [[0.5,5],[1,0],[2,0],
+    "action_values" : [[0.5,4],[1,0],[2,0],
                        [0.25,2],[0.5,2],[1,1],
                        [0,0.5],[0,1],[0,2],
                        [1,4],[1,3]]
@@ -48,7 +48,7 @@ harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"
 tim = library.agents.baseAgents.TWAPAgent(1,"TWAP",11)
 agent = harry
 
-stock = library.market_modelsM.real_stock_lob(merged,n_steps=n_steps,n_train=20)
+stock = library.market_modelsM.real_stock_lob(merged,n_steps=n_steps,n_train=30)
 market = library.market_modelsM.lob_market(stock,n_hist_data)
 
 agent.learning_rate = lr
