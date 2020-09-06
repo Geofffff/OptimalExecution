@@ -57,7 +57,7 @@ agent.expected_range = 0.002
 agent.expected_mean = 0.99
 
 market.k = 0.01 / 10000#params["position"]**2
-#market.b = 0.005
+market.b = 0.005 / 10000#params["position"]**2
 
 my_simulator = library.simulations2.simulator(market,agent,params,test_name = "MOMD2",orderbook = True)
 my_simulator.train(10000,epsilon_decay =0.9999)
