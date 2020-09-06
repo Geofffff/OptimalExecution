@@ -15,7 +15,7 @@ else:
 
 C = 50
 
-r = random.randint(1,3)
+r = random.randint(1,2)
 if r == 1:
 	n_hist_data = 32
 elif r == 2:
@@ -44,8 +44,8 @@ params = {
 
 
 state_size = 3
-harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], f"{n_steps}T{n_steps} QRDQN BTX LO3",C=C, N=200,alternative_target = True,UCB=True,UCBc = UCBc,tree_horizon = n_steps,n_hist_data=n_hist_data,n_hist_inputs=7,orderbook =True)
-tim = library.agents.baseAgents.TWAPAgent(1,"TWAP",11)
+harry = library.agents.distAgentsWIP2.QRAgent(state_size, params["action_values"], f"{n_steps}T{n_steps} QRDQN BTX LO3",C=C, N=200,alternative_target = True,UCB=True,UCBc = UCBc,tree_horizon = n_steps/2,n_hist_data=n_hist_data,n_hist_inputs=7,orderbook =True)
+tim = library.agents.baseAgents.TWAPAgent(0,"LO maximo",11)
 agent = harry
 
 stock = library.market_modelsM.real_stock_lob(merged,n_steps=n_steps,n_train=30)
@@ -57,7 +57,7 @@ agent.expected_range = 0.002
 agent.expected_mean = 0.99
 
 market.k = 0.01 / 10000#params["position"]**2
-market.b = 0.005 / 10000#params["position"]**2
+market.b = 0.00#5 #params["position"]**2
 
 my_simulator = library.simulations2.simulator(market,agent,params,test_name = "MOMD2",orderbook = True)
 my_simulator.train(10000,epsilon_decay =0.9999)

@@ -190,7 +190,7 @@ class simulator:
 			track = self.episode(evaluate = False,record = record)
 			total_count += track["count"]
 			total_reward += track["reward"]
-			print(track["reward"])
+			#print(track["reward"])
 			#print("position ",total_position,track["position"])
 			total_position = [total_position[i] + (track["position"][i] if i < len(track["position"]) else 0) for i in range(self.num_steps)]
 			if self.orderbook:

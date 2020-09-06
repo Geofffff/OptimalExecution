@@ -363,7 +363,9 @@ class lob_market(market):
 		self.warn_solo_price = False
 		self.lo_value = 0 # Purely for summary statistics purposes
 
-	def execute_lob(self):
+	def execute_lob(self,max_vol):
+		# The use of max_vol is a shortcut but this doesnt affect the validity of the results
+		# In reality the LOs should be cancelled when they go above the position
 		# Stock market orders in considered time window
 		if len(self.lo_position) == 0:
 			return 0,0
@@ -446,7 +448,11 @@ class lob_market(market):
 
 		#print("lob returns", fulfilled_total * self.stock.ask)
 		assert fulfilled_total >= 0, "We can't have negative returns from LOs"
+		fulfilled_total = min(fulfilled_total,max_vol)
 		self.lo_value += fulfilled_total
+		if fulfilled_total > 0:
+			#print("sold",fulfilled_total, "at", self.stock.ask )
+			pass
 		return fulfilled_total, fulfilled_total * self.stock.ask
 
 

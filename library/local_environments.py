@@ -195,7 +195,7 @@ class orderbook_environment(agent_environment):
     def sell(self,volume):
         # For the orderbook agent volume is a 2 tuple containing MO and LO volume
         # First update LOB...
-        delta_position, returns = self.m.execute_lob()
+        delta_position, returns = self.m.execute_lob(self.position)
         self.position -= delta_position
         # ... then execute any market orders ...
         #print("volume",volume)
