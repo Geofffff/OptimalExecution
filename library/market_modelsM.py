@@ -275,6 +275,7 @@ class market:
 		if ret < 0:
 			ret = 0 # Slight quirk of the linear temporary impact is that if we try and sell 5000 in 5 seconds we may get a negative price, not very realistc
 			# maybe impact coefficient is too high...
+		#print("volume",volume,"ret",ret)
 		return ret
 
 	def g(self,v):
