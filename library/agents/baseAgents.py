@@ -38,6 +38,7 @@ class replayMemory:
 	def __getitem__(self, index):
 		return self.buffer[index]
 
+# Depreciated
 class stockProcessingNetwork(Model):
 	'''Network for preprocessing of stock prices'''
 	def __init__(self,input_dim,output_dim = None,units=16):

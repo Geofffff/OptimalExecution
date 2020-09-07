@@ -187,7 +187,7 @@ class simulator:
 			record = ["count","reward","position"]
 			if self.orderbook:
 				record.append("lo")
-			track = self.episode(evaluate = False,record = record)
+			track = self.episode(evaluate = True,record = record)
 			total_count += track["count"]
 			total_reward += track["reward"]
 			#print(track["reward"])
@@ -287,6 +287,7 @@ class simulator:
 
 
 			if not evaluate:
+				#print("remembering!")
 				self.agent.remember(state, action, reward, next_state, done)
 
 			if verbose:
