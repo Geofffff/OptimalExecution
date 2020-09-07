@@ -287,7 +287,6 @@ class simulator:
 
 
 			if not evaluate:
-				#print("remembering!")
 				self.agent.remember(state, action, reward, next_state, done)
 
 			if verbose:
