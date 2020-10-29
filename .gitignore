@@ -1,4 +1,8 @@
 /wandb
 /data
 .ipynb_checkpoints
+/library/__pycache__/
+/library/Archive/
+/library/Agents/__pycache__/
+/library/Agents/.DS_Store
 
